@@ -1,4 +1,4 @@
-# HPC Homework
+# CS 598: High-Performance Parallel Computing, Fall 2026
 
 Collaborative repo for graduate high-performance parallel computing homework.
 Each assignment is C code + a LaTeX writeup, built with plain `make`.
