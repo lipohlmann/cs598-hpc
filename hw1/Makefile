@@ -1,7 +1,8 @@
+CC = gcc-16
 include ../common.mk
 
 # ---- Assignment-specific settings ----
-TARGET  = hw-template
+TARGET  = hw1
 SRCS    = $(wildcard src/*.c)
 OBJS    = $(SRCS:.c=.o)
 

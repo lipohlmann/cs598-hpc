@@ -5,7 +5,10 @@
 # different (e.g. CC = nvcc for a CUDA assignment).
 
 # ---- C toolchain ----
-CC       ?= mpicc
+ifeq ($(origin CC),default)
+CC := mpicc
+endif
+
 CFLAGS   ?= -O2 -Wall -Wextra -std=c11 -fopenmp
 LDFLAGS  ?= -fopenmp -lm
 
