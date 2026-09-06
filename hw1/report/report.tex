@@ -1,0 +1,64 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    tabsize=4
+}
+
+\title{High Performance Parallel Computing \\ Homework Template}
+\author{Your Name(s)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Problem Statement}
+Briefly restate the problem being solved.
+
+\section{Approach}
+Describe the parallelization strategy (e.g. domain decomposition, threading
+model, communication pattern) and any relevant design decisions.
+
+\section{Implementation}
+Highlight the key parts of the code. Reference \texttt{src/main.c} rather
+than pasting the whole file; use \texttt{listings} for short excerpts.
+
+\begin{lstlisting}[language=C, caption={Example excerpt}]
+int main(int argc, char *argv[]) {
+    printf("hello\n");
+    return 0;
+}
+\end{lstlisting}
+
+\section{Results}
+Present timing/scaling data, plots, or tables here.
+
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.7\textwidth]{figures/speedup.pdf}
+%     \caption{Speedup vs. number of processes/threads.}
+% \end{figure}
+
+\section{Discussion}
+Interpret the results: does performance match expectations? What are the
+bottlenecks?
+
+\section{Conclusion}
+Summarize findings.
+
+\end{document}
