@@ -1,8 +1,7 @@
 # HPC Homework
 
 Collaborative repo for graduate high-performance parallel computing homework.
-Each assignment is C code + a LaTeX writeup, built with plain `make` (no
-CMake — see rationale below).
+Each assignment is C code + a LaTeX writeup, built with plain `make`.
 
 ## Layout
 
