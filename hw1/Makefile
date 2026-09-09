@@ -1,4 +1,4 @@
-CC = gcc-16
+CC = gcc
 include ../common.mk
 
 # ---- Assignment-specific settings ----
