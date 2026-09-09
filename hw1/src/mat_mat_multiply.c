@@ -16,7 +16,7 @@ double MatMatEntry(const double* A, const size_t A_cols, const double* B,
                    const size_t B_cols, const size_t row, const size_t col) {
   size_t K = A_cols;
   double sum = 0.0;
-  for (size_t k = 0; k < K - 1; k++) {
+  for (size_t k = 0; k < K; k++) {
     size_t A_flat_index = ComputeFlatIndex(A_cols, row, k);
     size_t B_flat_index = ComputeFlatIndex(B_cols, k, col);
     sum += (A[A_flat_index] * B[B_flat_index]);
