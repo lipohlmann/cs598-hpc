@@ -19,7 +19,7 @@ double toc() {
   struct timespec end_time;
   clock_gettime(CLOCK_MONOTONIC, &end_time);
   double elapsed_time = (end_time.tv_sec - start_time.tv_sec) +
-                         (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
+                        (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
   printf("Elapsed time is %.6f seconds.\n", elapsed_time);
   return elapsed_time;
 }
@@ -95,6 +95,17 @@ int main(int argc, char* argv[]) {
     free(D3);
     free(D4);
   }
+
+  FILE* csv_file = fopen("gflops.csv", "w");
+  if (csv_file == NULL) {
+    perror("fopen");
+    return 1;
+  }
+  fprintf(csv_file, "N,GFLOPS_per_core\n");
+  for (int i = 0; i < N_SAMPLES; i++) {
+    fprintf(csv_file, "%d,%.6f\n", Ns[i], gcs[i]);
+  }
+  fclose(csv_file);
 
   return 0;
 }
