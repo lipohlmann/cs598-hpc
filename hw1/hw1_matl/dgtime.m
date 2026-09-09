@@ -31,4 +31,5 @@ plot(NN,gc,'ro-',lw,2);
 xlabel('Matrix Size, N',fs,20);
 ylabel('GFLOPS',fs,20);
 title ('Matlab C=AB GFLOPS per Core',fs,20);
+exportgraphics(gcf, 'octave_gflops.png', 'Resolution', 300)
 
