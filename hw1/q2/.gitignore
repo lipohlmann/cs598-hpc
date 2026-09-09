@@ -1,0 +1,12 @@
+pingpong
+logs/
+.venv/
+__pycache__/
+
+# Smoke-test output from run_local.sh -- an oversubscribed local box, not a
+# measurement.  Regenerate with `make && ./run_local.sh`.
+data/local_*.csv
+analysis/out/summary_local_*
+
+# Result CSVs from the cluster (data/pp_*.csv) and the summaries derived from
+# them ARE committed -- they are the report's raw data.
