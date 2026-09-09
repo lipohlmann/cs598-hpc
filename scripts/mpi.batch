@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --account=26fa-cs598pa-eng     # This is valid for all students
+#SBATCH --partition=eng-instruction    # <- replace with your partition
+#SBATCH --time=00:10:00
+#SBATCH --nodes=2
+#SBATCH --ntasks-per-node=8
+#SBATCH --cpus-per-task=1
+#SBATCH --job-name=hw_mpi
+#SBATCH --output=logfile
+
+module load openmpi
+
+mpirun -np 16 --map-by ppr:8:node --bind-to core ./allreduce_test

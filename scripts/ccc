@@ -1,0 +1,1 @@
+ssh -o TCPKeepAlive=no -o ServerAliveInterval=15 -XYA liamp2@cc-login3.campuscluster.illinois.edu

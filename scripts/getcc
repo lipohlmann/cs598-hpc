@@ -1,0 +1,4 @@
+rm -f t.tgz
+scp liamp2@cc-login.campuscluster.illinois.edu:t.tgz .
+tar -zxvf t.tgz
+rm t.tgz

@@ -1,0 +1,6 @@
+mv logfile log.1
+module load openmpi
+make clean
+make
+sbatch mpi.batch $1 $2
+
