@@ -47,7 +47,7 @@ def main():
     plt.plot(Ns, gcs, "ro-", linewidth=2)
     plt.xlabel("Matrix Size, N", fontsize=20)
     plt.ylabel("GFLOPS", fontsize=20)
-    plt.title("C C=AB GFLOPS per Core", fontsize=20)
+    plt.title("C=AB GFLOPS per Core", fontsize=20)
     plt.tight_layout()
     plt.savefig(args.output, dpi=300)
 
