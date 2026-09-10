@@ -1,0 +1,136 @@
+rm -f hw1 src/main.o src/mat_mat_multiply.o src/rand_matrix.o
+latexmk -C -cd report/report.tex
+make: latexmk: No such file or directory
+make: *** [Makefile:35: clean] Error 127
+gcc -O2 -Wall -Wextra -std=c11 -fopenmp -O3 -march=native -funroll-loops -ffp-contract=fast -Iinclude -c src/main.c -o src/main.o
+gcc -O2 -Wall -Wextra -std=c11 -fopenmp -O3 -march=native -funroll-loops -ffp-contract=fast -Iinclude -c src/mat_mat_multiply.c -o src/mat_mat_multiply.o
+gcc -O2 -Wall -Wextra -std=c11 -fopenmp -O3 -march=native -funroll-loops -ffp-contract=fast -Iinclude -c src/rand_matrix.c -o src/rand_matrix.o
+gcc src/main.o src/mat_mat_multiply.o src/rand_matrix.o -o hw1 -fopenmp -lm
+./hw1
+Elapsed time is 0.000021 seconds.
+8 0.000021 0.049531
+Elapsed time is 0.000058 seconds.
+40 0.000058 2.220680
+Elapsed time is 0.000227 seconds.
+72 0.000227 3.284477
+Elapsed time is 0.000428 seconds.
+104 0.000428 5.253453
+Elapsed time is 0.000700 seconds.
+136 0.000700 7.187685
+Elapsed time is 0.001649 seconds.
+168 0.001649 5.749419
+Elapsed time is 0.002828 seconds.
+200 0.002828 5.658285
+Elapsed time is 0.003920 seconds.
+232 0.003920 6.371355
+Elapsed time is 0.004388 seconds.
+264 0.004388 8.386539
+Elapsed time is 0.006324 seconds.
+296 0.006324 8.201946
+Elapsed time is 0.007962 seconds.
+328 0.007962 8.863876
+Elapsed time is 0.009836 seconds.
+360 0.009836 9.487061
+Elapsed time is 0.012698 seconds.
+392 0.012698 9.487480
+Elapsed time is 0.014198 seconds.
+424 0.014198 10.737789
+Elapsed time is 0.017857 seconds.
+456 0.017857 10.619974
+Elapsed time is 0.021552 seconds.
+488 0.021552 10.784395
+Elapsed time is 0.024746 seconds.
+520 0.024746 11.364206
+Elapsed time is 0.030267 seconds.
+552 0.030267 11.114066
+Elapsed time is 0.035611 seconds.
+584 0.035611 11.186278
+Elapsed time is 0.038951 seconds.
+616 0.038951 12.002002
+Elapsed time is 0.047325 seconds.
+648 0.047325 11.499007
+Elapsed time is 0.057271 seconds.
+680 0.057271 10.980443
+Elapsed time is 0.059507 seconds.
+712 0.059507 12.131244
+Elapsed time is 0.067612 seconds.
+744 0.067612 12.182145
+Elapsed time is 0.078010 seconds.
+776 0.078010 11.980222
+Elapsed time is 0.081433 seconds.
+808 0.081433 12.955752
+Elapsed time is 0.094307 seconds.
+840 0.094307 12.569671
+Elapsed time is 0.105551 seconds.
+872 0.105551 12.563738
+Elapsed time is 0.113924 seconds.
+904 0.113924 12.969427
+Elapsed time is 0.125610 seconds.
+936 0.125610 13.056732
+Elapsed time is 0.140820 seconds.
+968 0.140820 12.882258
+Elapsed time is 0.149519 seconds.
+1000 0.149519 13.376215
+Elapsed time is 0.164239 seconds.
+1032 0.164239 13.384198
+Elapsed time is 0.180245 seconds.
+1064 0.180245 13.365705
+Elapsed time is 0.191822 seconds.
+1096 0.191822 13.726591
+Elapsed time is 0.212192 seconds.
+1128 0.212192 13.527836
+Elapsed time is 0.228076 seconds.
+1160 0.228076 13.687528
+Elapsed time is 0.244010 seconds.
+1192 0.244010 13.881988
+Elapsed time is 0.265524 seconds.
+1224 0.265524 13.812443
+Elapsed time is 0.289688 seconds.
+1256 0.289688 13.679420
+Elapsed time is 0.304315 seconds.
+1288 0.304315 14.042804
+Elapsed time is 0.333037 seconds.
+1320 0.333037 13.812085
+Elapsed time is 0.365194 seconds.
+1352 0.365194 13.534316
+Elapsed time is 0.380780 seconds.
+1384 0.380780 13.923996
+Elapsed time is 0.418615 seconds.
+1416 0.418615 13.564521
+Elapsed time is 0.478263 seconds.
+1448 0.478263 12.696066
+Elapsed time is 0.515891 seconds.
+1480 0.515891 12.567751
+Elapsed time is 0.555051 seconds.
+1512 0.555051 12.455243
+Elapsed time is 0.596305 seconds.
+1544 0.596305 12.345358
+Elapsed time is 0.630978 seconds.
+1576 0.630978 12.407513
+Elapsed time is 0.678649 seconds.
+1608 0.678649 12.253007
+Elapsed time is 0.730915 seconds.
+1640 0.730915 12.069657
+Elapsed time is 0.762033 seconds.
+1672 0.762033 12.267758
+Elapsed time is 0.813358 seconds.
+1704 0.813358 12.166255
+Elapsed time is 0.860454 seconds.
+1736 0.860454 12.160500
+Elapsed time is 0.900846 seconds.
+1768 0.900846 12.269484
+Elapsed time is 0.970435 seconds.
+1800 0.970435 12.019350
+Elapsed time is 1.021692 seconds.
+1832 1.021692 12.036121
+Elapsed time is 1.063949 seconds.
+1864 1.063949 12.174381
+Elapsed time is 1.134933 seconds.
+1896 1.134933 12.010880
+Elapsed time is 1.201844 seconds.
+1928 1.201844 11.926228
+Elapsed time is 1.238499 seconds.
+1960 1.238499 12.159127
+Elapsed time is 1.319807 seconds.
+1992 1.319807 11.978091
+mv: cannot stat 'optimize_logfile': No such file or directory
