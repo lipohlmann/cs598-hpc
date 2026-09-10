@@ -1,0 +1,144 @@
+rm -f hw1 src/main.o src/mat_mat_multiply.o src/rand_matrix.o
+latexmk -C -cd report/report.tex
+make: latexmk: No such file or directory
+make: *** [Makefile:28: clean] Error 127
+gcc -O2 -Wall -Wextra -std=c11 -fopenmp -Iinclude -c src/main.c -o src/main.o
+gcc -O2 -Wall -Wextra -std=c11 -fopenmp -Iinclude -c src/mat_mat_multiply.c -o src/mat_mat_multiply.o
+src/mat_mat_multiply.c: In function ‘MatMat’:
+src/mat_mat_multiply.c:4:46: warning: unused parameter ‘B_rows’ [-Wunused-parameter]
+    4 |                const double* B, const size_t B_rows, const size_t B_cols) {
+      |                                 ~~~~~~~~~~~~~^~~~~~
+gcc -O2 -Wall -Wextra -std=c11 -fopenmp -Iinclude -c src/rand_matrix.c -o src/rand_matrix.o
+gcc src/main.o src/mat_mat_multiply.o src/rand_matrix.o -o hw1 -fopenmp -lm
+./hw1
+Elapsed time is 0.000003 seconds.
+8 0.000003 0.292739
+Elapsed time is 0.000339 seconds.
+40 0.000339 0.377863
+Elapsed time is 0.002492 seconds.
+72 0.002492 0.299558
+Elapsed time is 0.007337 seconds.
+104 0.007337 0.306638
+Elapsed time is 0.017908 seconds.
+136 0.017908 0.280932
+Elapsed time is 0.036538 seconds.
+168 0.036538 0.259548
+Elapsed time is 0.065294 seconds.
+200 0.065294 0.245044
+Elapsed time is 0.104712 seconds.
+232 0.104712 0.238506
+Elapsed time is 0.157541 seconds.
+264 0.157541 0.233587
+Elapsed time is 0.225541 seconds.
+296 0.225541 0.229975
+Elapsed time is 0.311214 seconds.
+328 0.311214 0.226774
+Elapsed time is 0.416738 seconds.
+360 0.416738 0.223910
+Elapsed time is 0.544255 seconds.
+392 0.544255 0.221353
+Elapsed time is 0.702410 seconds.
+424 0.702410 0.217039
+Elapsed time is 0.904714 seconds.
+456 0.904714 0.209611
+Elapsed time is 1.136128 seconds.
+488 1.136128 0.204579
+Elapsed time is 1.390917 seconds.
+520 1.390917 0.202180
+Elapsed time is 1.675021 seconds.
+552 1.675021 0.200829
+Elapsed time is 1.993474 seconds.
+584 1.993474 0.199829
+Elapsed time is 2.343209 seconds.
+616 2.343209 0.199508
+Elapsed time is 2.726323 seconds.
+648 2.726323 0.199608
+Elapsed time is 3.157763 seconds.
+680 3.157763 0.199149
+Elapsed time is 3.573381 seconds.
+712 3.573381 0.202018
+Elapsed time is 4.058892 seconds.
+744 4.058892 0.202928
+Elapsed time is 4.583320 seconds.
+776 4.583320 0.203908
+Elapsed time is 5.226001 seconds.
+808 5.226001 0.201881
+Elapsed time is 5.784402 seconds.
+840 5.784402 0.204932
+Elapsed time is 6.499005 seconds.
+872 6.499005 0.204048
+Elapsed time is 7.223448 seconds.
+904 7.223448 0.204546
+Elapsed time is 8.011566 seconds.
+936 8.011566 0.204711
+Elapsed time is 8.810490 seconds.
+968 8.810490 0.205900
+Elapsed time is 9.706963 seconds.
+1000 9.706963 0.206038
+Elapsed time is 10.712106 seconds.
+1032 10.712106 0.205208
+Elapsed time is 11.690922 seconds.
+1064 11.690922 0.206066
+Elapsed time is 12.781461 seconds.
+1096 12.781461 0.206007
+Elapsed time is 13.986180 seconds.
+1128 13.986180 0.205238
+Elapsed time is 15.155205 seconds.
+1160 15.155205 0.205988
+Elapsed time is 16.407994 seconds.
+1192 16.407994 0.206444
+Elapsed time is 17.783208 seconds.
+1224 17.783208 0.206236
+Elapsed time is 19.241801 seconds.
+1256 19.241801 0.205946
+Elapsed time is 20.804515 seconds.
+1288 20.804515 0.205409
+Elapsed time is 22.352151 seconds.
+1320 22.352151 0.205794
+Elapsed time is 24.036187 seconds.
+1352 24.036187 0.205634
+Elapsed time is 25.801279 seconds.
+1384 25.801279 0.205493
+Elapsed time is 27.600658 seconds.
+1416 27.600658 0.205731
+Elapsed time is 29.293153 seconds.
+1448 29.293153 0.207286
+Elapsed time is 31.577442 seconds.
+1480 31.577442 0.205323
+Elapsed time is 33.586519 seconds.
+1512 33.586519 0.205836
+Elapsed time is 35.891884 seconds.
+1544 35.891884 0.205105
+Elapsed time is 38.254043 seconds.
+1576 38.254043 0.204654
+Elapsed time is 40.543622 seconds.
+1608 40.543622 0.205100
+Elapsed time is 42.977489 seconds.
+1640 42.977489 0.205268
+Elapsed time is 45.549203 seconds.
+1672 45.549203 0.205238
+Elapsed time is 48.175475 seconds.
+1704 48.175475 0.205406
+Elapsed time is 51.189009 seconds.
+1736 51.189009 0.204410
+Elapsed time is 53.897921 seconds.
+1768 53.897921 0.205071
+Elapsed time is 56.940259 seconds.
+1800 56.940259 0.204846
+Elapsed time is 60.018596 seconds.
+1832 60.018596 0.204890
+Elapsed time is 63.195498 seconds.
+1864 63.195498 0.204966
+Elapsed time is 66.459949 seconds.
+1896 66.459949 0.205109
+Elapsed time is 69.928891 seconds.
+1928 69.928891 0.204972
+Elapsed time is 73.577959 seconds.
+1960 73.577959 0.204668
+Elapsed time is 79.575856 seconds.
+1992 79.575856 0.198663
+Traceback (most recent call last):
+  File "/u/liamp2/projects/cs598-hpc/hw1/plot_gflops.py", line 15, in <module>
+    import matplotlib.pyplot as plt
+ModuleNotFoundError: No module named 'matplotlib'
+mv: cannot stat 'first_run.png': No such file or directory
