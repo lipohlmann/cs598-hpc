@@ -4,17 +4,17 @@
 #include <omp.h>
 #endif
 
-// Register-resident accumulator tile shape (rows x cols), sized to the
-// vector width -march=native actually resolved to on this build machine.
-// TILE_ROWS * TILE_COLS doubles must live in vector registers for the
-// whole K reduction (see ComputeTile) -- on a narrower ISA than expected
-// (e.g. a virtualized node exposing SSE2 instead of the host's real AVX2)
-// an AVX2-sized tile would overflow the register file and spill to memory
-// every k step, silently costing a large fraction of peak throughput.
-#if defined(__AVX512F__)
-#define TILE_ROWS 8
-#define TILE_COLS 16
-#elif defined(__AVX2__) && defined(__FMA__)
+// Register-resident accumulator tile shape (rows x cols). TILE_ROWS *
+// TILE_COLS doubles must live in vector registers for the whole K
+// reduction (see ComputeTile), so this is sized for the 256-bit vectors
+// the Makefile pins via -mprefer-vector-width=256 (16 YMM registers x 4
+// doubles each): 6x8 = 48 accumulator doubles (12 YMM registers), leaving
+// headroom for the per-k A/B temporaries. A tile sized for a wider vector
+// (e.g. AVX-512's 512-bit) would overflow this register file and spill to
+// memory every k step if the vectorizer doesn't actually use that width --
+// which it may not, even when the ISA is available (see the Makefile
+// comment) -- so don't grow this without also raising the pinned width.
+#if defined(__AVX2__) && defined(__FMA__)
 #define TILE_ROWS 6
 #define TILE_COLS 8
 #elif defined(__AVX__)
