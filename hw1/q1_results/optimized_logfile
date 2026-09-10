@@ -10,10 +10,10 @@ NUMA topology (which sockets our allocated CPUs sit on):
 available: 2 nodes (0-1)
 node 0 cpus: 0 2 4 6 8 10 12 14 16 18 20 22 24 26 28 30 32 34 36 38 40 42 44 46 48 50 52 54 56 58 60 62
 node 0 size: 128279 MB
-node 0 free: 63103 MB
+node 0 free: 63171 MB
 node 1 cpus: 1 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31 33 35 37 39 41 43 45 47 49 51 53 55 57 59 61 63
 node 1 size: 128964 MB
-node 1 free: 85430 MB
+node 1 free: 85424 MB
 node distances:
 node     0    1 
    0:   10   20 
@@ -22,134 +22,134 @@ node     0    1
 rm -f hw1 src/main.o src/mat_mat_multiply.o src/rand_matrix.o
 latexmk -C -cd report/report.tex
 make: latexmk: No such file or directory
-make: *** [Makefile:35: clean] Error 127
-gcc -O2 -Wall -Wextra -std=c11 -fopenmp -O3 -march=native -funroll-loops -ffp-contract=fast -Iinclude -c src/main.c -o src/main.o
-gcc -O2 -Wall -Wextra -std=c11 -fopenmp -O3 -march=native -funroll-loops -ffp-contract=fast -Iinclude -c src/mat_mat_multiply.c -o src/mat_mat_multiply.o
-gcc -O2 -Wall -Wextra -std=c11 -fopenmp -O3 -march=native -funroll-loops -ffp-contract=fast -Iinclude -c src/rand_matrix.c -o src/rand_matrix.o
+make: *** [Makefile:43: clean] Error 127
+gcc -O2 -Wall -Wextra -std=c11 -fopenmp -O3 -march=native -funroll-loops -ffp-contract=fast -mprefer-vector-width=256 -Iinclude -c src/main.c -o src/main.o
+gcc -O2 -Wall -Wextra -std=c11 -fopenmp -O3 -march=native -funroll-loops -ffp-contract=fast -mprefer-vector-width=256 -Iinclude -c src/mat_mat_multiply.c -o src/mat_mat_multiply.o
+gcc -O2 -Wall -Wextra -std=c11 -fopenmp -O3 -march=native -funroll-loops -ffp-contract=fast -mprefer-vector-width=256 -Iinclude -c src/rand_matrix.c -o src/rand_matrix.o
 gcc src/main.o src/mat_mat_multiply.o src/rand_matrix.o -o hw1 -fopenmp -lm
-Elapsed time is 0.000015 seconds.
-8 0.000015 0.068757
-Elapsed time is 0.000068 seconds.
-40 0.000068 1.877383
-Elapsed time is 0.000267 seconds.
-72 0.000267 2.793908
-Elapsed time is 0.000424 seconds.
-104 0.000424 5.303111
-Elapsed time is 0.000763 seconds.
-136 0.000763 6.595418
-Elapsed time is 0.001270 seconds.
-168 0.001270 7.468278
-Elapsed time is 0.002092 seconds.
-200 0.002092 7.649200
-Elapsed time is 0.002828 seconds.
-232 0.002828 8.832372
-Elapsed time is 0.004001 seconds.
-264 0.004001 9.197237
-Elapsed time is 0.005060 seconds.
-296 0.005060 10.251011
-Elapsed time is 0.006583 seconds.
-328 0.006583 10.720861
-Elapsed time is 0.008222 seconds.
-360 0.008222 11.348727
-Elapsed time is 0.010259 seconds.
-392 0.010259 11.742785
-Elapsed time is 0.011924 seconds.
-424 0.011924 12.785105
-Elapsed time is 0.015227 seconds.
-456 0.015227 12.454258
-Elapsed time is 0.017083 seconds.
-488 0.017083 13.606023
-Elapsed time is 0.021536 seconds.
-520 0.021536 13.058031
-Elapsed time is 0.022649 seconds.
-552 0.022649 14.852554
-Elapsed time is 0.028861 seconds.
-584 0.028861 13.802466
-Elapsed time is 0.032920 seconds.
-616 0.032920 14.200643
-Elapsed time is 0.040230 seconds.
-648 0.040230 13.527154
-Elapsed time is 0.043996 seconds.
-680 0.043996 14.293510
-Elapsed time is 0.050167 seconds.
-712 0.050167 14.389697
-Elapsed time is 0.057390 seconds.
-744 0.057390 14.351949
-Elapsed time is 0.066320 seconds.
-776 0.066320 14.091861
-Elapsed time is 0.073370 seconds.
-808 0.073370 14.379551
-Elapsed time is 0.083172 seconds.
-840 0.083172 14.252527
-Elapsed time is 0.089662 seconds.
-872 0.089662 14.790037
-Elapsed time is 0.101327 seconds.
-904 0.101327 14.581701
-Elapsed time is 0.107559 seconds.
-936 0.107559 15.247970
-Elapsed time is 0.119537 seconds.
-968 0.119537 15.175811
-Elapsed time is 0.128580 seconds.
-1000 0.128580 15.554533
-Elapsed time is 0.146558 seconds.
-1032 0.146558 14.998918
-Elapsed time is 0.152454 seconds.
-1064 0.152454 15.802141
-Elapsed time is 0.168406 seconds.
-1096 0.168406 15.635224
-Elapsed time is 0.179533 seconds.
-1128 0.179533 15.988724
-Elapsed time is 0.196923 seconds.
-1160 0.196923 15.852823
-Elapsed time is 0.211226 seconds.
-1192 0.211226 16.036549
-Elapsed time is 0.233816 seconds.
-1224 0.233816 15.685540
-Elapsed time is 0.247343 seconds.
-1256 0.247343 16.021354
-Elapsed time is 0.274080 seconds.
-1288 0.274080 15.591930
-Elapsed time is 0.287654 seconds.
-1320 0.287654 15.991203
-Elapsed time is 0.320315 seconds.
-1352 0.320315 15.430577
-Elapsed time is 0.341105 seconds.
-1384 0.341105 15.543569
-Elapsed time is 0.404131 seconds.
-1416 0.404131 14.050696
-Elapsed time is 0.434884 seconds.
-1448 0.434884 13.962486
-Elapsed time is 0.485086 seconds.
-1480 0.485086 13.365846
-Elapsed time is 0.512660 seconds.
-1512 0.512660 13.485143
-Elapsed time is 0.561822 seconds.
-1544 0.561822 13.103062
-Elapsed time is 0.595389 seconds.
-1576 0.595389 13.149145
-Elapsed time is 0.636050 seconds.
-1608 0.636050 13.073655
-Elapsed time is 0.668306 seconds.
-1640 0.668306 13.200382
-Elapsed time is 0.726460 seconds.
-1672 0.726460 12.868470
-Elapsed time is 0.759733 seconds.
-1704 0.759733 13.024996
-Elapsed time is 0.815828 seconds.
-1736 0.815828 12.825686
-Elapsed time is 0.843642 seconds.
-1768 0.843642 13.101420
-Elapsed time is 0.924671 seconds.
-1800 0.924671 12.614211
-Elapsed time is 0.946241 seconds.
-1832 0.946241 12.995843
-Elapsed time is 1.011816 seconds.
-1864 1.011816 12.801655
-Elapsed time is 1.064298 seconds.
-1896 1.064298 12.808017
-Elapsed time is 1.128101 seconds.
-1928 1.128101 12.705829
-Elapsed time is 1.163544 seconds.
-1960 1.163544 12.942420
-Elapsed time is 1.249993 seconds.
-1992 1.249993 12.647082
+Elapsed time is 0.000016 seconds.
+8 0.000016 0.065835
+Elapsed time is 0.000058 seconds.
+40 0.000058 2.204312
+Elapsed time is 0.000216 seconds.
+72 0.000216 3.457873
+Elapsed time is 0.000423 seconds.
+104 0.000423 5.321664
+Elapsed time is 0.000802 seconds.
+136 0.000802 6.273912
+Elapsed time is 0.001744 seconds.
+168 0.001744 5.438687
+Elapsed time is 0.002420 seconds.
+200 0.002420 6.610936
+Elapsed time is 0.003836 seconds.
+232 0.003836 6.511187
+Elapsed time is 0.005112 seconds.
+264 0.005112 7.198000
+Elapsed time is 0.006205 seconds.
+296 0.006205 8.359225
+Elapsed time is 0.007528 seconds.
+328 0.007528 9.375081
+Elapsed time is 0.009813 seconds.
+360 0.009813 9.508643
+Elapsed time is 0.012398 seconds.
+392 0.012398 9.716960
+Elapsed time is 0.014787 seconds.
+424 0.014787 10.309732
+Elapsed time is 0.017999 seconds.
+456 0.017999 10.536255
+Elapsed time is 0.021941 seconds.
+488 0.021941 10.593480
+Elapsed time is 0.025375 seconds.
+520 0.025375 11.082220
+Elapsed time is 0.029101 seconds.
+552 0.029101 11.559506
+Elapsed time is 0.036920 seconds.
+584 0.036920 10.789537
+Elapsed time is 0.038558 seconds.
+616 0.038558 12.124342
+Elapsed time is 0.049673 seconds.
+648 0.049673 10.955563
+Elapsed time is 0.054930 seconds.
+680 0.054930 11.448501
+Elapsed time is 0.061729 seconds.
+712 0.061729 11.694458
+Elapsed time is 0.074736 seconds.
+744 0.074736 11.020955
+Elapsed time is 0.084275 seconds.
+776 0.084275 11.089553
+Elapsed time is 0.090610 seconds.
+808 0.090610 11.643611
+Elapsed time is 0.103160 seconds.
+840 0.103160 11.490979
+Elapsed time is 0.116267 seconds.
+872 0.116267 11.405773
+Elapsed time is 0.124920 seconds.
+904 0.124920 11.827797
+Elapsed time is 0.137314 seconds.
+936 0.137314 11.943782
+Elapsed time is 0.154866 seconds.
+968 0.154866 11.713844
+Elapsed time is 0.163178 seconds.
+1000 0.163178 12.256585
+Elapsed time is 0.176290 seconds.
+1032 0.176290 12.469312
+Elapsed time is 0.194889 seconds.
+1064 0.194889 12.361410
+Elapsed time is 0.210573 seconds.
+1096 0.210573 12.504283
+Elapsed time is 0.231367 seconds.
+1128 0.231367 12.406675
+Elapsed time is 0.248801 seconds.
+1160 0.248801 12.547321
+Elapsed time is 0.263889 seconds.
+1192 0.263889 12.836243
+Elapsed time is 0.291711 seconds.
+1224 0.291711 12.572504
+Elapsed time is 0.313621 seconds.
+1256 0.313621 12.635528
+Elapsed time is 0.329565 seconds.
+1288 0.329565 12.966930
+Elapsed time is 0.364545 seconds.
+1320 0.364545 12.618288
+Elapsed time is 0.395529 seconds.
+1352 0.395529 12.496309
+Elapsed time is 0.413829 seconds.
+1384 0.413829 12.812000
+Elapsed time is 0.455417 seconds.
+1416 0.455417 12.468380
+Elapsed time is 0.519593 seconds.
+1448 0.519593 11.686170
+Elapsed time is 0.562371 seconds.
+1480 0.562371 11.529013
+Elapsed time is 0.605221 seconds.
+1512 0.605221 11.422774
+Elapsed time is 0.648450 seconds.
+1544 0.648450 11.352596
+Elapsed time is 0.689656 seconds.
+1576 0.689656 11.351831
+Elapsed time is 0.738921 seconds.
+1608 0.738921 11.253562
+Elapsed time is 0.794210 seconds.
+1640 0.794210 11.107758
+Elapsed time is 0.834480 seconds.
+1672 0.834480 11.202701
+Elapsed time is 0.886157 seconds.
+1704 0.886157 11.166782
+Elapsed time is 0.945794 seconds.
+1736 0.945794 11.063243
+Elapsed time is 0.984716 seconds.
+1768 0.984716 11.224467
+Elapsed time is 1.058452 seconds.
+1800 1.058452 11.019862
+Elapsed time is 1.113502 seconds.
+1832 1.113502 11.043724
+Elapsed time is 1.162171 seconds.
+1864 1.162171 11.145450
+Elapsed time is 1.237797 seconds.
+1896 1.237797 11.012744
+Elapsed time is 1.312898 seconds.
+1928 1.312898 10.917423
+Elapsed time is 1.358444 seconds.
+1960 1.358444 11.085528
+Elapsed time is 1.432502 seconds.
+1992 1.432502 11.035772
