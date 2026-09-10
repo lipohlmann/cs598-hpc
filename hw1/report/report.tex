@@ -8,6 +8,9 @@
 \usepackage{hyperref}
 \usepackage{booktabs}
 
+\usepackage{minted}
+\usepackage[capitalise,noabbrev]{cleveref}
+
 \lstset{
     basicstyle=\ttfamily\small,
     breaklines=true,
@@ -19,46 +22,30 @@
     tabsize=4
 }
 
-\title{High Performance Parallel Computing \\ Homework Template}
-\author{Your Name(s)}
+\title{High Performance Parallel Computing \\ Homework 1}
+\author{Liam Pohlmann, Alex Shaffer}
 \date{\today}
 
 \begin{document}
 
 \maketitle
 
-\section{Problem Statement}
-Briefly restate the problem being solved.
+\section{Problem 1}
 
-\section{Approach}
-Describe the parallelization strategy (e.g. domain decomposition, threading
-model, communication pattern) and any relevant design decisions.
+Using the provided MatLab code, MatLab version R2025b was run on the \texttt{eng-partition} on a single node with a single single task and a single CPU per task.
 
-\section{Implementation}
-Highlight the key parts of the code. Reference \texttt{src/main.c} rather
-than pasting the whole file; use \texttt{listings} for short excerpts.
+\inputminted{batch}{../q1_results/matlab_results/batch_matlab.sh}
 
-\begin{lstlisting}[language=C, caption={Example excerpt}]
-int main(int argc, char *argv[]) {
-    printf("hello\n");
-    return 0;
-}
-\end{lstlisting}
+This produced the results seen in \cref{fig:matlab_gflops}.
 
-\section{Results}
-Present timing/scaling data, plots, or tables here.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{../q1_results/matlab_results/octave_gflops.png}
+    \label{fig:matlab_gflops}
+    \caption{}
+\end{figure}
 
-% \begin{figure}[h]
-%     \centering
-%     \includegraphics[width=0.7\textwidth]{figures/speedup.pdf}
-%     \caption{Speedup vs. number of processes/threads.}
-% \end{figure}
 
-\section{Discussion}
-Interpret the results: does performance match expectations? What are the
-bottlenecks?
-
-\section{Conclusion}
-Summarize findings.
+\section{Problem 2}
 
 \end{document}
