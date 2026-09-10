@@ -8,6 +8,14 @@
 \usepackage{hyperref}
 \usepackage{booktabs}
 
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  filecolor=magenta,
+  urlcolor=blue,
+  citecolor=black
+}
+
 \usepackage{minted}
 \usepackage[capitalise,noabbrev]{cleveref}
 
@@ -22,7 +30,7 @@
     tabsize=4
 }
 
-\title{High Performance Parallel Computing \\ Homework 1}
+\title{\textbf{High Performance Parallel Computing \\ Homework 1}}
 \author{Liam Pohlmann, Alex Shaffer}
 \date{\today}
 
@@ -32,7 +40,7 @@
 
 \section{Problem 1}
 
-Using the provided MatLab code, MatLab version R2025b was run on the \texttt{eng-partition} on a single node with a single single task and a single CPU per task.
+Using the provided MatLab code, MatLab version R2025b was run on the \texttt{eng-partition} on a single node with a single single task and 8 CPUs per task.
 
 \inputminted{batch}{../q1_results/matlab_results/batch_matlab.sh}
 
@@ -40,9 +48,9 @@ This produced the results seen in \cref{fig:matlab_gflops}.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{../q1_results/matlab_results/octave_gflops.png}
-    \label{fig:matlab_gflops}
-    \caption{}
+    \includegraphics[width=0.8\textwidth]{../q1_results/matlab_results/matlab_gflops.png}
+    \caption{MatLab number of Giga-Flops per core for the matrix-matrix product.}
+        \label{fig:matlab_gflops}
 \end{figure}
 
 
