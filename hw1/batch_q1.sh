@@ -11,6 +11,17 @@
 
 module load miniconda3/24.9.2
 
+# Diagnostics: if per-core GFLOPS is still low, these reveal whether it's a
+# vector-ISA/core-count mismatch (e.g. a virtualized node not exposing the
+# host's real AVX2/AVX-512) rather than the kernel itself.
+echo "=== node diagnostics ==="
+echo "nproc: $(nproc)"
+lscpu | grep -E "Model name|Socket|Thread\(s\) per core|Core\(s\) per socket"
+echo -n "SIMD ISA available: "
+lscpu | grep -o -E "avx512f|avx2|avx|fma" | sort -u | tr '\n' ' '
+echo
+echo "=========================="
+
 # `module load` only puts a bare base Python on PATH (no matplotlib), and
 # `conda activate` needs conda.sh sourced before it works in a non-login
 # shell. Create (once) and activate a dedicated env with the plotting deps,
@@ -37,5 +48,5 @@ make run
 python plot_gflops.py gflops.csv -o optimized.png
 mv gflops.csv ./q1_results/
 mv optimized.png ./q1_results/
-mv optimize_logfile ./q1_results/
+mv optimized_logfile ./q1_results/
 

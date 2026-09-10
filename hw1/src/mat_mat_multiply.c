@@ -4,9 +4,26 @@
 #include <omp.h>
 #endif
 
-// Register-resident accumulator tile shape (rows x cols).
+// Register-resident accumulator tile shape (rows x cols), sized to the
+// vector width -march=native actually resolved to on this build machine.
+// TILE_ROWS * TILE_COLS doubles must live in vector registers for the
+// whole K reduction (see ComputeTile) -- on a narrower ISA than expected
+// (e.g. a virtualized node exposing SSE2 instead of the host's real AVX2)
+// an AVX2-sized tile would overflow the register file and spill to memory
+// every k step, silently costing a large fraction of peak throughput.
+#if defined(__AVX512F__)
+#define TILE_ROWS 8
+#define TILE_COLS 16
+#elif defined(__AVX2__) && defined(__FMA__)
 #define TILE_ROWS 6
 #define TILE_COLS 8
+#elif defined(__AVX__)
+#define TILE_ROWS 4
+#define TILE_COLS 4
+#else
+#define TILE_ROWS 2
+#define TILE_COLS 4
+#endif
 
 // Depth of the K-panel of B reused by every thread before moving on.
 #define K_PANEL_DEPTH 112
