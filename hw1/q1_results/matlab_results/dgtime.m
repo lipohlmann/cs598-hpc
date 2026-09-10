@@ -1,5 +1,7 @@
 hdr;
 
+max_gflops = 0;
+N_where_max_occurs = 0;
 k=0;
 for N=8:32:2000; k=k+1;
 
@@ -20,12 +22,19 @@ for N=8:32:2000; k=k+1;
    ncore = 8;
    gcore = gflops / ncore;                % GFLOPS / core
 
+   if gcore > max_gflops
+	   max_gflops = gcore;
+	   N_where_max_occurs = N;
+   end
+
    disp([ N etime gcore ]);
 
    NN(k)=N;
    gc(k)=gcore;
 
 end;
+
+fprintf("The maximum gflops per core is %.3f, and this occurs at N=%d\n.", max_gflops, N_where_max_occurs);
 
 plot(NN,gc,'ro-',lw,2);
 xlabel('Matrix Size, N',fs,20);
