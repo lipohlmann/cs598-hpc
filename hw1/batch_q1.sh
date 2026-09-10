@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=8              # matches the 8-CPU MatLab comparison run
 #SBATCH --mem=16G
 #SBATCH --job-name=run_hw1
-#SBATCH --output=logfile
+#SBATCH --output=optimized_logfile
 
 module load miniconda3/24.9.2
 
@@ -34,8 +34,8 @@ export OMP_PLACES=cores
 make clean || true
 make code
 make run
-python plot_gflops.py gflops.csv -o first_run.png
+python plot_gflops.py gflops.csv -o optimized.png
 mv gflops.csv ./q1_results/
-mv first_run.png ./q1_results/
-mv logfile ./q1_results/
+mv optimized.png ./q1_results/
+mv optimize_logfile ./q1_results/
 
