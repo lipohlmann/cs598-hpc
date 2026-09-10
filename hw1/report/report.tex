@@ -17,6 +17,7 @@
 }
 
 \usepackage{minted}
+\setminted{frame=single}
 \usepackage[capitalise,noabbrev]{cleveref}
 
 \lstset{
@@ -53,6 +54,14 @@ This produced the results seen in \cref{fig:matlab_gflops}.
     \caption{MatLab number of Giga-Flops per core for the matrix-matrix product.}
         \label{fig:matlab_gflops}
 \end{figure}
+
+A naive first iteration was created, with the implementation of a matrix-matrix being:
+
+\inputminted{c}{../q1_results/first_iter/mat_mat_multiply.h}
+\inputminted{c}{../q1_results/first_iter/mat_mat_multiply.c}
+with a \texttt{Makefile}:
+\inputminted{shell}{../q1_results/first_iter/Makefile}
+\inputminted{shell}{../q1_results/first_iter/common.mk}
 
 
 \section{Problem 2}
