@@ -70,11 +70,8 @@ int main(int argc, char* argv[]) {
     double N3 = (double)N * (double)N * (double)N;
     double gflops = (8.0 * 2.0 * N3 / elapsed_time) / 1e9;
 
-    unsigned int n_cores = 8;
-    double gcore = gflops / n_cores;
-
     Ns[k] = N;
-    gcs[k] = gcore;
+    gcs[k] = gflops;
     printf("%d %.6f %.6f\n", Ns[k], elapsed_time, gcs[k]);
     k += 1;
 

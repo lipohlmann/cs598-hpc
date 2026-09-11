@@ -1,19 +1,10 @@
 #include "mat_mat_multiply.h"
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
 // Register-resident accumulator tile shape (rows x cols). TILE_ROWS *
 // TILE_COLS doubles must live in vector registers for the whole K
-// reduction (see ComputeTile), so this is sized for the 256-bit vectors
-// the Makefile pins via -mprefer-vector-width=256 (16 YMM registers x 4
-// doubles each): 6x8 = 48 accumulator doubles (12 YMM registers), leaving
-// headroom for the per-k A/B temporaries. A tile sized for a wider vector
-// (e.g. AVX-512's 512-bit) would overflow this register file and spill to
-// memory every k step if the vectorizer doesn't actually use that width --
-// which it may not, even when the ISA is available (see the Makefile
-// comment) -- so don't grow this without also raising the pinned width.
+// reduction (see ComputeTile), so this is sized for 256-bit AVX2 vectors
+// (16 YMM registers x 4 doubles each): 6x8 = 48 accumulator doubles (12
+// YMM registers), leaving headroom for the per-k A/B temporaries.
 #if defined(__AVX2__) && defined(__FMA__)
 #define TILE_ROWS 6
 #define TILE_COLS 8
@@ -24,32 +15,6 @@
 #define TILE_ROWS 2
 #define TILE_COLS 4
 #endif
-
-// Depth of the K-panel of B reused by every thread before moving on.
-#define K_PANEL_DEPTH 112
-
-static inline size_t Min(size_t a, size_t b) { return a < b ? a : b; }
-
-static inline size_t RoundUpToMultiple(size_t value, size_t multiple) {
-  size_t remainder = value % multiple;
-  return remainder == 0 ? value : value + (multiple - remainder);
-}
-
-static int GetNumThreads(void) {
-#ifdef _OPENMP
-  return omp_get_max_threads();
-#else
-  return 1;
-#endif
-}
-
-// One contiguous row block per thread, rounded up to a multiple of
-// TILE_ROWS so the fast path in MultiplyRowBlock covers as much as
-// possible without falling back to ComputeTileScalar.
-static size_t RowsPerThread(size_t num_rows) {
-  size_t threads = (size_t)GetNumThreads();
-  return RoundUpToMultiple((num_rows + threads - 1) / threads, TILE_ROWS);
-}
 
 // Accumulates a TILE_ROWS x TILE_COLS tile of C over the reduction depth
 // [k_start, k_end). The accumulator stays in local arrays for the whole
@@ -144,21 +109,7 @@ double* MatMat(const double* restrict A, const size_t A_rows,
   const size_t num_cols = B_cols;
 
   double* restrict C = calloc(num_rows * num_cols, sizeof(double));
-  const size_t row_block = RowsPerThread(num_rows);
-
-  // The K panel is the outer, sequential loop: every thread reuses the
-  // same panel of B while sweeping its row block across all of C, instead
-  // of re-reading B once per row block.
-  for (size_t k_start = 0; k_start < inner_dim; k_start += K_PANEL_DEPTH) {
-    const size_t k_end = Min(k_start + K_PANEL_DEPTH, inner_dim);
-
-#pragma omp parallel for schedule(static)
-    for (size_t row_start = 0; row_start < num_rows; row_start += row_block) {
-      const size_t row_end = Min(row_start + row_block, num_rows);
-      MultiplyRowBlock(A, inner_dim, B, num_cols, C, row_start, row_end,
-                        k_start, k_end);
-    }
-  }
+  MultiplyRowBlock(A, inner_dim, B, num_cols, C, 0, num_rows, 0, inner_dim);
 
   return C;
 }
