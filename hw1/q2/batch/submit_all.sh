@@ -4,13 +4,14 @@
 #     ./batch/submit_all.sh          # all five
 #     ./batch/submit_all.sh 2a       # just the P1 = 64-rank baseline
 #
-# Before the first 128-ranks-on-one-node run, check the real core count:
+# eng-instruction is heterogeneous -- as of 2026-09-11:
 #
-#     sinfo -p eng-instruction -o "%n %c %m"
+#     $ sinfo -p eng-instruction -o "%n %c"
+#     ccc0391 128    ccc0392 128    ccc0393 128    ccc0398 64    ccc0399 64
 #
-# If a node has fewer than 128 cores, 128 ranks on one node needs
-# --oversubscribe (and --bind-to hwthread) added to the mpirun line in
-# pingpong.slurm; otherwise Open MPI will refuse to launch.
+# pingpong.slurm therefore carries --mincpus=128, so every config below lands
+# on the 128-core class and all five are measured on the same hardware.  Only
+# three such nodes exist, so the two-node jobs may queue behind each other.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
