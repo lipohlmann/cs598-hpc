@@ -21,6 +21,11 @@
 # ever lands somewhere unexpected -- this does not self-update.
 #SBATCH --exclude=ccc0398,ccc0399
 #SBATCH --job-name=pingpong
+# logs/ must already exist AT SUBMIT TIME -- Slurm opens this file before the
+# script below runs, so the mkdir cannot cover it.  If logs/ is missing the job
+# dies at launch with no output anywhere, which is confusing to chase.  Submit
+# through batch/submit_all.sh, which creates it; a bare sbatch needs a manual
+# `mkdir -p logs` first.
 #SBATCH --output=logs/%x-P%N-%j.out
 
 set -euo pipefail
@@ -50,17 +55,22 @@ make --no-print-directory
 echo "=== $(date) P=$NTASKS nodes=$SLURM_NNODES msg_vol=$MSG_VOL ==="
 srun hostname -s | sort | uniq -c
 
-# --map-by ppr:N:node is required, not redundant.  Without it Open MPI packs
-# ranks by the node's topology (128 physical cores) rather than by the CPUs
-# Slurm actually granted per node, so a 2-node job puts every rank on the
-# first node and dies with "binding more processes than cpus available in your
-# allocation".  A 1-node job cannot show this, which is what makes the bug easy
-# to miss.  This did once fail the other way ("Procs mapped" < "Number of
-# procs") -- but only on a heterogeneous 128+64 allocation, which the
-# --exclude above now rules out.  Keep both or neither.
-mpirun -np "$NTASKS" \
-    --map-by "ppr:${SLURM_NTASKS_PER_NODE}:node" \
-    --bind-to core \
+# srun, not mpirun: mpirun here does not read the Slurm allocation.  On a
+# 2-node job it sees only the local node, so it either maps half the ranks
+# ("Procs mapped: 64 ... PPR: 64:node") or piles all of them onto node 1
+# ("binding more processes than cpus available in your allocation") depending
+# on --map-by.  No mapping flag can fix that -- the node list is already
+# missing.  The `srun hostname` line above proves srun sees both nodes, so let
+# Slurm launch the ranks and drop -np/--map-by/--bind-to with it: SLURM_NTASKS
+# sets the count, block distribution keeps ranks 0..n-1 on the first node, and
+# --cpu-bind=cores replaces --bind-to core.
+#
+# If srun rejects the PMI type, `srun --mpi=list` prints what this build has
+# (pmi2 is the usual alternative) -- override without editing via SRUN_MPI.
+SRUN_MPI=${SRUN_MPI:-pmix}
+
+srun --mpi="$SRUN_MPI" \
+    --cpu-bind=cores \
     ./pingpong \
         --msg-vol "$MSG_VOL" \
         --nsizes "$NSIZES" \

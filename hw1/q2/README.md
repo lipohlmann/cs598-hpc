@@ -78,12 +78,13 @@ comparison into `../report/figures/`.
   a rank-count effect. `batch/pingpong.slurm` pins every job to the 128-core
   class with `--exclude=ccc0398,ccc0399` — by name, because Slurm rejects the
   tidier `--mincpus=128` here. Do not compare curves across node classes.
-- **`--map-by ppr:N:node` is load-bearing.** Without it Open MPI packs ranks
-  by the node's topology rather than by the CPUs Slurm granted per node, so a
-  two-node job puts every rank on the first node and dies with *binding more
-  processes than cpus available in your allocation*. One-node jobs never show
-  this. It fails the opposite way (*Procs mapped < Number of procs*) on a
-  heterogeneous allocation, so it depends on the `--exclude` above.
+- **Launch with `srun`, not `mpirun`.** `mpirun` on this cluster does not read
+  the Slurm allocation — on a two-node job it sees only the local node and
+  fails either as *Procs mapped: 64 ... PPR: 64:node* or as *binding more
+  processes than cpus available in your allocation*, depending on `--map-by`.
+  One-node jobs work fine either way, which hides it. `srun` gets the node
+  list right, so it launches the ranks and `-np` / `--map-by` / `--bind-to`
+  all go away.
 - **The round trip is serialized.** The partner does `irecv; msgwait; isend;
   msgwait` — it cannot reply until the ping has landed. Posting both halves at
   once would let the legs overlap and would read roughly twice as fast.
