@@ -33,7 +33,7 @@ squeue -u $USER
 ```
 
 All five must run on the same node class or the comparison is meaningless --
-see the note on `--mincpus` below. The five output files are
+see the note on the heterogeneous partition below. The five output files are
 `data/pp_P{64,128}_n1.csv` and `data/pp_P{128,192,256}_n2.csv`; a config is
 missing from `data/` if and only if its job failed.
 
@@ -75,8 +75,9 @@ comparison into `../report/figures/`.
   slots than `2 x ntasks-per-node`, and Open MPI refuses to launch) and, more
   quietly, put the 1x64 baseline on a 64-core node and the 1x128 run on a
   128-core one -- so their latency difference was mostly a CPU difference, not
-  a rank-count effect. `batch/pingpong.slurm` pins every job with
-  `--mincpus=128`. Do not compare curves across node classes.
+  a rank-count effect. `batch/pingpong.slurm` pins every job to the 128-core
+  class with `--exclude=ccc0398,ccc0399` — by name, because Slurm rejects the
+  tidier `--mincpus=128` here. Do not compare curves across node classes.
 - **No `--map-by`.** The `sbatch --nodes` / `--ntasks-per-node` allocation
   already fixes the layout; `ppr:N:node` only re-imposes it as a hard
   constraint that fails whenever Open MPI resolves fewer slots than `N`.

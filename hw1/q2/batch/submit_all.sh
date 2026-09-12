@@ -9,9 +9,10 @@
 #     $ sinfo -p eng-instruction -o "%n %c"
 #     ccc0391 128    ccc0392 128    ccc0393 128    ccc0398 64    ccc0399 64
 #
-# pingpong.slurm therefore carries --mincpus=128, so every config below lands
-# on the 128-core class and all five are measured on the same hardware.  Only
-# three such nodes exist, so the two-node jobs may queue behind each other.
+# pingpong.slurm therefore carries --exclude=ccc0398,ccc0399, so every config
+# below lands on the 128-core class and all five are measured on the same
+# hardware.  Only three such nodes exist, so the two-node jobs may queue
+# behind each other.  Re-check that node list if sinfo ever disagrees.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."

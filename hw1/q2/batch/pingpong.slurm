@@ -11,11 +11,15 @@
 #SBATCH --time=00:10:00                # keep under 10 minutes (see scripts/README.md)
 #SBATCH --cpus-per-task=1
 # eng-instruction is heterogeneous: ccc0391-93 have 128 cores, ccc0398-99 have
-# 64.  Without this, a 2-node job can draw one of each, so Open MPI resolves
+# 64.  Left alone, a 2-node job can draw one of each, so Open MPI resolves
 # fewer slots than 2 x ntasks-per-node and refuses to launch; worse, the 1-node
 # 64- and 128-rank runs land on different CPUs and are not comparable.  Every
-# config here fits on a 128-core node, so pin them all to that class.
-#SBATCH --mincpus=128
+# config here fits on a 128-core node, so keep them all on that class by name.
+# (--mincpus=128 is the tidier way to say this, but Slurm rejects it here with
+# "Requested node configuration is not available" even for the 64-rank job.)
+# Recheck the node list against `sinfo -p eng-instruction -o "%n %c"` if a job
+# ever lands somewhere unexpected -- this does not self-update.
+#SBATCH --exclude=ccc0398,ccc0399
 #SBATCH --job-name=pingpong
 #SBATCH --output=logs/%x-P%N-%j.out
 
@@ -50,8 +54,8 @@ srun hostname -s | sort | uniq -c
 # the layout, and "ppr:N:node" only re-imposes it as a hard constraint that
 # fails ("Procs mapped" < "Number of procs") whenever Open MPI resolves fewer
 # slots per node than N.  If "Procs mapped" is still short of "Number of
-# procs" here, --mincpus did not hold the allocation to the 128-core nodes;
-# fall back to pinning them by name with #SBATCH --exclude=ccc0398,ccc0399.
+# procs" here, the --exclude above did not hold the allocation to the 128-core
+# nodes -- check `srun hostname` in the log to see where the job actually ran.
 mpirun -np "$NTASKS" \
     --bind-to core \
     ./pingpong \
