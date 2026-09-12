@@ -50,13 +50,16 @@ make --no-print-directory
 echo "=== $(date) P=$NTASKS nodes=$SLURM_NNODES msg_vol=$MSG_VOL ==="
 srun hostname -s | sort | uniq -c
 
-# No --map-by: the sbatch --nodes/--ntasks-per-node allocation already fixes
-# the layout, and "ppr:N:node" only re-imposes it as a hard constraint that
-# fails ("Procs mapped" < "Number of procs") whenever Open MPI resolves fewer
-# slots per node than N.  If "Procs mapped" is still short of "Number of
-# procs" here, the --exclude above did not hold the allocation to the 128-core
-# nodes -- check `srun hostname` in the log to see where the job actually ran.
+# --map-by ppr:N:node is required, not redundant.  Without it Open MPI packs
+# ranks by the node's topology (128 physical cores) rather than by the CPUs
+# Slurm actually granted per node, so a 2-node job puts every rank on the
+# first node and dies with "binding more processes than cpus available in your
+# allocation".  A 1-node job cannot show this, which is what makes the bug easy
+# to miss.  This did once fail the other way ("Procs mapped" < "Number of
+# procs") -- but only on a heterogeneous 128+64 allocation, which the
+# --exclude above now rules out.  Keep both or neither.
 mpirun -np "$NTASKS" \
+    --map-by "ppr:${SLURM_NTASKS_PER_NODE}:node" \
     --bind-to core \
     ./pingpong \
         --msg-vol "$MSG_VOL" \
