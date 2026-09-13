@@ -4,7 +4,7 @@
 #SBATCH --time=01:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=1
 #SBATCH --mem=16G
 #SBATCH --job-name=run_hw1
 #SBATCH --output=optimized_logfile
@@ -32,5 +32,4 @@ python plot_gflops.py gflops.csv -o optimized.png
 mv gflops.csv ./q1_results/
 mv optimized.png ./q1_results/
 mv optimized_logfile ./q1_results/
-make clean
 
