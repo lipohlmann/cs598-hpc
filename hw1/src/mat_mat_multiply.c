@@ -1,7 +1,20 @@
 #include "mat_mat_multiply.h"
 
+// Register-resident accumulator tile shape (rows x cols), sized to the
+// vector width -march=native actually enables so one row's accumulator
+// fills whole vector registers instead of spilling or under-using them:
+// AVX-512 packs 8 doubles/register, AVX2 packs 4. Matches the Makefile's
+// -mprefer-vector-width choice for the same reason.
+#if defined(__AVX512F__)
+#define TILE_ROWS 8
+#define TILE_COLS 8
+#elif defined(__AVX2__) && defined(__FMA__)
 #define TILE_ROWS 4
 #define TILE_COLS 4
+#else
+#define TILE_ROWS 2
+#define TILE_COLS 4
+#endif
 
 // Block sizes for the loop nest in MatMat. KC caps how many rows of B
 // ([kc, kc+KC) x full width) are swept repeatedly while resident in
@@ -18,64 +31,42 @@
 static inline size_t Min(size_t a, size_t b) { return a < b ? a : b; }
 
 // Accumulates the TILE_ROWS x TILE_COLS block of C at (row0, col0) over the
-// reduction range [k0, k0+kdepth), in scalar registers, so each element of
-// A is read once per k (reused across TILE_COLS columns) and each element
-// of B is read once per k (reused across TILE_ROWS rows). C is read once
-// (existing partial sum from prior K-blocks) and written once per call,
-// instead of every C entry re-walking A and B from scratch with no reuse.
+// reduction range [k0, k0+kdepth), in register-resident accumulators, so
+// each element of A is read once per k (reused across TILE_COLS columns)
+// and each element of B is read once per k (reused across TILE_ROWS rows).
+// C is read once (existing partial sum from prior K-blocks) and written
+// once per call, instead of every C entry re-walking A and B from scratch
+// with no reuse. The inner loop is TILE_COLS wide to match one full vector
+// register (see the TILE_COLS definition above); #pragma omp simd tells
+// the vectorizer it may treat those TILE_COLS lanes as independent (each
+// is its own reduction over k, so packing them into one vector op isn't a
+// floating-point reordering of any single lane's sum).
 static void ComputeTile(const double* restrict A, size_t A_cols,
                          const double* restrict B, size_t B_cols,
                          double* restrict C, size_t row0, size_t col0,
                          size_t k0, size_t kdepth) {
-  const double* restrict a0 = A + (row0 + 0) * A_cols + k0;
-  const double* restrict a1 = A + (row0 + 1) * A_cols + k0;
-  const double* restrict a2 = A + (row0 + 2) * A_cols + k0;
-  const double* restrict a3 = A + (row0 + 3) * A_cols + k0;
-  const double* restrict b_base = B + k0 * B_cols + col0;
-
-  double* restrict c0 = C + (row0 + 0) * B_cols + col0;
-  double* restrict c1 = C + (row0 + 1) * B_cols + col0;
-  double* restrict c2 = C + (row0 + 2) * B_cols + col0;
-  double* restrict c3 = C + (row0 + 3) * B_cols + col0;
-
-  double c00 = c0[0], c01 = c0[1], c02 = c0[2], c03 = c0[3];
-  double c10 = c1[0], c11 = c1[1], c12 = c1[2], c13 = c1[3];
-  double c20 = c2[0], c21 = c2[1], c22 = c2[2], c23 = c2[3];
-  double c30 = c3[0], c31 = c3[1], c32 = c3[2], c33 = c3[3];
-
-  for (size_t k = 0; k < kdepth; k++) {
-    const double* restrict b_row = b_base + k * B_cols;
-    const double b0 = b_row[0], b1 = b_row[1], b2 = b_row[2], b3 = b_row[3];
-
-    double av = a0[k];
-    c00 += av * b0;
-    c01 += av * b1;
-    c02 += av * b2;
-    c03 += av * b3;
-
-    av = a1[k];
-    c10 += av * b0;
-    c11 += av * b1;
-    c12 += av * b2;
-    c13 += av * b3;
-
-    av = a2[k];
-    c20 += av * b0;
-    c21 += av * b1;
-    c22 += av * b2;
-    c23 += av * b3;
-
-    av = a3[k];
-    c30 += av * b0;
-    c31 += av * b1;
-    c32 += av * b2;
-    c33 += av * b3;
+  const double* restrict a_row[TILE_ROWS];
+  double* restrict c_row[TILE_ROWS];
+  double acc[TILE_ROWS][TILE_COLS];
+  for (size_t r = 0; r < TILE_ROWS; r++) {
+    a_row[r] = A + (row0 + r) * A_cols + k0;
+    c_row[r] = C + (row0 + r) * B_cols + col0;
+    for (size_t c = 0; c < TILE_COLS; c++) acc[r][c] = c_row[r][c];
   }
 
-  c0[0] = c00; c0[1] = c01; c0[2] = c02; c0[3] = c03;
-  c1[0] = c10; c1[1] = c11; c1[2] = c12; c1[3] = c13;
-  c2[0] = c20; c2[1] = c21; c2[2] = c22; c2[3] = c23;
-  c3[0] = c30; c3[1] = c31; c3[2] = c32; c3[3] = c33;
+  for (size_t k = 0; k < kdepth; k++) {
+    const double* restrict b_row = B + (k0 + k) * B_cols + col0;
+    for (size_t r = 0; r < TILE_ROWS; r++) {
+      const double av = a_row[r][k];
+#pragma omp simd
+      for (size_t c = 0; c < TILE_COLS; c++) {
+        acc[r][c] += av * b_row[c];
+      }
+    }
+  }
+
+  for (size_t r = 0; r < TILE_ROWS; r++)
+    for (size_t c = 0; c < TILE_COLS; c++) c_row[r][c] = acc[r][c];
 }
 
 // Scalar fallback for row/column remainders that don't fill a full

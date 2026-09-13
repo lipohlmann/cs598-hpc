@@ -5,16 +5,17 @@ include ../common.mk
 # -O3                       : enable auto-vectorization of the blocked kernel
 # -march=native             : use the build host's SIMD ISA (AVX2/FMA, etc.)
 # -ffp-contract=fast        : fuse mul+add into FMA (off by default under -std=c11)
-# -mprefer-vector-width=256 : pin the auto-vectorizer to 256-bit (AVX2) vectors,
-#   matching the 6x8 register tile in mat_mat_multiply.c (sized for 16 YMM
-#   registers). Without this, a host with AVX-512 could get 512-bit vectors,
-#   which would overflow that tile's register budget and spill to memory.
+# -mprefer-vector-width=512 : let the auto-vectorizer use 512-bit (AVX-512)
+#   vectors on hosts that have them. mat_mat_multiply.c sizes its register
+#   tile from the same __AVX512F__/__AVX2__ feature macros -march=native
+#   defines, so the tile and the vector width always agree; on a host
+#   without AVX-512 this has no effect (there's nothing 512-bit to prefer).
 # -fopenmp-simd             : recognize the kernel's `#pragma omp simd` hints
 #   (needed so the vectorizer may reorder the tile's FP reduction -- IEEE754
 #   add isn't associative, so plain -O3 refuses to vectorize it otherwise)
 #   WITHOUT pulling in -fopenmp's threading runtime: it only enables SIMD
 #   directives, never `#pragma omp parallel`, and links no libgomp/pthread.
-CFLAGS += -O3 -march=native -ffp-contract=fast -mprefer-vector-width=256 -fopenmp-simd
+CFLAGS += -O3 -march=native -ffp-contract=fast -mprefer-vector-width=512 -fopenmp-simd
 
 # Q1 requires single-core serial code. common.mk defaults CFLAGS/LDFLAGS to
 # -fopenmp for other assignments in this repo; strip it here so nothing can
