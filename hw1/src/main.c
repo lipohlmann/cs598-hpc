@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "common.h"
 #include "mat_mat_multiply.h"
 #include "rand_matrix.h"
 
