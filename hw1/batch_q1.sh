@@ -9,6 +9,13 @@
 #SBATCH --job-name=run_hw1
 #SBATCH --output=optimized_logfile
 
+echo "=== compute node CPU ==="
+lscpu | grep -Ei 'model name|^cpu\(s\)|mhz|cache'
+echo "=== vector ISA available ==="
+lscpu | grep -Eo 'avx512f|avx512vl|avx2|\bfma\b' | sort -u
+echo "=== ISA gcc -march=native actually resolves to on this node ==="
+gcc -march=native -Q --help=target 2>/dev/null | grep -E '\-m(avx|fma|sse|arch=| tune=)'
+
 module load miniconda3/24.9.2
 
 # `module load` only puts a bare base Python on PATH (no matplotlib), and
