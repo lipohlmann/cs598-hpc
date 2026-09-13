@@ -1,0 +1,28 @@
+rm -f hw1 src/main.o src/mat_mat_multiply.o src/rand_matrix.o
+latexmk -C -cd report/report.tex
+make: latexmk: No such file or directory
+make: *** [Makefile:53: clean] Error 127
+gcc -O2 -Wall -Wextra -std=c11 -O3 -march=native -ffp-contract=fast -mprefer-vector-width=256 -fopenmp-simd -D_POSIX_C_SOURCE=199309L -Iinclude -c src/main.c -o src/main.o
+src/main.c:5:10: fatal error: common.h: No such file or directory
+    5 | #include "common.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+make: *** [../common.mk:22: src/main.o] Error 1
+gcc -O2 -Wall -Wextra -std=c11 -O3 -march=native -ffp-contract=fast -mprefer-vector-width=256 -fopenmp-simd -D_POSIX_C_SOURCE=199309L -Iinclude -c src/main.c -o src/main.o
+src/main.c:5:10: fatal error: common.h: No such file or directory
+    5 | #include "common.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+make: *** [../common.mk:22: src/main.o] Error 1
+Traceback (most recent call last):
+  File "/u/liamp2/projects/cs598-hpc/hw1/plot_gflops.py", line 56, in <module>
+    main()
+  File "/u/liamp2/projects/cs598-hpc/hw1/plot_gflops.py", line 45, in main
+    Ns, gcs = read_csv(args.csv_path)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u/liamp2/projects/cs598-hpc/hw1/plot_gflops.py", line 21, in read_csv
+    with open(csv_path, newline="") as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'gflops.csv'
+mv: cannot stat 'gflops.csv': No such file or directory
+mv: cannot stat 'optimized.png': No such file or directory
