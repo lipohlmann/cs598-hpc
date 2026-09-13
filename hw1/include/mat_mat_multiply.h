@@ -13,9 +13,8 @@
  * @param B_cols Number of columns in B
  * @return double*
  */
-double* MatMat(const double* restrict A, const size_t A_rows,
-               const size_t A_cols, const double* restrict B,
-               const size_t B_rows, const size_t B_cols);
+double* MatMat(const double* A, const size_t A_rows, const size_t A_cols,
+               const double* B, const size_t B_rows, const size_t B_cols);
 
 /**
  * @brief Computes the i-j-th entry of the Matrix-Matrix product AB.
