@@ -66,22 +66,77 @@ with a \texttt{Makefile}:
 The second (and all future iterations) were make using Claude Code (Sonnet 5.0).
 This produced the figure seen in \cref{fig:second_iter}, which is an order of magnitude improvement but still off about a factor of five for what is desired.
 
+\inputminted{c}{../q1_results/v2/mat_mat_multiply.h}
+\inputminted{c}{../q1_results/v2/mat_mat_multiply.c}
+
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{../q1_results/second_iter/optimized.png}
+    \includegraphics[width=0.8\textwidth]{../q1_results/v2/optimized.png}
     \caption{Second iteration.}
     \label{fig:second_iter}
 \end{figure}
 
 The final iteration is given in \cref{fig:last_iter} using the files:
 \inputminted{c}{../src/mat_mat_multiply.c}
+\inputminted{c}{../include/mat_mat_multiply.h}
 \inputminted{shell}{../Makefile}
+\inputminted{shell}{../batch_q1.sh}
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{../q1_results/last_iter/optimized.png}
+    \includegraphics[width=0.8\textwidth]{../q1_results/v3/optimized.png}
     \caption{Last iteration.}
     \label{fig:last_iter}
 \end{figure}
+\clearpage
+Notice that with this final iteration, we were able to achieve about half of the performance of MatLab.
+This was only possible after giving Claude some additional information about the HPC that was being run on. 
+This information was reported in the log file after a run and can be seen below.
+\begin{minted}{shell}
+    === compute node CPU ===
+CPU(s):                                  64
+Model name:                              Intel(R) Xeon(R) Platinum 8358 CPU @ 2.60GHz
+L1d cache:                               3 MiB (64 instances)
+L1i cache:                               2 MiB (64 instances)
+L2 cache:                                80 MiB (64 instances)
+L3 cache:                                96 MiB (2 instances)
+=== vector ISA available ===
+avx2
+avx512f
+avx512vl
+fma
+=== ISA gcc -march=native actually resolves to on this node ===
+  -march=                               icelake-server
+  -mavx                                 [enabled]
+  -mavx2                                [enabled]
+  -mavx256-split-unaligned-load         [disabled]
+  -mavx256-split-unaligned-store        [disabled]
+  -mavx5124fmaps                        [disabled]
+  -mavx5124vnniw                        [disabled]
+  -mavx512bf16                          [disabled]
+  -mavx512bitalg                        [enabled]
+  -mavx512bw                            [enabled]
+  -mavx512cd                            [enabled]
+  -mavx512dq                            [enabled]
+  -mavx512er                            [disabled]
+  -mavx512f                             [enabled]
+  -mavx512ifma                          [enabled]
+  -mavx512pf                            [disabled]
+  -mavx512vbmi                          [enabled]
+  -mavx512vbmi2                         [enabled]
+  -mavx512vl                            [enabled]
+  -mavx512vnni                          [enabled]
+  -mavx512vp2intersect                  [disabled]
+  -mavx512vpopcntdq                     [enabled]
+  -mavxvnni                             [disabled]
+  -mfma                                 [enabled]
+  -mfma4                                [disabled]
+  -msse                                 [enabled]
+  -msse2                                [enabled]
+  -msse2avx                             [disabled]
+  -msse3                                [enabled]
+  -msse4                                [enabled]
+  -msse4.1                              [enabled]
+\end{minted}
 
 
 \section{Problem 2}
