@@ -42,7 +42,7 @@
 \section{Problem 1}
 
 Using the provided MatLab code, MatLab version R2025b was run on the \texttt{eng-partition} on a single node with a single single task and 8 CPUs per task.
-The maximum number of GFlops per core is about 75.609, which occurs at $N=1992$.
+The maximum number of GFlops per core is about 80.151, which occurs at $N=1704$.
 
 \inputminted{batch}{../q1_results/matlab_results/batch_matlab.sh}
 
@@ -138,6 +138,46 @@ fma
   -msse4.1                              [enabled]
 \end{minted}
 
+Raising \texttt{-mprefer-vector-width} to 512 and sizing the register tile in \texttt{mat\_mat\_multiply.c} off the same \texttt{\_\_AVX512F\_\_}/\texttt{\_\_AVX2\_\_} feature macros that \texttt{-march=native} defines (so the tile always matches the vector width actually available, and the code still compiles correctly on a partition node without AVX-512) took the achieved performance from about 7 GFLOPS/core up to a peak of 33.149 GFLOPS/core at $N=808$, shown alongside the MatLab curve in \cref{fig:comparison}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{../q1_results/comparison_gflops.png}
+    \caption{Final C kernel (1 core) vs. MatLab (8 CPUs / 8) GFLOPS per core.}
+    \label{fig:comparison}
+\end{figure}
+
+\subsection{$N_{1/2}$}
+
+$N_{1/2}$ -- the smallest matrix size at which a curve reaches half of its own peak GFLOPS -- differs sharply between the two:
+\begin{itemize}
+    \item \textbf{C (this work):} peak 33.149 GFLOPS/core; half-peak is 16.575 GFLOPS, first reached at $N_{1/2} = 72$.
+    \item \textbf{MatLab:} peak 80.151 GFLOPS/core; half-peak is 40.076 GFLOPS, first reached at $N_{1/2} = 488$.
+\end{itemize}
+The serial C kernel has essentially no dispatch overhead, so it is already near its (lower) asymptotic rate at very small $N$. MatLab's curve in \cref{fig:comparison} is visibly a step function: below roughly $N=700$ it tracks the C curve or falls under it, then jumps abruptly once $N$ is large enough that MKL's internal multithreading pays for itself, climbing toward its 8-CPU peak. That threading start-up cost is exactly why MatLab needs a much larger $N$ to reach half of its own peak, even though its peak is higher.
+
+\subsection{Comparison to Iteration 1}
+
+Iteration 1 (the naive triple loop, \cref{fig:naive}) peaked at only 0.378 GFLOPS/core (at $N=40$) and settled to a floor of about 0.199 GFLOPS/core for large $N$, since its innermost loop strides through $B$ with stride \texttt{B\_cols} instead of reading it contiguously. Against that baseline, the final version is:
+\begin{itemize}
+    \item $33.149 / 0.378 \approx 88\times$ faster at each curve's own peak.
+    \item $27.372 / 0.199 \approx 138\times$ faster at $N=1992$, comparing large-matrix performance directly.
+\end{itemize}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{../q1_results/naive_implementation_results.png}
+    \caption{Iteration 1 (naive triple loop) GFLOPS per core.}
+    \label{fig:naive}
+\end{figure}
+
+\subsection{Process and Lessons Learned}
+
+The largest single-step gains, in order, came from: (1) loop reordering plus a register-blocked microkernel to stop re-walking $A$ and $B$ from scratch for every output entry, (2) blocking the $K$ and $M$ loops so a slab of $B$ -- already contiguous in row-major storage -- stays cache-resident across many row-blocks of $A$ instead of being re-streamed from memory each time, and (3) matching the microkernel's vector width to what the compute node's CPU actually supports.
+
+Step (2) is a cautionary tale about environment mismatch: it produced a large, clean improvement on a local development machine (eliminating a severe falloff at large $N$), but made \emph{no measurable difference at all} on the actual cluster node -- the peak GFLOPS was identical before and after, and unaffected by changing \texttt{--cpus-per-task} from 1 to 8 and back. That flat ceiling was the signal that the bottleneck on the real hardware wasn't memory bandwidth at all. Rather than keep guessing, we added a short diagnostic block to \texttt{batch\_q1.sh} to print the compute node's CPU model, advertised vector ISA, and what \texttt{-march=native} actually resolves to -- which is what surfaced step (3): the node is an Ice Lake Xeon with full AVX-512, but the Makefile was hard-capping vectorization at 256 bits and the microkernel tile was only sized for one 256-bit register per row, together leaving roughly half of the chip's per-core throughput unused. That single fix accounted for most of the total improvement. The broader lesson: a local machine is not a reliable proxy for the target HPC hardware, and it's worth pulling concrete diagnostics from the actual compute node early rather than assuming the same bottleneck applies everywhere.
+
+We are satisfied with the final result. A peak of 33.149 GFLOPS/core against MatLab's 80.151 is a real gap, but part of that gap is not apples-to-apples: MatLab's ``per-core'' figure is an 8-CPU MKL run divided by 8, not a directly measured single-core run, and the plateau in \cref{fig:comparison} strongly suggests it depends on multithreading to reach its peak at all. Closing more of the remaining gap on the C side would mean packing $A$/$B$ into aligned contiguous panels and retuning the $K/M$ block sizes for the Ice Lake node's actual cache sizes rather than the development machine's, but the current result is a reasonable, well-understood stopping point for a serial kernel.
 
 \section{Problem 2}
 
