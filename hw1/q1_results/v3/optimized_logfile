@@ -1,0 +1,184 @@
+=== compute node CPU ===
+CPU(s):                                  64
+Model name:                              Intel(R) Xeon(R) Platinum 8358 CPU @ 2.60GHz
+L1d cache:                               3 MiB (64 instances)
+L1i cache:                               2 MiB (64 instances)
+L2 cache:                                80 MiB (64 instances)
+L3 cache:                                96 MiB (2 instances)
+=== vector ISA available ===
+avx2
+avx512f
+avx512vl
+fma
+=== ISA gcc -march=native actually resolves to on this node ===
+  -march=                     		icelake-server
+  -mavx                       		[enabled]
+  -mavx2                      		[enabled]
+  -mavx256-split-unaligned-load 	[disabled]
+  -mavx256-split-unaligned-store 	[disabled]
+  -mavx5124fmaps              		[disabled]
+  -mavx5124vnniw              		[disabled]
+  -mavx512bf16                		[disabled]
+  -mavx512bitalg              		[enabled]
+  -mavx512bw                  		[enabled]
+  -mavx512cd                  		[enabled]
+  -mavx512dq                  		[enabled]
+  -mavx512er                  		[disabled]
+  -mavx512f                   		[enabled]
+  -mavx512ifma                		[enabled]
+  -mavx512pf                  		[disabled]
+  -mavx512vbmi                		[enabled]
+  -mavx512vbmi2               		[enabled]
+  -mavx512vl                  		[enabled]
+  -mavx512vnni                		[enabled]
+  -mavx512vp2intersect        		[disabled]
+  -mavx512vpopcntdq           		[enabled]
+  -mavxvnni                   		[disabled]
+  -mfma                       		[enabled]
+  -mfma4                      		[disabled]
+  -msse                       		[enabled]
+  -msse2                      		[enabled]
+  -msse2avx                   		[disabled]
+  -msse3                      		[enabled]
+  -msse4                      		[enabled]
+  -msse4.1                    		[enabled]
+  -msse4.2                    		[enabled]
+  -msse4a                     		[disabled]
+  -msse5                      		-mavx
+  -msseregparm                		[disabled]
+  Known valid arguments for -march= option:
+rm -f hw1 src/main.o src/mat_mat_multiply.o src/rand_matrix.o
+latexmk -C -cd report/report.tex
+make: latexmk: No such file or directory
+make: *** [Makefile:54: clean] Error 127
+gcc -O2 -Wall -Wextra -std=c11 -O3 -march=native -ffp-contract=fast -mprefer-vector-width=512 -fopenmp-simd -D_POSIX_C_SOURCE=199309L -Iinclude -c src/main.c -o src/main.o
+gcc -O2 -Wall -Wextra -std=c11 -O3 -march=native -ffp-contract=fast -mprefer-vector-width=512 -fopenmp-simd -D_POSIX_C_SOURCE=199309L -Iinclude -c src/mat_mat_multiply.c -o src/mat_mat_multiply.o
+gcc -O2 -Wall -Wextra -std=c11 -O3 -march=native -ffp-contract=fast -mprefer-vector-width=512 -fopenmp-simd -D_POSIX_C_SOURCE=199309L -Iinclude -c src/rand_matrix.c -o src/rand_matrix.o
+gcc src/main.o src/mat_mat_multiply.o src/rand_matrix.o -o hw1 -lm
+./hw1
+Elapsed time is 0.000002 seconds.
+8 0.000002 3.417605
+Elapsed time is 0.000087 seconds.
+40 0.000087 11.780677
+Elapsed time is 0.000265 seconds.
+72 0.000265 22.574232
+Elapsed time is 0.000673 seconds.
+104 0.000673 26.731480
+Elapsed time is 0.001481 seconds.
+136 0.001481 27.170382
+Elapsed time is 0.002780 seconds.
+168 0.002780 27.286445
+Elapsed time is 0.004555 seconds.
+200 0.004555 28.097922
+Elapsed time is 0.007026 seconds.
+232 0.007026 28.437708
+Elapsed time is 0.010760 seconds.
+264 0.010760 27.360234
+Elapsed time is 0.015010 seconds.
+296 0.015010 27.644423
+Elapsed time is 0.020206 seconds.
+328 0.020206 27.942917
+Elapsed time is 0.026626 seconds.
+360 0.026626 28.036330
+Elapsed time is 0.034576 seconds.
+392 0.034576 27.874627
+Elapsed time is 0.042945 seconds.
+424 0.042945 28.399124
+Elapsed time is 0.053643 seconds.
+456 0.053643 28.281413
+Elapsed time is 0.065372 seconds.
+488 0.065372 28.443814
+Elapsed time is 0.080032 seconds.
+520 0.080032 28.110285
+Elapsed time is 0.089607 seconds.
+552 0.089607 30.032690
+Elapsed time is 0.107121 seconds.
+584 0.107121 29.749695
+Elapsed time is 0.122145 seconds.
+616 0.122145 30.618571
+Elapsed time is 0.142331 seconds.
+648 0.142331 30.587511
+Elapsed time is 0.166494 seconds.
+680 0.166494 30.216849
+Elapsed time is 0.187657 seconds.
+712 0.187657 30.774769
+Elapsed time is 0.208336 seconds.
+744 0.208336 31.628244
+Elapsed time is 0.239092 seconds.
+776 0.239092 31.270912
+Elapsed time is 0.254615 seconds.
+808 0.254615 33.149015
+Elapsed time is 0.300927 seconds.
+840 0.300927 31.513494
+Elapsed time is 0.332871 seconds.
+872 0.332871 31.870821
+Elapsed time is 0.368790 seconds.
+904 0.368790 32.051336
+Elapsed time is 0.402991 seconds.
+936 0.402991 32.557623
+Elapsed time is 0.456814 seconds.
+968 0.456814 31.769200
+Elapsed time is 0.496584 seconds.
+1000 0.496584 32.220130
+Elapsed time is 0.550034 seconds.
+1032 0.550034 31.971976
+Elapsed time is 0.591213 seconds.
+1064 0.591213 32.598737
+Elapsed time is 0.642482 seconds.
+1096 0.642482 32.786166
+Elapsed time is 0.707044 seconds.
+1128 0.707044 32.478859
+Elapsed time is 0.767850 seconds.
+1160 0.767850 32.525027
+Elapsed time is 0.837345 seconds.
+1192 0.837345 32.362662
+Elapsed time is 0.923331 seconds.
+1224 0.923331 31.776554
+Elapsed time is 1.029315 seconds.
+1256 1.029315 30.799291
+Elapsed time is 1.133815 seconds.
+1288 1.133815 30.152652
+Elapsed time is 1.230030 seconds.
+1320 1.230030 29.917553
+Elapsed time is 1.329486 seconds.
+1352 1.329486 29.741738
+Elapsed time is 1.432815 seconds.
+1384 1.432815 29.603170
+Elapsed time is 1.571986 seconds.
+1416 1.571986 28.897548
+Elapsed time is 1.651088 seconds.
+1448 1.651088 29.420871
+Elapsed time is 1.813984 seconds.
+1480 1.813984 28.593788
+Elapsed time is 1.945345 seconds.
+1512 1.945345 28.430117
+Elapsed time is 2.137904 seconds.
+1544 2.137904 27.546956
+Elapsed time is 2.223015 seconds.
+1576 2.223015 28.173857
+Elapsed time is 2.355644 seconds.
+1608 2.355644 28.240240
+Elapsed time is 2.544368 seconds.
+1640 2.544368 27.737773
+Elapsed time is 2.686566 seconds.
+1672 2.686566 27.837565
+Elapsed time is 2.858879 seconds.
+1704 2.858879 27.690636
+Elapsed time is 2.992225 seconds.
+1736 2.992225 27.975307
+Elapsed time is 3.199038 seconds.
+1768 3.199038 27.640597
+Elapsed time is 3.414867 seconds.
+1800 3.414867 27.325220
+Elapsed time is 3.573469 seconds.
+1832 3.573469 27.530006
+Elapsed time is 3.758942 seconds.
+1864 3.758942 27.567164
+Elapsed time is 3.976707 seconds.
+1896 3.976707 27.422771
+Elapsed time is 4.193316 seconds.
+1928 4.193316 27.345346
+Elapsed time is 4.395247 seconds.
+1960 4.395247 27.409738
+Elapsed time is 4.620388 seconds.
+1992 4.620388 27.372187
