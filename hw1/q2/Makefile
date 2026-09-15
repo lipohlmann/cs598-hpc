@@ -4,9 +4,9 @@
 # src/ layout shared with the Q1 gcc build.  Q2 needs mpicc and nothing else.
 
 CC      = mpicc
-# _POSIX_C_SOURCE is needed because -std=c11 is strict ISO and would otherwise
-# hide gethostname().
-CFLAGS  = -O2 -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Iinclude
+# _GNU_SOURCE is needed because -std=c11 is strict ISO and would otherwise
+# hide gethostname() and sched_getcpu().
+CFLAGS  = -O2 -std=c11 -D_GNU_SOURCE -Wall -Wextra -Iinclude
 LDFLAGS = -lm
 
 TARGET  = pingpong

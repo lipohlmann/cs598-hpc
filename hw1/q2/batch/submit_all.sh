@@ -10,9 +10,11 @@
 #     ccc0391 128    ccc0392 128    ccc0393 128    ccc0398 64    ccc0399 64
 #
 # pingpong.slurm therefore carries --exclude=ccc0398,ccc0399, so every config
-# below lands on the 128-core class and all five are measured on the same
-# hardware.  Only three such nodes exist, so the two-node jobs may queue
-# behind each other.  Re-check that node list if sinfo ever disagrees.
+# below lands on the 128-CPU class and all five are measured on the same
+# hardware, and --exclusive, so no two of them (or anyone else's job) share a
+# node.  Only three such nodes exist, so expect the five jobs to run one or
+# two at a time; the set takes roughly half an hour of wall clock plus queue
+# time.  Re-check that node list if sinfo ever disagrees.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."

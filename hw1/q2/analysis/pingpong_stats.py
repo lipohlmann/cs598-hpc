@@ -8,6 +8,13 @@ Per partner rank p this computes the four quantities the assignment asks for:
   m_2                the m where t(m_2) = 2 t(1)
   eager limit        the largest m still sent eagerly
 
+Results are summarized per (class, socket): self / same node / across nodes,
+split by the socket the partner ran on.  Slurm's default task distribution
+puts consecutive ranks on alternating sockets, and the two sockets measure
+very differently (up to 3x at large m across nodes), so a plain per-class
+median would mix two populations.  CSVs written before the partner_socket
+column existed fall back to the plain class.
+
 Standard library only -- no numpy, no matplotlib -- so this runs anywhere,
 including a cluster login node.  Plotting lives in plot_pingpong.py.
 
@@ -21,8 +28,11 @@ import os
 import statistics
 import sys
 
-# Fit the inverse bandwidth over the top decade of message sizes.
-LARGE_M_FRACTION = 0.1
+# The inverse bandwidth is t/m over the largest sizes.  A slope fit over the
+# top decade is NOT usable here: a second protocol switch sits at 200-400 KB,
+# where t roughly halves, so a line through that range means nothing (the
+# first version of this script fit one and reported 90+ GB/s for a self-send).
+LARGE_M_NPTS = 5
 
 # Restrict eager-limit detection to sizes where a protocol switch is plausible.
 EAGER_M_MIN = 64
@@ -34,10 +44,11 @@ CLASS_ORDER = ("self", "intra", "inter")
 class Curve:
     """One partner's t(m) curve."""
 
-    def __init__(self, partner, host, cls):
+    def __init__(self, partner, host, cls, socket):
         self.partner = partner
         self.host = host
         self.cls = cls
+        self.socket = socket  # None if the CSV predates the column
         self.m = []
         self.t = []
 
@@ -49,6 +60,14 @@ class Curve:
         pairs = sorted(zip(self.m, self.t))
         self.m = [p[0] for p in pairs]
         self.t = [p[1] for p in pairs]
+
+
+def socket_of(v):
+    """partner_socket column -> int, or None if absent or unknown (-1)."""
+    if v is None or v == "":
+        return None
+    s = int(v)
+    return s if s >= 0 else None
 
 
 def read_csv(path):
@@ -70,7 +89,8 @@ def read_csv(path):
         for row in csv.DictReader(lines):
             p = int(row["partner"])
             if p not in curves:
-                curves[p] = Curve(p, row["partner_host"], row["class"])
+                curves[p] = Curve(p, row["partner_host"], row["class"],
+                                  socket_of(row.get("partner_socket")))
             t = float(row["t_half_s"])
             if t > 0.0:  # partner rows never carry a negative time, but be safe
                 curves[p].add(int(row["nwds"]), t)
@@ -83,6 +103,23 @@ def read_csv(path):
     return meta, out
 
 
+def group_name(cls, socket):
+    return cls if socket is None else "%s/s%d" % (cls, socket)
+
+
+def bucket(items, key):
+    """Bucket curves or result rows by (class, socket), in display order."""
+    out = {}
+    for it in items:
+        out.setdefault(key(it), []).append(it)
+
+    def order(k):
+        cls, s = k
+        return (CLASS_ORDER.index(cls), -1 if s is None else s)
+
+    return [(k, out[k]) for k in sorted(out, key=order)]
+
+
 def median3(y):
     """Median-of-three smoothing, used only for jump detection."""
     if len(y) < 3:
@@ -93,32 +130,15 @@ def median3(y):
     return s
 
 
-def lsq_slope(x, y):
-    """Least-squares slope of y = a + b x.  Returns b, or None if degenerate."""
-    n = len(x)
-    if n < 2:
-        return None
-    sx = sum(x)
-    sy = sum(y)
-    sxx = sum(v * v for v in x)
-    sxy = sum(a * b for a, b in zip(x, y))
-    den = n * sxx - sx * sx
-    if den == 0.0:
-        return None
-    return (n * sxy - sx * sy) / den
-
-
 def inverse_bandwidth(c):
-    """Slope of t vs m over the largest sizes: seconds per word."""
-    m_cut = c.m[-1] * LARGE_M_FRACTION
-    xs = [float(m) for m in c.m if m >= m_cut]
-    ys = [t for m, t in zip(c.m, c.t) if m >= m_cut]
-    if len(xs) < 3:
+    """Median of t/m over the last LARGE_M_NPTS sizes: seconds per word.
+
+    This includes the latency term, which is under 3% of t at 800 KB.
+    """
+    if len(c.m) < LARGE_M_NPTS:
         return None
-    b = lsq_slope(xs, ys)
-    if b is None or b <= 0.0:
-        return None
-    return b
+    return statistics.median(
+        t / m for m, t in zip(c.m[-LARGE_M_NPTS:], c.t[-LARGE_M_NPTS:]))
 
 
 def m_half(c, t_ref, ts):
@@ -140,23 +160,26 @@ def m_half(c, t_ref, ts):
 
 
 def eager_limit(c, ts):
-    """Largest m still sent eagerly.
+    """Largest m still sent eagerly, and the next tested size after it.
 
     A protocol switch shows up as a step in t that is larger than the steady
     growth explained by the message size itself.  Score each consecutive pair by
     how much the time jump exceeds the size jump in log space and take the
     biggest.  Smoothed, since a single noisy point would otherwise win.
 
+    The true limit lies between the two sizes returned; the size grid is too
+    coarse there (8088 and 8224 bytes) to say more than "8 KB".
+
     Per partner this is only as good as the data: on a noisy or oversubscribed
     machine an unrelated later jump can outscore the real protocol step.  The
-    median across the ranks in a class is the robust number -- report() prints
+    median across the ranks in a group is the robust number -- report() prints
     it with the full [min, max] spread so that disagreement stays visible.
     """
     if len(c.m) < 4:
-        return None, None
+        return None, None, None
     m_hi = c.m[-1] * EAGER_M_MAX_FRACTION
 
-    best_score, best_m = 0.0, None
+    best_score, best_i = 0.0, None
     for i in range(len(c.m) - 1):
         if not (EAGER_M_MIN <= c.m[i] <= m_hi):
             continue
@@ -164,8 +187,10 @@ def eager_limit(c, ts):
             continue
         score = math.log(ts[i + 1] / ts[i]) - math.log(c.m[i + 1] / c.m[i])
         if score > best_score:
-            best_score, best_m = score, c.m[i]
-    return best_m, (best_score if best_m else None)
+            best_score, best_i = score, i
+    if best_i is None:
+        return None, None, None
+    return c.m[best_i], c.m[best_i + 1], best_score
 
 
 def analyze(c):
@@ -179,12 +204,13 @@ def analyze(c):
 
     b = inverse_bandwidth(c)
     m2 = m_half(c, ref, ts) if ref else None
-    m_eager, score = eager_limit(c, ts)
+    m_eager, m_next, score = eager_limit(c, ts)
 
     return {
         "partner": c.partner,
         "host": c.host,
         "class": c.cls,
+        "socket": c.socket,
         "t_lat_s": t1,
         "t_lat_min_s": t_lat_min,
         "inv_bw_s_per_word": b,
@@ -192,6 +218,7 @@ def analyze(c):
         "m2_words": m2,
         "m_eager_words": m_eager,
         "m_eager_bytes": (8 * m_eager) if m_eager else None,
+        "m_eager_next_bytes": (8 * m_next) if m_next else None,
         "eager_score": score,
     }
 
@@ -222,34 +249,27 @@ COLUMNS = [
     ("inv_bw_s_per_word", "inv bw (ns/word)", "ns_word"),
     ("bw_GB_s", "bandwidth (GB/s)", "gb"),
     ("m2_words", "m_2 (words)", "int"),
-    ("m_eager_words", "eager limit (words)", "int"),
-    ("m_eager_bytes", "eager limit (bytes)", "int"),
 ]
 
 
 def report(meta, rows, out_dir, tag, quiet=False):
-    by_class = {}
-    for r in rows:
-        by_class.setdefault(r["class"], []).append(r)
+    groups = bucket(rows, lambda r: (r["class"], r["socket"]))
 
     if not quiet:
         print("=" * 78)
-        print("%s   P=%s nodes=%s msg_vol=%s" % (meta.get("file", tag),
-                                                 meta.get("P", "?"),
-                                                 meta.get("nodes", "?"),
-                                                 meta.get("msg_vol", "?")))
+        print("%s   P=%s nodes=%s msg_vol=%s rank0 socket=%s"
+              % (meta.get("file", tag), meta.get("P", "?"),
+                 meta.get("nodes", "?"), meta.get("msg_vol", "?"),
+                 meta.get("socket0", "?")))
         print("=" * 78)
-        head = "%-7s %5s  " % ("class", "n") + "".join(
-            "%28s" % c[1] for c in COLUMNS[:4]
+        head = "%-9s %5s  " % ("group", "n") + "".join(
+            "%28s" % c[1] for c in COLUMNS
         )
         print(head)
         print("-" * len(head))
-        for cls in CLASS_ORDER:
-            if cls not in by_class:
-                continue
-            group = by_class[cls]
-            line = "%-7s %5d  " % (cls, len(group))
-            for key, _, kind in COLUMNS[:4]:
+        for (cls, sock), group in groups:
+            line = "%-9s %5d  " % (group_name(cls, sock), len(group))
+            for key, _, kind in COLUMNS:
                 lo, med, hi = summarize(group, key)
                 line += "%28s" % (
                     "--" if med is None
@@ -257,14 +277,14 @@ def report(meta, rows, out_dir, tag, quiet=False):
                 )
             print(line)
         print()
-        for cls in CLASS_ORDER:
-            if cls not in by_class:
-                continue
-            lo, med, hi = summarize(by_class[cls], "m_eager_bytes")
-            m2lo, m2med, m2hi = summarize(by_class[cls], "m2_words")
-            print("  %-5s  eager limit  median %s B  [%s, %s]     "
-                  "m_2 median %s words [%s, %s]"
-                  % (cls, fmt(med, "int"), fmt(lo, "int"), fmt(hi, "int"),
+        for (cls, sock), group in groups:
+            lo, med, hi = summarize(group, "m_eager_bytes")
+            _, nxt, _ = summarize(group, "m_eager_next_bytes")
+            m2lo, m2med, m2hi = summarize(group, "m2_words")
+            print("  %-9s eager limit between %s and %s B  (last eager size "
+                  "spread [%s, %s])   m_2 median %s words [%s, %s]"
+                  % (group_name(cls, sock), fmt(med, "int"), fmt(nxt, "int"),
+                     fmt(lo, "int"), fmt(hi, "int"),
                      fmt(m2med, "int"), fmt(m2lo, "int"), fmt(m2hi, "int")))
         print()
 
@@ -282,16 +302,16 @@ def report(meta, rows, out_dir, tag, quiet=False):
         fh.write("%% generated by analysis/pingpong_stats.py from %s\n"
                  % meta.get("file", tag))
         fh.write("\\begin{tabular}{lrrrrr}\n\\toprule\n")
-        fh.write("class & ranks & latency ($\\mu$s) & inv.\\ bw (ns/word) & "
-                 "$m_2$ (words) & eager (bytes) \\\\\n\\midrule\n")
-        for cls in CLASS_ORDER:
-            if cls not in by_class:
-                continue
-            group = by_class[cls]
-            cells = [cls, str(len(group))]
-            for key, _, kind in (COLUMNS[0], COLUMNS[1], COLUMNS[3], COLUMNS[5]):
+        fh.write("group & ranks & latency ($\\mu$s) & inv.\\ bw (ns/word) & "
+                 "$m_2$ (words) & eager limit (bytes) \\\\\n\\midrule\n")
+        for (cls, sock), group in groups:
+            cells = [group_name(cls, sock), str(len(group))]
+            for key, _, kind in (COLUMNS[0], COLUMNS[1], COLUMNS[3]):
                 _, med, _ = summarize(group, key)
                 cells.append(fmt(med, kind))
+            _, lo, _ = summarize(group, "m_eager_bytes")
+            _, hi, _ = summarize(group, "m_eager_next_bytes")
+            cells.append("%s--%s" % (fmt(lo, "int"), fmt(hi, "int")))
             fh.write(" & ".join(cells) + " \\\\\n")
         fh.write("\\bottomrule\n\\end{tabular}\n")
 
@@ -321,12 +341,13 @@ def main():
         report(meta, rows, args.out_dir, tag)
 
         if args.per_partner:
-            print("%-8s %-12s %-6s %10s %12s %10s %12s"
-                  % ("partner", "host", "class", "lat(us)", "invbw(ns/w)",
-                     "m_2", "eager(B)"))
+            print("%-8s %-12s %-6s %4s %10s %12s %10s %12s"
+                  % ("partner", "host", "class", "sock", "lat(us)",
+                     "invbw(ns/w)", "m_2", "eager(B)"))
             for r in rows:
-                print("%-8d %-12s %-6s %10s %12s %10s %12s"
+                print("%-8d %-12s %-6s %4s %10s %12s %10s %12s"
                       % (r["partner"], r["host"][:12], r["class"],
+                         "--" if r["socket"] is None else r["socket"],
                          fmt(r["t_lat_s"], "us"),
                          fmt(r["inv_bw_s_per_word"], "ns_word"),
                          fmt(r["m2_words"], "int"),

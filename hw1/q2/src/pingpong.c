@@ -13,6 +13,7 @@
  * exactly and running out to m = 101086 words (about 808 KB).
  */
 
+#include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +25,7 @@
 #define TAG_PING 1
 #define TAG_PONG 2
 #define TAG_HOST 3
+#define TAG_CPU 4
 
 #define HOSTLEN 64
 #define NSIZES_MAX 500
@@ -41,6 +43,28 @@
 static int max_rank(void) { return num_ranks(); }
 static int nranks(void) { return num_ranks() + 1; }
 
+/*
+ * Where this rank is running: the CPU and its socket (physical package),
+ * read from sysfs.  Slurm's default block:cyclic task distribution puts
+ * consecutive ranks on alternating sockets, and socket placement turned out
+ * to matter more than anything else in the first set of runs, so it is
+ * recorded per partner.  Either value is -1 if it cannot be determined.
+ */
+static void placement(int *cpu, int *socket) {
+  char path[96];
+  FILE *fp;
+
+  *cpu = sched_getcpu();
+  *socket = -1;
+  if (*cpu < 0) return;
+  snprintf(path, sizeof(path),
+           "/sys/devices/system/cpu/cpu%d/topology/physical_package_id", *cpu);
+  fp = fopen(path, "r");
+  if (!fp) return;
+  if (fscanf(fp, "%d", socket) != 1) *socket = -1;
+  fclose(fp);
+}
+
 /* ------------------------------------------------------------------ */
 /* The timing kernel.                                                  */
 /*                                                                     */
@@ -50,8 +74,10 @@ static int nranks(void) { return num_ranks() + 1; }
 /* landed.  Posting both halves at once instead would let the two legs */
 /* overlap and would read roughly twice as fast.                       */
 /*                                                                     */
-/* Rank 0 returns the half-round-trip time in seconds; the partner     */
-/* returns -1.                                                         */
+/* Rank 0 returns the time per one-way message in seconds, i.e. half   */
+/* the round trip.  For the p = 0 self case there is no pong: each     */
+/* iteration is a single send-to-self, so that branch divides by nloop */
+/* rather than 2*nloop.  The partner returns -1.                       */
 /* ------------------------------------------------------------------ */
 static double ping_pong(int me, int p, const double *sbuf, double *rbuf,
                         int nbytes, int nloop) {
@@ -67,7 +93,7 @@ static double ping_pong(int me, int p, const double *sbuf, double *rbuf,
       msgwait();
     }
     t1 = msg_wtime();
-    return (t1 - t0) / (2.0 * nloop);
+    return (t1 - t0) / nloop;
   }
 
   if (me == 0) {
@@ -161,6 +187,7 @@ int main(int argc, char *argv[]) {
   int nwds[NSIZES_MAX], nloop_tab[NSIZES_MAX];
   char myhost[HOSTLEN], host0[HOSTLEN];
   char *hosts = NULL;
+  int where[2], *wheres = NULL; /* {cpu, socket}, per partner on rank 0 */
   double *thalf = NULL, *sbuf = NULL, *rbuf = NULL;
   int me, P, p, j, i, maxwds, warm_partner, nbad = 0;
   double t_start;
@@ -243,7 +270,8 @@ int main(int argc, char *argv[]) {
   if (me == 0) {
     thalf = malloc((size_t)(M + 1) * nsizes * sizeof(double));
     hosts = malloc((size_t)(M + 1) * HOSTLEN);
-    if (!thalf || !hosts) {
+    wheres = malloc((size_t)(M + 1) * sizeof(where));
+    if (!thalf || !hosts || !wheres) {
       fprintf(stderr, "rank 0: out of memory for results\n");
       msg_finalize();
       return 1;
@@ -255,11 +283,18 @@ int main(int argc, char *argv[]) {
             maxwds, 8 * nwds[0], 8 * maxwds);
   }
 
-  /* Warm start the timer and the connection path before any measurement. */
+  /*
+   * Warm start the timer and the connection path before any measurement, at
+   * both the smallest and the largest size: the first rendezvous-size message
+   * to a peer sets up its connection and registers memory, and that must not
+   * land inside a timed loop.
+   */
   warm_partner = (M >= 1) ? 1 : 0;
   msg_barrier();
-  if (me == 0 || me == warm_partner)
+  if (me == 0 || me == warm_partner) {
     ping_pong(me, warm_partner, sbuf, rbuf, 8 * nwds[0], WARMUP_LOOPS);
+    ping_pong(me, warm_partner, sbuf, rbuf, 8 * maxwds, WARMUP_LOOPS);
+  }
 
   t_start = msg_wtime();
 
@@ -268,17 +303,21 @@ int main(int argc, char *argv[]) {
     if (me != 0 && me != p) continue;
 
     /*
-     * Exchange hostnames so rank 0 can label each partner intra- or
-     * inter-node later.  msg.h exposes no gather, so this rides on the
-     * point-to-point calls we already have.
+     * Exchange hostname and CPU/socket so rank 0 can label each partner
+     * intra- or inter-node, and by socket, later.  msg.h exposes no gather,
+     * so this rides on the point-to-point calls we already have.
      */
+    placement(&where[0], &where[1]);
     if (p == 0) {
       memcpy(&hosts[0], myhost, HOSTLEN);
+      memcpy(&wheres[0], where, sizeof(where));
     } else if (me == 0) {
       irecv(p, &hosts[(size_t)p * HOSTLEN], HOSTLEN, TAG_HOST);
+      irecv(p, &wheres[(size_t)p * 2], (int)sizeof(where), TAG_CPU);
       msgwait();
     } else {
       isend(0, myhost, HOSTLEN, TAG_HOST);
+      isend(0, where, (int)sizeof(where), TAG_CPU);
       msgwait();
     }
 
@@ -287,8 +326,10 @@ int main(int argc, char *argv[]) {
       for (i = 0; i < maxwds; ++i) sbuf[i] = (double)i; /* restore payload */
     }
 
-    /* Per-partner warm start: first touch of this pair's connection. */
+    /* Per-partner warm start: first touch of this pair's connection, on
+     * both the eager and the rendezvous path. */
     ping_pong(me, p, sbuf, rbuf, 8 * nwds[0], WARMUP_LOOPS);
+    ping_pong(me, p, sbuf, rbuf, 8 * maxwds, WARMUP_LOOPS);
 
     for (j = 0; j < nsizes; ++j) {
       double t = ping_pong(me, p, sbuf, rbuf, 8 * nwds[j], nloop_tab[j]);
@@ -315,9 +356,12 @@ int main(int argc, char *argv[]) {
     }
     strftime(stamp, sizeof(stamp), "%Y-%m-%dT%H:%M:%S", localtime(&now));
 
-    fprintf(fp, "# P=%d nodes=%d M=%d msg_vol=%g nsizes=%d host0=%s date=%s\n",
-            P, nodes, M, msg_vol, nsizes, host0, stamp);
-    fprintf(fp, "partner,partner_host,class,nwds,bytes,nloop,t_half_s,mb_per_s\n");
+    fprintf(fp,
+            "# P=%d nodes=%d M=%d msg_vol=%g nsizes=%d host0=%s cpu0=%d "
+            "socket0=%d date=%s\n",
+            P, nodes, M, msg_vol, nsizes, host0, wheres[0], wheres[1], stamp);
+    fprintf(fp, "partner,partner_host,partner_cpu,partner_socket,class,nwds,"
+                "bytes,nloop,t_half_s,mb_per_s\n");
 
     for (p = 0; p <= M; ++p) {
       const char *host = &hosts[(size_t)p * HOSTLEN];
@@ -326,7 +370,8 @@ int main(int argc, char *argv[]) {
       for (j = 0; j < nsizes; ++j) {
         double t = thalf[(size_t)p * nsizes + j];
         double mbs = (t > 0.0) ? (8.0 * nwds[j]) / t / 1.0e6 : 0.0;
-        fprintf(fp, "%d,%s,%s,%d,%d,%d,%.9e,%.4f\n", p, host, cls, nwds[j],
+        fprintf(fp, "%d,%s,%d,%d,%s,%d,%d,%d,%.9e,%.4f\n", p, host,
+                wheres[(size_t)p * 2], wheres[(size_t)p * 2 + 1], cls, nwds[j],
                 8 * nwds[j], nloop_tab[j], t, mbs);
       }
     }
@@ -344,6 +389,7 @@ int main(int argc, char *argv[]) {
   free(rbuf);
   free(thalf);
   free(hosts);
+  free(wheres);
 
   msg_finalize();
   return (me == 0 && nbad) ? 1 : 0;

@@ -3,11 +3,14 @@
 
   2a  one log-log figure per configuration: 1/2-round-trip time vs message
       size, one thin line per partner rank p, coloured by whether p is on the
-      same node as rank 0, with the per-class median drawn over the top and the
-      latency / m_2 / eager-limit guides annotated.
+      same node as rank 0, with one median per (class, socket) drawn over the
+      top -- solid for socket 0, dashed for socket 1 -- and the latency / m_2 /
+      eager-limit guides annotated.  The socket split is the point: the two
+      sockets measure differently enough that a single per-class median would
+      sit between two populations.
 
-  2b  one comparison figure: the per-class median curve of every configuration
-      on a shared axis, faceted intra-node | inter-node.
+  2b  one comparison figure: the per-(class, socket) median curve of every
+      configuration on a shared axis, faceted intra-node | inter-node.
 
 Needs numpy + matplotlib:
 
@@ -28,9 +31,10 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.lines import Line2D
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from pingpong_stats import analyze, read_csv  # noqa: E402
+from pingpong_stats import analyze, bucket, read_csv  # noqa: E402
 
 # Chart chrome and ink, light surface (these figures are printed into a LaTeX
 # report, so there is a single surface and no dark variant).
@@ -50,6 +54,18 @@ CLASS_LABEL = {
     "self": "rank 0 to itself",
 }
 CLASS_ORDER = ("self", "intra", "inter")
+
+# Socket is a second, orthogonal identity, so it gets line style, not colour.
+SOCKET_STYLE = ["-", "--", ":", "-."]
+
+
+def socket_style(socket):
+    return "-" if socket is None else SOCKET_STYLE[socket % len(SOCKET_STYLE)]
+
+
+def socket_suffix(socket):
+    return "" if socket is None else ", socket %d" % socket
+
 
 # Categorical slots 1-5 for the configuration comparison (line charts use the
 # adjacent pairlist, which this order clears).
@@ -119,11 +135,13 @@ def edge_labels(ax, items, fontsize=8.5, min_gap=0.045):
                     annotation_clip=False)
 
 
-def class_median(curves, cls):
-    """Median t(m) across all partners in one class, on the shared size grid."""
-    members = [c for c in curves if c.cls == cls]
-    if not members:
-        return None, None
+def curve_groups(curves):
+    """[((class, socket), [Curve, ...]), ...] in display order."""
+    return bucket(curves, lambda c: (c.cls, c.socket))
+
+
+def median_curve(members):
+    """Median t(m) across a group of partners, on the shared size grid."""
     grid = members[0].m
     stack = np.array([c.t for c in members if c.m == grid], dtype=float)
     if stack.size == 0:
@@ -149,20 +167,20 @@ def figure_2a(meta, curves, rows, out_base, title):
         ax.plot(cu.m, np.array(cu.t) * 1e6, color=CLASS_COLOR[cu.cls],
                 linewidth=0.5, alpha=0.16, zorder=2, solid_capstyle="round")
 
-    # The per-class median carries the reading.
+    # The per-(class, socket) medians carry the reading.
     ends = []
-    for cls in present:
-        m, t = class_median(curves, cls)
+    for (cls, sock), members in curve_groups(curves):
+        m, t = median_curve(members)
         if m is None:
             continue
-        n = sum(1 for cu in curves if cu.cls == cls)
-        ax.plot(m, t * 1e6, color=CLASS_COLOR[cls], linewidth=2.0, zorder=5,
-                solid_capstyle="round",
-                label="%s (%d rank%s)" % (CLASS_LABEL[cls], n,
-                                          "" if n == 1 else "s"))
-        ends.append((t[-1] * 1e6, CLASS_LABEL[cls], CLASS_COLOR[cls]))
+        n = len(members)
+        name = CLASS_LABEL[cls] + socket_suffix(sock)
+        ax.plot(m, t * 1e6, color=CLASS_COLOR[cls], linestyle=socket_style(sock),
+                linewidth=2.0, zorder=5, solid_capstyle="round",
+                label="%s (%d rank%s)" % (name, n, "" if n == 1 else "s"))
+        ends.append((t[-1] * 1e6, name, CLASS_COLOR[cls]))
 
-    # Three series, so all get a direct label as well as the legend.
+    # Few enough series that all get a direct label as well as the legend.
     edge_labels(ax, ends)
 
     # Guides, drawn from the same numbers the summary table reports.
@@ -171,6 +189,7 @@ def figure_2a(meta, curves, rows, out_base, title):
     lat = median_of(rows, ref_cls, "t_lat_s")
     m2 = median_of(rows, ref_cls, "m2_words")
     eager = median_of(rows, ref_cls, "m_eager_words")
+    eager_next = median_of(rows, ref_cls, "m_eager_next_bytes")
 
     ref_name = CLASS_LABEL[ref_cls]
     if lat:
@@ -187,8 +206,9 @@ def figure_2a(meta, curves, rows, out_base, title):
     if m2:
         guides.append((m2, "$m_2$ = %d words" % round(m2), hi, (4, -6), "top"))
     if eager:
-        guides.append((eager, "eager limit %d words (%d B)"
-                       % (round(eager), 8 * round(eager)), lo, (4, 6), "bottom"))
+        guides.append((eager, "eager limit between %d and %d B"
+                       % (8 * round(eager), round(eager_next)), lo, (4, 6),
+                       "bottom"))
     for value, text, y, offset, va in guides:
         ax.axvline(value, color=INK_MUTED, linewidth=0.8, linestyle=(0, (1, 3)),
                    zorder=3)
@@ -211,7 +231,7 @@ def figure_2a(meta, curves, rows, out_base, title):
 
 
 def figure_2b(datasets, out_base):
-    """Class medians of every configuration, faceted intra | inter."""
+    """(class, socket) medians of every configuration, faceted intra | inter."""
     panels = [c for c in ("intra", "inter")
               if any(any(cu.cls == c for cu in d["curves"]) for d in datasets)]
     if not panels:
@@ -221,6 +241,7 @@ def figure_2b(datasets, out_base):
     fig, axes = plt.subplots(1, len(panels), figsize=(4.6 * len(panels), 4.6),
                              dpi=150, squeeze=False)
     fig.patch.set_facecolor(SURFACE)
+    sockets_seen = set()
 
     for k, cls in enumerate(panels):
         ax = axes[0][k]
@@ -228,13 +249,18 @@ def figure_2b(datasets, out_base):
                    "1/2 round-trip time (microseconds)" if k == 0 else "")
         ends = []
         for i, d in enumerate(datasets):
-            m, t = class_median(d["curves"], cls)
-            if m is None:
-                continue
             color = CONFIG_COLORS[i % len(CONFIG_COLORS)]
-            ax.plot(m, t * 1e6, color=color, linewidth=1.8, zorder=5,
-                    solid_capstyle="round", label=d["label"])
-            ends.append((t[-1] * 1e6, d["label"], color))
+            for (c, sock), members in curve_groups(d["curves"]):
+                if c != cls:
+                    continue
+                m, t = median_curve(members)
+                if m is None:
+                    continue
+                sockets_seen.add(sock)
+                ax.plot(m, t * 1e6, color=color, linestyle=socket_style(sock),
+                        linewidth=1.8, zorder=5, solid_capstyle="round")
+                ends.append((t[-1] * 1e6, d["label"] + socket_suffix(sock),
+                             color))
         edge_labels(ax, ends, fontsize=7.5, min_gap=0.04)
         add_byte_axis(ax)
         ax.set_title(CLASS_LABEL[cls], color=INK, fontsize=10,
@@ -242,8 +268,15 @@ def figure_2b(datasets, out_base):
         if k > 0:
             ax.set_ylabel("")
 
-    handles, labels = axes[0][0].get_legend_handles_labels()
-    leg = fig.legend(handles, labels, loc="lower center", ncol=len(labels),
+    # Colour = configuration, line style = socket: two legends' worth of
+    # entries, built by hand since each config drew more than one line.
+    handles = [Line2D([], [], color=CONFIG_COLORS[i % len(CONFIG_COLORS)],
+                      linewidth=1.8, label=d["label"])
+               for i, d in enumerate(datasets)]
+    handles += [Line2D([], [], color=INK_SECONDARY, linestyle=socket_style(s),
+                       linewidth=1.8, label="socket %d" % s)
+                for s in sorted(s for s in sockets_seen if s is not None)]
+    leg = fig.legend(handles=handles, loc="lower center", ncol=len(handles),
                      frameon=False, fontsize=8.5, bbox_to_anchor=(0.5, -0.02))
     for text in leg.get_texts():
         text.set_color(INK_SECONDARY)
