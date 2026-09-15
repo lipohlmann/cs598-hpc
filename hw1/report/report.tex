@@ -7,6 +7,7 @@
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{booktabs}
+\usepackage{placeins}
 
 \hypersetup{
   colorlinks=true,
@@ -180,5 +181,109 @@ Step (2) is a cautionary tale about environment mismatch: it produced a large, c
 We are satisfied with the final result. A peak of 33.149 GFLOPS/core against MatLab's 80.151 is a real gap, but part of that gap is not apples-to-apples: MatLab's ``per-core'' figure is an 8-CPU MKL run divided by 8, not a directly measured single-core run, and the plateau in \cref{fig:comparison} strongly suggests it depends on multithreading to reach its peak at all. Closing more of the remaining gap on the C side would mean packing $A$/$B$ into aligned contiguous panels and retuning the $K/M$ block sizes for the Ice Lake node's actual cache sizes rather than the development machine's, but the current result is a reasonable, well-understood stopping point for a serial kernel.
 
 \section{Problem 2}
+\FloatBarrier
+
+Here we created the ping pong test to measure properties of the communication on one node and between 2 nodes. The ping pong test was run on the \texttt{eng-partition} of the campus cluster.
+
+One note: though the assignment didn't ask us to measure this, it became clear that the inter/intra socket communication on one node has a significant effect on the results. for this reason the plots are also broken up by socket.
+\subsection*{2a.}
+Here we look at single node communication performance. We record the latency, inverse bandwidth, $m_2$ and eager limit.
+These are recorded for $P=64$ in \cref{tab:pp64} and plotted in \cref{fig:pp64}. As noted before, the communication performance is measurably different depending on whether the communication is intra-socket or inter-socket. The eager limit is measured the same across these.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pp_P64_n1.pdf}
+    \caption{Half round-trip time vs.\ message size from rank 0 to every rank $p$, $P=64$ on one node. Thin lines are individual partner ranks; heavy lines are the per-socket medians.}
+    \label{fig:pp64}
+\end{figure}
+
+\begin{table}
+    \centering
+    \input{../q2/analysis/out/summary_pp_P64_n1.tex}
+    \caption{Ping-pong summary, $P=64$ on one node: median over the ranks in each group (self, same node, across nodes, by partner socket).}
+    \label{tab:pp64}
+\end{table}
+
+\FloatBarrier
+\subsection*{2b.}
+
+We move to $P=128$ in \cref{tab:pp128n1} and \cref{fig:pp128n1}. The same trends are observed, but the latency is slightly higher for non-self communication.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pp_P128_n1.pdf}
+    \caption{As \cref{fig:pp64}, $P=128$ on one node.}
+    \label{fig:pp128n1}
+\end{figure}
+
+\begin{table}
+    \centering
+    \input{../q2/analysis/out/summary_pp_P128_n1.tex}
+    \caption{Ping-pong summary, $P=128$ on one node: median over the ranks in each group (self, same node, across nodes, by partner socket).}
+    \label{tab:pp128n1}
+\end{table}
+
+\FloatBarrier
+
+We then move to $P=128$ on two nodes in \cref{tab:pp128n2} and \cref{fig:pp128n2}. We see higher latency for the inter-node communication, the inter-node inverse bandwidth was measured to depend suprisingly on the socket.
+Socket S1 on node 2 was suprisingly close to the Socket 1 on node 1 for inverse bandwidth, but Socket 0 on node 2 was significantly worse. My guess is that this is due to the physical network connections on the cluster.
+The $m_2$ value is strikingly higher for the inter-node communication and again depends on the socket. The eager limit is measured to be the same across all sockets and nodes.
+
+As we continue to increase in ranks on 2 nodes up to $P=196$ and $P=256$ we see the same trends. 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pp_P128_n2.pdf}
+    \caption{As \cref{fig:pp64}, $P=128$ on two nodes.}
+    \label{fig:pp128n2}
+\end{figure}
+
+\begin{table}
+    \centering
+    \input{../q2/analysis/out/summary_pp_P128_n2.tex}
+    \caption{Ping-pong summary, $P=128$ on two nodes: median over the ranks in each group (self, same node, across nodes, by partner socket).}
+    \label{tab:pp128n2}
+\end{table}
+
+\FloatBarrier
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pp_P192_n2.pdf}
+    \caption{As \cref{fig:pp64}, $P=192$ on two nodes.}
+    \label{fig:pp192n2}
+\end{figure}
+
+\begin{table}
+    \centering
+    \input{../q2/analysis/out/summary_pp_P192_n2.tex}
+    \caption{Ping-pong summary, $P=192$ on two nodes: median over the ranks in each group (self, same node, across nodes, by partner socket).}
+    \label{tab:pp192n2}
+\end{table}
+
+\FloatBarrier
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pp_P256_n2.pdf}
+    \caption{As \cref{fig:pp64}, $P=256$ on two nodes.}
+    \label{fig:pp256n2}
+\end{figure}
+
+\begin{table}
+    \centering
+    \input{../q2/analysis/out/summary_pp_P256_n2.tex}
+    \caption{Ping-pong summary, $P=256$ on two nodes: median over the ranks in each group (self, same node, across nodes, by partner socket).}
+    \label{tab:pp256n2}
+\end{table}
+
+\FloatBarrier
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/pp_compare.pdf}
+    \caption{Per-socket median curves of all five configurations: same node (left) and across nodes (right).}
+    \label{fig:pp_compare}
+\end{figure}
 
 \end{document}
