@@ -9,9 +9,10 @@ grid over P ranks and replaces the two serial transposes with
 
 On the campus cluster (compute nodes, via Slurm):
 
-    ./driver                      # module load, make clean, make, sbatch (P=1)
+    ./driver                      # module load, make clean, make, then submit
+                                  # sweep, pingpong and fst_sweep jobs
 
-    # larger runs -- size comes from the sbatch options, args go to test_poisson
+    # single runs -- size comes from the sbatch options, args go to test_poisson
     sbatch --ntasks-per-node=16 poisson.sbatch 2048 2048 1 1
     sbatch --nodes=2 --ntasks-per-node=64 poisson.sbatch 2048 2048 1 1 pairwise
 

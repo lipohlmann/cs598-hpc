@@ -1,5 +1,18 @@
+# Build everything and submit every job the report needs.  All CSV files
+# land in one output directory (default results):
+#
+#   ./driver                 # results/
+#   ./driver my_results
+#
+# GRID_SIZES etc. are passed through to the jobs, e.g.
+#   GRID_SIZES="32 128 512 2048 8192" ./driver
+
+OUTPUT_DIR=${1:-results}
+
 module load openmpi
 make clean
-make
-sbatch poisson.sbatch         #submit the job (P=1; see poisson.sbatch for larger P)
+make || exit 1
 
+sbatch sweep.sbatch     "$OUTPUT_DIR"   # test_poisson over N, P, both transposes
+sbatch pingpong.sbatch  "$OUTPUT_DIR"   # point-to-point, within and across nodes
+sbatch fst_sweep.sbatch "$OUTPUT_DIR"   # single-core FST over (m, n)
