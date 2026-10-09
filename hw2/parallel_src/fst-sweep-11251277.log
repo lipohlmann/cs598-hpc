@@ -1,0 +1,394 @@
+=== m=1 n=31 nrep=2000 ===
+m n nrep                       = 1 31 2000
+max error vs direct FST        = 2.720046e-15
+max error S(SX)-X              = 2.220446e-16
+max error fast vs matmul       = 2.775558e-15
+avg time block_fst_apply       = 8.766825e-07 sec
+batched FST/s                  = 1.140664e+06
+individual FST/s equiv         = 1.140664e+06
+GFLOPS (nominal)               = 1.768
+=== m=2 n=31 nrep=2000 ===
+m n nrep                       = 2 31 2000
+max error vs direct FST        = 4.274359e-15
+max error S(SX)-X              = 3.330669e-16
+max error fast vs matmul       = 4.274359e-15
+avg time block_fst_apply       = 1.009346e-06 sec
+batched FST/s                  = 9.907410e+05
+individual FST/s equiv         = 1.981482e+06
+GFLOPS (nominal)               = 3.071
+=== m=4 n=31 nrep=2000 ===
+m n nrep                       = 4 31 2000
+max error vs direct FST        = 3.455569e-15
+max error S(SX)-X              = 3.330669e-16
+max error fast vs matmul       = 3.649858e-15
+avg time block_fst_apply       = 1.424790e-06 sec
+batched FST/s                  = 7.018578e+05
+individual FST/s equiv         = 2.807431e+06
+GFLOPS (nominal)               = 4.352
+=== m=8 n=31 nrep=2000 ===
+m n nrep                       = 8 31 2000
+max error vs direct FST        = 4.551914e-15
+max error S(SX)-X              = 3.330669e-16
+max error fast vs matmul       = 4.551914e-15
+avg time block_fst_apply       = 2.327199e-06 sec
+batched FST/s                  = 4.297011e+05
+individual FST/s equiv         = 3.437609e+06
+GFLOPS (nominal)               = 5.328
+=== m=16 n=31 nrep=2000 ===
+m n nrep                       = 16 31 2000
+max error vs direct FST        = 4.662937e-15
+max error S(SX)-X              = 4.440892e-16
+max error fast vs matmul       = 4.607426e-15
+avg time block_fst_apply       = 4.177836e-06 sec
+batched FST/s                  = 2.393584e+05
+individual FST/s equiv         = 3.829734e+06
+GFLOPS (nominal)               = 5.936
+=== m=32 n=31 nrep=2000 ===
+m n nrep                       = 32 31 2000
+max error vs direct FST        = 6.328271e-15
+max error S(SX)-X              = 4.440892e-16
+max error fast vs matmul       = 6.328271e-15
+avg time block_fst_apply       = 7.894926e-06 sec
+batched FST/s                  = 1.266636e+05
+individual FST/s equiv         = 4.053236e+06
+GFLOPS (nominal)               = 6.283
+=== m=1 n=127 nrep=2000 ===
+m n nrep                       = 1 127 2000
+max error vs direct FST        = 1.601497e-14
+max error S(SX)-X              = 5.551115e-16
+max error fast vs matmul       = 1.595946e-14
+avg time block_fst_apply       = 3.341933e-06 sec
+batched FST/s                  = 2.992280e+05
+individual FST/s equiv         = 2.992280e+05
+GFLOPS (nominal)               = 2.660
+=== m=2 n=127 nrep=2000 ===
+m n nrep                       = 2 127 2000
+max error vs direct FST        = 1.421085e-14
+max error S(SX)-X              = 5.551115e-16
+max error fast vs matmul       = 1.409983e-14
+avg time block_fst_apply       = 4.907602e-06 sec
+batched FST/s                  = 2.037655e+05
+individual FST/s equiv         = 4.075310e+05
+GFLOPS (nominal)               = 3.623
+=== m=4 n=127 nrep=2000 ===
+m n nrep                       = 4 127 2000
+max error vs direct FST        = 1.715295e-14
+max error S(SX)-X              = 5.551115e-16
+max error fast vs matmul       = 1.695866e-14
+avg time block_fst_apply       = 7.262837e-06 sec
+batched FST/s                  = 1.376872e+05
+individual FST/s equiv         = 5.507489e+05
+GFLOPS (nominal)               = 4.896
+=== m=8 n=127 nrep=2000 ===
+m n nrep                       = 8 127 2000
+max error vs direct FST        = 2.142730e-14
+max error S(SX)-X              = 5.551115e-16
+max error fast vs matmul       = 2.109424e-14
+avg time block_fst_apply       = 1.229730e-05 sec
+batched FST/s                  = 8.131866e+04
+individual FST/s equiv         = 6.505493e+05
+GFLOPS (nominal)               = 5.783
+=== m=16 n=127 nrep=2000 ===
+m n nrep                       = 16 127 2000
+max error vs direct FST        = 2.098322e-14
+max error S(SX)-X              = 6.106227e-16
+max error fast vs matmul       = 2.087219e-14
+avg time block_fst_apply       = 2.466136e-05 sec
+batched FST/s                  = 4.054926e+04
+individual FST/s equiv         = 6.487882e+05
+GFLOPS (nominal)               = 5.768
+=== m=32 n=127 nrep=2000 ===
+m n nrep                       = 32 127 2000
+max error vs direct FST        = 2.481348e-14
+max error S(SX)-X              = 6.661338e-16
+max error fast vs matmul       = 2.498002e-14
+avg time block_fst_apply       = 5.153102e-05 sec
+batched FST/s                  = 1.940579e+04
+individual FST/s equiv         = 6.209851e+05
+GFLOPS (nominal)               = 5.521
+=== m=64 n=127 nrep=2000 ===
+m n nrep                       = 64 127 2000
+max error vs direct FST        = 2.591677e-14
+max error S(SX)-X              = 5.689893e-16
+max error fast vs matmul       = 2.560452e-14
+avg time block_fst_apply       = 1.008322e-04 sec
+batched FST/s                  = 9.917472e+03
+individual FST/s equiv         = 6.347182e+05
+GFLOPS (nominal)               = 5.643
+=== m=128 n=127 nrep=2000 ===
+m n nrep                       = 128 127 2000
+max error vs direct FST        = 2.904274e-14
+max error S(SX)-X              = 6.661338e-16
+max error fast vs matmul       = 2.877906e-14
+avg time block_fst_apply       = 2.003614e-04 sec
+batched FST/s                  = 4.990980e+03
+individual FST/s equiv         = 6.388455e+05
+GFLOPS (nominal)               = 5.679
+=== m=1 n=511 nrep=2000 ===
+m n nrep                       = 1 511 2000
+max error vs direct FST        = 8.126833e-14
+max error S(SX)-X              = 6.106227e-16
+max error fast vs matmul       = 8.104628e-14
+avg time block_fst_apply       = 1.457068e-05 sec
+batched FST/s                  = 6.863097e+04
+individual FST/s equiv         = 6.863097e+04
+GFLOPS (nominal)               = 3.156
+=== m=2 n=511 nrep=2000 ===
+m n nrep                       = 2 511 2000
+max error vs direct FST        = 8.743006e-14
+max error S(SX)-X              = 7.771561e-16
+max error fast vs matmul       = 8.720802e-14
+avg time block_fst_apply       = 2.201874e-05 sec
+batched FST/s                  = 4.541587e+04
+individual FST/s equiv         = 9.083173e+04
+GFLOPS (nominal)               = 4.177
+=== m=4 n=511 nrep=2000 ===
+m n nrep                       = 4 511 2000
+max error vs direct FST        = 1.033895e-13
+max error S(SX)-X              = 7.216450e-16
+max error fast vs matmul       = 1.036393e-13
+avg time block_fst_apply       = 3.683691e-05 sec
+batched FST/s                  = 2.714669e+04
+individual FST/s equiv         = 1.085868e+05
+GFLOPS (nominal)               = 4.994
+=== m=8 n=511 nrep=2000 ===
+m n nrep                       = 8 511 2000
+max error vs direct FST        = 1.335043e-13
+max error S(SX)-X              = 7.771561e-16
+max error fast vs matmul       = 1.338929e-13
+avg time block_fst_apply       = 6.910306e-05 sec
+batched FST/s                  = 1.447114e+04
+individual FST/s equiv         = 1.157691e+05
+GFLOPS (nominal)               = 5.324
+=== m=16 n=511 nrep=2000 ===
+m n nrep                       = 16 511 2000
+max error vs direct FST        = 1.196820e-13
+max error S(SX)-X              = 7.771561e-16
+max error fast vs matmul       = 1.187939e-13
+avg time block_fst_apply       = 1.289348e-04 sec
+batched FST/s                  = 7.755860e+03
+individual FST/s equiv         = 1.240938e+05
+GFLOPS (nominal)               = 5.707
+=== m=32 n=511 nrep=2000 ===
+m n nrep                       = 32 511 2000
+max error vs direct FST        = 1.273703e-13
+max error S(SX)-X              = 7.910339e-16
+max error fast vs matmul       = 1.277589e-13
+avg time block_fst_apply       = 2.528283e-04 sec
+batched FST/s                  = 3.955253e+03
+individual FST/s equiv         = 1.265681e+05
+GFLOPS (nominal)               = 5.821
+=== m=64 n=511 nrep=2000 ===
+m n nrep                       = 64 511 2000
+max error vs direct FST        = 1.121325e-13
+max error S(SX)-X              = 7.771561e-16
+max error fast vs matmul       = 1.125766e-13
+avg time block_fst_apply       = 5.119209e-04 sec
+batched FST/s                  = 1.953427e+03
+individual FST/s equiv         = 1.250193e+05
+GFLOPS (nominal)               = 5.750
+=== m=128 n=511 nrep=2000 ===
+m n nrep                       = 128 511 2000
+max error vs direct FST        = 1.489919e-13
+max error S(SX)-X              = 9.436896e-16
+max error fast vs matmul       = 1.488254e-13
+avg time block_fst_apply       = 1.144933e-03 sec
+batched FST/s                  = 8.734137e+02
+individual FST/s equiv         = 1.117970e+05
+GFLOPS (nominal)               = 5.142
+=== m=256 n=511 nrep=2000 ===
+m n nrep                       = 256 511 2000
+max error vs direct FST        = 1.394440e-13
+max error S(SX)-X              = 8.881784e-16
+max error fast vs matmul       = 1.392220e-13
+avg time block_fst_apply       = 2.508861e-03 sec
+batched FST/s                  = 3.985872e+02
+individual FST/s equiv         = 1.020383e+05
+GFLOPS (nominal)               = 4.693
+=== m=512 n=511 nrep=1528 ===
+m n nrep                       = 512 511 1528
+max error vs direct FST        = 1.345590e-13
+max error S(SX)-X              = 1.054712e-15
+max error fast vs matmul       = 1.345590e-13
+avg time block_fst_apply       = 4.869621e-03 sec
+batched FST/s                  = 2.053548e+02
+individual FST/s equiv         = 1.051416e+05
+GFLOPS (nominal)               = 4.835
+=== m=1 n=2047 nrep=2000 ===
+m n nrep                       = 1 2047 2000
+max error S(SX)-X              = 7.216450e-16
+avg time block_fst_apply       = 6.721194e-05 sec
+batched FST/s                  = 1.487831e+04
+individual FST/s equiv         = 1.487831e+04
+GFLOPS (nominal)               = 3.350
+=== m=2 n=2047 nrep=2000 ===
+m n nrep                       = 2 2047 2000
+max error S(SX)-X              = 7.771561e-16
+avg time block_fst_apply       = 1.080282e-04 sec
+batched FST/s                  = 9.256839e+03
+individual FST/s equiv         = 1.851368e+04
+GFLOPS (nominal)               = 4.169
+=== m=4 n=2047 nrep=2000 ===
+m n nrep                       = 4 2047 2000
+max error S(SX)-X              = 7.771561e-16
+avg time block_fst_apply       = 1.773156e-04 sec
+batched FST/s                  = 5.639663e+03
+individual FST/s equiv         = 2.255865e+04
+GFLOPS (nominal)               = 5.080
+=== m=8 n=2047 nrep=2000 ===
+m n nrep                       = 8 2047 2000
+max error S(SX)-X              = 8.881784e-16
+avg time block_fst_apply       = 3.258179e-04 sec
+batched FST/s                  = 3.069199e+03
+individual FST/s equiv         = 2.455359e+04
+GFLOPS (nominal)               = 5.529
+=== m=16 n=2047 nrep=2000 ===
+m n nrep                       = 16 2047 2000
+max error S(SX)-X              = 8.881784e-16
+avg time block_fst_apply       = 6.343765e-04 sec
+batched FST/s                  = 1.576351e+03
+individual FST/s equiv         = 2.522161e+04
+GFLOPS (nominal)               = 5.679
+=== m=32 n=2047 nrep=2000 ===
+m n nrep                       = 32 2047 2000
+max error S(SX)-X              = 9.992007e-16
+avg time block_fst_apply       = 1.376425e-03 sec
+batched FST/s                  = 7.265198e+02
+individual FST/s equiv         = 2.324863e+04
+GFLOPS (nominal)               = 5.235
+=== m=64 n=2047 nrep=2000 ===
+m n nrep                       = 64 2047 2000
+max error S(SX)-X              = 9.853229e-16
+avg time block_fst_apply       = 2.848261e-03 sec
+batched FST/s                  = 3.510914e+02
+individual FST/s equiv         = 2.246985e+04
+GFLOPS (nominal)               = 5.060
+=== m=128 n=2047 nrep=1526 ===
+m n nrep                       = 128 2047 1526
+max error S(SX)-X              = 9.992007e-16
+avg time block_fst_apply       = 5.536948e-03 sec
+batched FST/s                  = 1.806049e+02
+individual FST/s equiv         = 2.311743e+04
+GFLOPS (nominal)               = 5.205
+=== m=256 n=2047 nrep=763 ===
+m n nrep                       = 256 2047 763
+max error S(SX)-X              = 9.992007e-16
+avg time block_fst_apply       = 1.142559e-02 sec
+batched FST/s                  = 8.752279e+01
+individual FST/s equiv         = 2.240584e+04
+GFLOPS (nominal)               = 5.045
+=== m=512 n=2047 nrep=381 ===
+m n nrep                       = 512 2047 381
+max error S(SX)-X              = 1.054712e-15
+avg time block_fst_apply       = 2.315243e-02 sec
+batched FST/s                  = 4.319200e+01
+individual FST/s equiv         = 2.211431e+04
+GFLOPS (nominal)               = 4.979
+=== m=1024 n=2047 nrep=190 ===
+m n nrep                       = 1024 2047 190
+max error S(SX)-X              = 1.110223e-15
+avg time block_fst_apply       = 5.441715e-02 sec
+batched FST/s                  = 1.837656e+01
+individual FST/s equiv         = 1.881760e+04
+GFLOPS (nominal)               = 4.237
+=== m=2048 n=2047 nrep=95 ===
+m n nrep                       = 2048 2047 95
+max error S(SX)-X              = 1.165734e-15
+avg time block_fst_apply       = 1.156580e-01 sec
+batched FST/s                  = 8.646182e+00
+individual FST/s equiv         = 1.770738e+04
+GFLOPS (nominal)               = 3.987
+=== m=1 n=8191 nrep=2000 ===
+m n nrep                       = 1 8191 2000
+max error S(SX)-X              = 8.881784e-16
+avg time block_fst_apply       = 3.257390e-04 sec
+batched FST/s                  = 3.069942e+03
+individual FST/s equiv         = 3.069942e+03
+GFLOPS (nominal)               = 3.269
+=== m=2 n=8191 nrep=2000 ===
+m n nrep                       = 2 8191 2000
+max error S(SX)-X              = 1.137979e-15
+avg time block_fst_apply       = 5.267459e-04 sec
+batched FST/s                  = 1.898449e+03
+individual FST/s equiv         = 3.796897e+03
+GFLOPS (nominal)               = 4.043
+=== m=4 n=8191 nrep=2000 ===
+m n nrep                       = 4 8191 2000
+max error S(SX)-X              = 9.436896e-16
+avg time block_fst_apply       = 8.345051e-04 sec
+batched FST/s                  = 1.198315e+03
+individual FST/s equiv         = 4.793260e+03
+GFLOPS (nominal)               = 5.104
+=== m=8 n=8191 nrep=2000 ===
+m n nrep                       = 8 8191 2000
+max error S(SX)-X              = 9.992007e-16
+avg time block_fst_apply       = 1.644463e-03 sec
+batched FST/s                  = 6.081013e+02
+individual FST/s equiv         = 4.864810e+03
+GFLOPS (nominal)               = 5.180
+=== m=16 n=8191 nrep=2000 ===
+m n nrep                       = 16 8191 2000
+max error S(SX)-X              = 1.332268e-15
+avg time block_fst_apply       = 3.255111e-03 sec
+batched FST/s                  = 3.072092e+02
+individual FST/s equiv         = 4.915346e+03
+GFLOPS (nominal)               = 5.234
+=== m=32 n=8191 nrep=1526 ===
+m n nrep                       = 32 8191 1526
+max error S(SX)-X              = 1.124101e-15
+avg time block_fst_apply       = 6.438933e-03 sec
+batched FST/s                  = 1.553052e+02
+individual FST/s equiv         = 4.969767e+03
+GFLOPS (nominal)               = 5.292
+=== m=64 n=8191 nrep=763 ===
+m n nrep                       = 64 8191 763
+max error S(SX)-X              = 1.221245e-15
+avg time block_fst_apply       = 1.292194e-02 sec
+batched FST/s                  = 7.738775e+01
+individual FST/s equiv         = 4.952816e+03
+GFLOPS (nominal)               = 5.274
+=== m=128 n=8191 nrep=381 ===
+m n nrep                       = 128 8191 381
+max error S(SX)-X              = 1.151856e-15
+avg time block_fst_apply       = 2.570547e-02 sec
+batched FST/s                  = 3.890222e+01
+individual FST/s equiv         = 4.979484e+03
+GFLOPS (nominal)               = 5.302
+=== m=256 n=8191 nrep=190 ===
+m n nrep                       = 256 8191 190
+max error S(SX)-X              = 1.276756e-15
+avg time block_fst_apply       = 6.176219e-02 sec
+batched FST/s                  = 1.619114e+01
+individual FST/s equiv         = 4.144931e+03
+GFLOPS (nominal)               = 4.414
+=== m=512 n=8191 nrep=95 ===
+m n nrep                       = 512 8191 95
+max error S(SX)-X              = 1.443290e-15
+avg time block_fst_apply       = 1.301026e-01 sec
+batched FST/s                  = 7.686242e+00
+individual FST/s equiv         = 3.935356e+03
+GFLOPS (nominal)               = 4.190
+=== m=1024 n=8191 nrep=47 ===
+m n nrep                       = 1024 8191 47
+max error S(SX)-X              = 1.332268e-15
+avg time block_fst_apply       = 2.627121e-01 sec
+batched FST/s                  = 3.806448e+00
+individual FST/s equiv         = 3.897803e+03
+GFLOPS (nominal)               = 4.150
+=== m=2048 n=8191 nrep=23 ===
+m n nrep                       = 2048 8191 23
+max error S(SX)-X              = 1.332268e-15
+avg time block_fst_apply       = 5.329662e-01 sec
+batched FST/s                  = 1.876292e+00
+individual FST/s equiv         = 3.842645e+03
+GFLOPS (nominal)               = 4.092
+=== m=4096 n=8191 nrep=11 ===
+m n nrep                       = 4096 8191 11
+max error S(SX)-X              = 1.346145e-15
+avg time block_fst_apply       = 1.121550e+00 sec
+batched FST/s                  = 8.916228e-01
+individual FST/s equiv         = 3.652087e+03
+GFLOPS (nominal)               = 3.889
+=== m=8192 n=8191 nrep=5 ===
+/var/spool/slurmd/job11251277/slurm_script: line 34: 174213 Killed                  ./test_block_fst "$batch_size" "$transform_length" "$num_reps" "$OUTPUT_DIR"
+[2026-10-09T17:15:31.398] error: Detected 1 oom_kill event in StepId=11251277.batch. Some of the step tasks have been OOM Killed.
