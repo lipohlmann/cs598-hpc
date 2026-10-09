@@ -86,8 +86,9 @@ typedef struct {
 
     /* Timing of the most recent poisson_solve, max over ranks (s).
        t_fst includes the eigenvalue division; t_tr is both transposes,
-       comm plus local reshuffle. */
-    double t_total, t_fst, t_tr;
+       comm plus local reshuffle; t_comm is the part of t_tr spent in
+       the message calls (posting isend/irecv and msgwait). */
+    double t_total, t_fst, t_tr, t_comm;
     double gflops;
 } poisson_plan;
 
