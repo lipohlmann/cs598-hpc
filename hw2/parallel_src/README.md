@@ -25,8 +25,10 @@ shared memory. Compute-node jobs don't need this.
 
 Executables:
 
-    test_poisson     [Nx] [Ny] [Lx] [Ly] [allatonce|pairwise]   (MPI, any P)
-    test_block_fst   [m] [n] [nrep]                             (serial)
+    test_poisson     [Nx] [Ny] [Lx] [Ly] [allatonce|pairwise]
+                     [num_reps] [max_sample_intervals] [output_dir]   (MPI, any P)
+    pingpong         [max_bytes] [output_dir] [label]           (MPI, P >= 2)
+    test_block_fst   [m] [n] [nrep] [output_dir]                (serial)
     bench_transpose  [nrep]                                     (serial, local transpose)
 
 Note `test_poisson` takes `Nx = nx+1`, the number of *intervals*.
@@ -122,6 +124,7 @@ After each solve the plan holds, as **max over ranks**:
 | `t_total` | whole solve (steps 1-7), after a barrier |
 | `t_fst` | the four FST passes plus the eigenvalue divide |
 | `t_tr` | both distributed transposes: messages **and** the local transposes of received blocks |
+| `t_comm` | the part of `t_tr` spent in message calls (posting `isend`/`irecv`, `msgwait`) |
 | `gflops` | aggregate rate over all P ranks |
 
 GFLOPS uses the nominal count `~10 N log2 N` per length-N transform,
@@ -150,6 +153,30 @@ slab; errors are max-reduced over ranks.
        N =  128   1.706940e-04    ratio 16.02
        N =  512   1.066744e-05    ratio 16.00
        N = 2048   6.667111e-07    ratio 16.00
+
+## CSV output
+
+Every program writes into one output directory, `results` unless given
+as its last argument.
+
+| program | file | columns |
+|---|---|---|
+| `test_poisson` | `timing_<tag>.csv`, one row: the fastest of `num_reps` solves | `P,Nx,Ny,mode,M,t_total,t_fst,t_transpose,t_comm,gflops,error` |
+| `test_poisson` with `max_sample_intervals > 0` | `solution_<tag>.csv` | `i,j,x,y,u,u_exact,error` |
+| `pingpong` | `pingpong_<label>.csv` (`pingpong.csv` without a label) | `nbytes,nrep,t_oneway_min,t_oneway_avg` |
+| `test_block_fst` | `fst.csv`, one row appended per timed run | `m,n,nrep,t_apply,gflops` |
+
+`<tag>` is `P<P>_N<Nx>x<Ny>_<mode>`, so concurrent jobs never share a
+file. `M` is the largest number of x-rows on any rank and `error` is the
+max-norm error of the continuous problem.
+
+Batch scripts that produce all of it (each takes the output directory as
+its optional argument):
+
+    sbatch sweep.sbatch        # test_poisson over N, P, both modes; merges timing.csv
+    sbatch pingpong.sbatch     # pingpong_intranode.csv, pingpong_internode.csv
+    sbatch fst_sweep.sbatch    # fst.csv over (m, n), single core
+
 
 `poisson_residual_op()` (full-grid, serial) is kept in `poisson.c` but
 no longer used by the test.

@@ -11,7 +11,7 @@ MAKEFLAGS += -r   # disable make's built-in implicit rules, so a config
 # msg_mpi.o goes into COMMON_OBJS -- every executable below links it,
 # since all three share poisson.o through COMMON_OBJS.
 COMMON_OBJS = block_fft.o block_fst.o transpose.o poisson.o msg_mpi.o
-EXES        = test_block_fst test_poisson bench_transpose
+EXES        = test_block_fst test_poisson bench_transpose pingpong
 
 all: $(EXES) asm
 
@@ -22,6 +22,9 @@ test_poisson: $(COMMON_OBJS) test_poisson.o
 	$(MPICC) $(CFLAGS_COMMON) $(CFLAGS_OPT) -o $@ $^ $(LIBS)
 
 bench_transpose: $(COMMON_OBJS) bench_transpose.o
+	$(MPICC) $(CFLAGS_COMMON) $(CFLAGS_OPT) -o $@ $^ $(LIBS)
+
+pingpong: msg_mpi.o pingpong.o
 	$(MPICC) $(CFLAGS_COMMON) $(CFLAGS_OPT) -o $@ $^ $(LIBS)
 
 %.o: %.c
