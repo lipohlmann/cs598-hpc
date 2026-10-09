@@ -1,0 +1,289 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{placeins}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  filecolor=magenta,
+  urlcolor=blue,
+  citecolor=black
+}
+
+\usepackage{minted}
+\setminted{frame=single}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    tabsize=4
+}
+
+\title{\textbf{High Performance Parallel Computing \\ Homework 1}}
+\author{Liam Pohlmann, Alex Shaffer}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Problem 1}
+
+Using the provided MatLab code, MatLab version R2025b was run on the \texttt{eng-partition} on a single node with a single single task and 8 CPUs per task.
+The maximum number of GFlops per core is about 80.151, which occurs at $N=1704$.
+
+\inputminted{batch}{../q1_results/matlab_results/batch_matlab.sh}
+
+This produced the results seen in \cref{fig:matlab_gflops}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{../q1_results/matlab_results/matlab_gflops.png}
+    \caption{MatLab number of Giga-Flops per core for the matrix-matrix product.}
+        \label{fig:matlab_gflops}
+\end{figure}
+
+A naive first iteration was created, with the implementation of a matrix-matrix being:
+
+\inputminted{c}{../q1_results/first_iter/mat_mat_multiply.h}
+\inputminted{c}{../q1_results/first_iter/mat_mat_multiply.c}
+with a \texttt{Makefile}:
+\inputminted{shell}{../q1_results/first_iter/Makefile}
+\inputminted{shell}{../q1_results/first_iter/common.mk}
+
+The second (and all future iterations) were make using Claude Code (Sonnet 5.0).
+This produced the figure seen in \cref{fig:second_iter}, which is an order of magnitude improvement but still off about a factor of five for what is desired.
+
+\inputminted{c}{../q1_results/v2/mat_mat_multiply.h}
+\inputminted{c}{../q1_results/v2/mat_mat_multiply.c}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{../q1_results/v2/optimized.png}
+    \caption{Second iteration.}
+    \label{fig:second_iter}
+\end{figure}
+
+The final iteration is given in \cref{fig:last_iter} using the files:
+\inputminted{c}{../src/mat_mat_multiply.c}
+\inputminted{c}{../include/mat_mat_multiply.h}
+\inputminted{shell}{../Makefile}
+\inputminted{shell}{../batch_q1.sh}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{../q1_results/v3/optimized.png}
+    \caption{Last iteration.}
+    \label{fig:last_iter}
+\end{figure}
+\clearpage
+Notice that with this final iteration, we were able to achieve about half of the performance of MatLab.
+This was only possible after giving Claude some additional information about the HPC that was being run on. 
+This information was reported in the log file after a run and can be seen below.
+\begin{minted}{shell}
+    === compute node CPU ===
+CPU(s):                                  64
+Model name:                              Intel(R) Xeon(R) Platinum 8358 CPU @ 2.60GHz
+L1d cache:                               3 MiB (64 instances)
+L1i cache:                               2 MiB (64 instances)
+L2 cache:                                80 MiB (64 instances)
+L3 cache:                                96 MiB (2 instances)
+=== vector ISA available ===
+avx2
+avx512f
+avx512vl
+fma
+=== ISA gcc -march=native actually resolves to on this node ===
+  -march=                               icelake-server
+  -mavx                                 [enabled]
+  -mavx2                                [enabled]
+  -mavx256-split-unaligned-load         [disabled]
+  -mavx256-split-unaligned-store        [disabled]
+  -mavx5124fmaps                        [disabled]
+  -mavx5124vnniw                        [disabled]
+  -mavx512bf16                          [disabled]
+  -mavx512bitalg                        [enabled]
+  -mavx512bw                            [enabled]
+  -mavx512cd                            [enabled]
+  -mavx512dq                            [enabled]
+  -mavx512er                            [disabled]
+  -mavx512f                             [enabled]
+  -mavx512ifma                          [enabled]
+  -mavx512pf                            [disabled]
+  -mavx512vbmi                          [enabled]
+  -mavx512vbmi2                         [enabled]
+  -mavx512vl                            [enabled]
+  -mavx512vnni                          [enabled]
+  -mavx512vp2intersect                  [disabled]
+  -mavx512vpopcntdq                     [enabled]
+  -mavxvnni                             [disabled]
+  -mfma                                 [enabled]
+  -mfma4                                [disabled]
+  -msse                                 [enabled]
+  -msse2                                [enabled]
+  -msse2avx                             [disabled]
+  -msse3                                [enabled]
+  -msse4                                [enabled]
+  -msse4.1                              [enabled]
+\end{minted}
+
+Raising \texttt{-mprefer-vector-width} to 512 and sizing the register tile in \texttt{mat\_mat\_multiply.c} off the same \texttt{\_\_AVX512F\_\_}/\texttt{\_\_AVX2\_\_} feature macros that \texttt{-march=native} defines (so the tile always matches the vector width actually available, and the code still compiles correctly on a partition node without AVX-512) took the achieved performance from about 7 GFLOPS/core up to a peak of 33.149 GFLOPS/core at $N=808$, shown alongside the MatLab curve in \cref{fig:comparison}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{../q1_results/comparison_gflops.png}
+    \caption{Final C kernel (1 core) vs. MatLab (8 CPUs / 8) GFLOPS per core.}
+    \label{fig:comparison}
+\end{figure}
+
+\subsection{$N_{1/2}$}
+
+$N_{1/2}$ -- the smallest matrix size at which a curve reaches half of its own peak GFLOPS -- differs sharply between the two:
+\begin{itemize}
+    \item \textbf{C (this work):} peak 33.149 GFLOPS/core; half-peak is 16.575 GFLOPS, first reached at $N_{1/2} = 72$.
+    \item \textbf{MatLab:} peak 80.151 GFLOPS/core; half-peak is 40.076 GFLOPS, first reached at $N_{1/2} = 488$.
+\end{itemize}
+The serial C kernel has essentially no dispatch overhead, so it is already near its (lower) asymptotic rate at very small $N$. MatLab's curve in \cref{fig:comparison} is visibly a step function: below roughly $N=700$ it tracks the C curve or falls under it, then jumps abruptly once $N$ is large enough that MKL's internal multithreading pays for itself, climbing toward its 8-CPU peak. That threading start-up cost is exactly why MatLab needs a much larger $N$ to reach half of its own peak, even though its peak is higher.
+
+\subsection{Comparison to Iteration 1}
+
+Iteration 1 (the naive triple loop, \cref{fig:naive}) peaked at only 0.378 GFLOPS/core (at $N=40$) and settled to a floor of about 0.199 GFLOPS/core for large $N$, since its innermost loop strides through $B$ with stride \texttt{B\_cols} instead of reading it contiguously. Against that baseline, the final version is:
+\begin{itemize}
+    \item $33.149 / 0.378 \approx 88\times$ faster at each curve's own peak.
+    \item $27.372 / 0.199 \approx 138\times$ faster at $N=1992$, comparing large-matrix performance directly.
+\end{itemize}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{../q1_results/naive_implementation_results.png}
+    \caption{Iteration 1 (naive triple loop) GFLOPS per core.}
+    \label{fig:naive}
+\end{figure}
+
+\subsection{Process and Lessons Learned}
+
+The largest single-step gains, in order, came from: (1) loop reordering plus a register-blocked microkernel to stop re-walking $A$ and $B$ from scratch for every output entry, (2) blocking the $K$ and $M$ loops so a slab of $B$ -- already contiguous in row-major storage -- stays cache-resident across many row-blocks of $A$ instead of being re-streamed from memory each time, and (3) matching the microkernel's vector width to what the compute node's CPU actually supports.
+
+Step (2) is a cautionary tale about environment mismatch: it produced a large, clean improvement on a local development machine (eliminating a severe falloff at large $N$), but made \emph{no measurable difference at all} on the actual cluster node -- the peak GFLOPS was identical before and after, and unaffected by changing \texttt{--cpus-per-task} from 1 to 8 and back. That flat ceiling was the signal that the bottleneck on the real hardware wasn't memory bandwidth at all. Rather than keep guessing, we added a short diagnostic block to \texttt{batch\_q1.sh} to print the compute node's CPU model, advertised vector ISA, and what \texttt{-march=native} actually resolves to -- which is what surfaced step (3): the node is an Ice Lake Xeon with full AVX-512, but the Makefile was hard-capping vectorization at 256 bits and the microkernel tile was only sized for one 256-bit register per row, together leaving roughly half of the chip's per-core throughput unused. That single fix accounted for most of the total improvement. The broader lesson: a local machine is not a reliable proxy for the target HPC hardware, and it's worth pulling concrete diagnostics from the actual compute node early rather than assuming the same bottleneck applies everywhere.
+
+We are satisfied with the final result. A peak of 33.149 GFLOPS/core against MatLab's 80.151 is a real gap, but part of that gap is not apples-to-apples: MatLab's ``per-core'' figure is an 8-CPU MKL run divided by 8, not a directly measured single-core run, and the plateau in \cref{fig:comparison} strongly suggests it depends on multithreading to reach its peak at all. Closing more of the remaining gap on the C side would mean packing $A$/$B$ into aligned contiguous panels and retuning the $K/M$ block sizes for the Ice Lake node's actual cache sizes rather than the development machine's, but the current result is a reasonable, well-understood stopping point for a serial kernel.
+
+\section{Problem 2}
+\FloatBarrier
+
+Here we created the ping pong test to measure properties of the communication on one node and between 2 nodes. The ping pong test was run on the \texttt{eng-partition} of the campus cluster.
+
+One note: though the assignment didn't ask us to measure this, it became clear that the inter/intra socket communication on one node has a significant effect on the results. for this reason the plots are also broken up by socket.
+\subsection*{2a.}
+Here we look at single node communication performance. We record the latency, inverse bandwidth, $m_2$ and eager limit.
+These are recorded for $P=64$ in \cref{tab:pp64} and plotted in \cref{fig:pp64}. As noted before, the communication performance is measurably different depending on whether the communication is intra-socket or inter-socket. The eager limit is measured the same across these.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pp_P64_n1.pdf}
+    \caption{Half round-trip time vs.\ message size from rank 0 to every rank $p$, $P=64$ on one node. Thin lines are individual partner ranks; heavy lines are the per-socket medians.}
+    \label{fig:pp64}
+\end{figure}
+
+\begin{table}
+    \centering
+    \input{../q2/analysis/out/summary_pp_P64_n1.tex}
+    \caption{Ping-pong summary, $P=64$ on one node: median over the ranks in each group (self, same node, across nodes, by partner socket).}
+    \label{tab:pp64}
+\end{table}
+
+\FloatBarrier
+\subsection*{2b.}
+
+We move to $P=128$ in \cref{tab:pp128n1} and \cref{fig:pp128n1}. The same trends are observed, but the latency is slightly higher for non-self communication.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pp_P128_n1.pdf}
+    \caption{As \cref{fig:pp64}, $P=128$ on one node.}
+    \label{fig:pp128n1}
+\end{figure}
+
+\begin{table}
+    \centering
+    \input{../q2/analysis/out/summary_pp_P128_n1.tex}
+    \caption{Ping-pong summary, $P=128$ on one node: median over the ranks in each group (self, same node, across nodes, by partner socket).}
+    \label{tab:pp128n1}
+\end{table}
+
+\FloatBarrier
+
+We then move to $P=128$ on two nodes in \cref{tab:pp128n2} and \cref{fig:pp128n2}. We see higher latency for the inter-node communication, the inter-node inverse bandwidth was measured to depend suprisingly on the socket.
+Socket S1 on node 2 was suprisingly close to the Socket 1 on node 1 for inverse bandwidth, but Socket 0 on node 2 was significantly worse. My guess is that this is due to the physical network connections on the cluster.
+The $m_2$ value is strikingly higher for the inter-node communication and again depends on the socket. The eager limit is measured to be the same across all sockets and nodes.
+
+As we continue to increase in ranks on 2 nodes up to $P=196$ and $P=256$ we see the same trends. 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pp_P128_n2.pdf}
+    \caption{As \cref{fig:pp64}, $P=128$ on two nodes.}
+    \label{fig:pp128n2}
+\end{figure}
+
+\begin{table}
+    \centering
+    \input{../q2/analysis/out/summary_pp_P128_n2.tex}
+    \caption{Ping-pong summary, $P=128$ on two nodes: median over the ranks in each group (self, same node, across nodes, by partner socket).}
+    \label{tab:pp128n2}
+\end{table}
+
+\FloatBarrier
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pp_P192_n2.pdf}
+    \caption{As \cref{fig:pp64}, $P=192$ on two nodes.}
+    \label{fig:pp192n2}
+\end{figure}
+
+\begin{table}
+    \centering
+    \input{../q2/analysis/out/summary_pp_P192_n2.tex}
+    \caption{Ping-pong summary, $P=192$ on two nodes: median over the ranks in each group (self, same node, across nodes, by partner socket).}
+    \label{tab:pp192n2}
+\end{table}
+
+\FloatBarrier
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pp_P256_n2.pdf}
+    \caption{As \cref{fig:pp64}, $P=256$ on two nodes.}
+    \label{fig:pp256n2}
+\end{figure}
+
+\begin{table}
+    \centering
+    \input{../q2/analysis/out/summary_pp_P256_n2.tex}
+    \caption{Ping-pong summary, $P=256$ on two nodes: median over the ranks in each group (self, same node, across nodes, by partner socket).}
+    \label{tab:pp256n2}
+\end{table}
+
+\FloatBarrier
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/pp_compare.pdf}
+    \caption{Per-socket median curves of all five configurations: same node (left) and across nodes (right).}
+    \label{fig:pp_compare}
+\end{figure}
+
+\end{document}
