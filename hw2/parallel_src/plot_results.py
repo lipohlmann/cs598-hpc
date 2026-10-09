@@ -56,8 +56,8 @@ plt.rcParams.update(
 def read_csv_if_present(file_name):
     """Return the table in results_directory/file_name, or None if absent."""
     path = os.path.join(results_directory, file_name)
-    if not os.path.exists(path):
-        print(f"skipping: {path} not found")
+    if not os.path.exists(path) or os.path.getsize(path) == 0:
+        print(f"skipping: {path} is missing or empty")
         return None
     return pd.read_csv(path)
 
@@ -65,11 +65,11 @@ def read_csv_if_present(file_name):
 def read_timing_table():
     """The merged timing.csv, or every per-run timing file stacked."""
     merged_path = os.path.join(results_directory, "timing.csv")
-    if os.path.exists(merged_path):
+    if os.path.exists(merged_path) and os.path.getsize(merged_path) > 0:
         return pd.read_csv(merged_path)
     per_run_paths = sorted(glob.glob(os.path.join(results_directory, "timing_P*.csv")))
     if not per_run_paths:
-        print(f"skipping: no timing files in {results_directory}")
+        print(f"skipping: no timing data in {results_directory}")
         return None
     return pd.concat([pd.read_csv(path) for path in per_run_paths])
 

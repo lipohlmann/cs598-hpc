@@ -62,5 +62,9 @@ for grid_size in $GRID_SIZES; do
 done
 
 # One merged table of every timing row in the output directory.
+if ! ls "$OUTPUT_DIR"/timing_P*.csv >/dev/null 2>&1; then
+    echo "no timing files were written to $OUTPUT_DIR -- every run failed; see above" >&2
+    exit 1
+fi
 awk 'FNR>1 || NR==1' "$OUTPUT_DIR"/timing_P*.csv > "$OUTPUT_DIR/timing.csv"
 echo "merged timing rows into $OUTPUT_DIR/timing.csv"
