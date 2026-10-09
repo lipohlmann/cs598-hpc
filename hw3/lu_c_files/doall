@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+make 
+: > logfile
+
+for b in 01 02 03 04 08 16 20 32 40 64
+do
+    echo "$b" > t.dat
+    ./factor < t.dat >> logfile
+    tail -1 logfile
+done
+
+grep time logfile
+

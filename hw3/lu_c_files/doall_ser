@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+make ser_factor
+: > logfile_ser
+
+for b in 01 02 03 04 08 16 20 32 40 64 128
+do
+    echo "$b" > t.dat
+    ./ser_factor 1000 1001 < t.dat >> logfile_ser
+    tail -1 logfile_ser
+done
+
+grep -i time logfile_ser

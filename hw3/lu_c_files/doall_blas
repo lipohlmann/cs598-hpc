@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+make factor_blas
+: > logfile_blas
+
+for b in 01 02 03 04 08 16 20 32 40 64 128
+do
+    echo "$b" > t.dat
+    ./factor_blas 1800 1801 < t.dat >> logfile_blas
+    tail -1 logfile_blas
+done
+
+grep time logfile_blas
