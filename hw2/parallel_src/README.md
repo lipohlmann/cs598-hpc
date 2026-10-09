@@ -10,7 +10,8 @@ grid over P ranks and replaces the two serial transposes with
 On the campus cluster (compute nodes, via Slurm):
 
     ./driver                      # module load, make clean, make, then submit
-                                  # sweep, pingpong and fst_sweep jobs
+                                  # sweep, pingpong and fst_sweep jobs, and
+                                  # plot when they finish
 
     # single runs -- size comes from the sbatch options, args go to test_poisson
     sbatch --ntasks-per-node=16 poisson.sbatch 2048 2048 1 1
@@ -177,6 +178,11 @@ its optional argument):
     sbatch sweep.sbatch        # test_poisson over N, P, both modes; merges timing.csv
     sbatch pingpong.sbatch     # pingpong_intranode.csv, pingpong_internode.csv
     sbatch fst_sweep.sbatch    # fst.csv over (m, n), single core
+
+`plot_results.py [results_directory] [figures_directory]` turns those
+CSV files into the report figures (PNG, default `../report/figures`);
+it needs numpy, pandas and matplotlib. `./driver` submits all three jobs
+and then `plot.sbatch`, which runs the plotter once they have finished.
 
 
 `poisson_residual_op()` (full-grid, serial) is kept in `poisson.c` but

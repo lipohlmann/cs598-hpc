@@ -1,5 +1,6 @@
-# Build everything and submit every job the report needs.  All CSV files
-# land in one output directory (default results):
+# Build everything, submit every job the report needs, then plot.  All
+# CSV files land in one output directory (default results) and the
+# figures in ../report/figures:
 #
 #   ./driver                 # results/
 #   ./driver my_results
@@ -13,6 +14,15 @@ module load openmpi
 make clean
 make || exit 1
 
-sbatch sweep.sbatch     "$OUTPUT_DIR"   # test_poisson over N, P, both transposes
-sbatch pingpong.sbatch  "$OUTPUT_DIR"   # point-to-point, within and across nodes
-sbatch fst_sweep.sbatch "$OUTPUT_DIR"   # single-core FST over (m, n)
+# test_poisson over N, P, both transposes
+sweep_job=$(sbatch --parsable sweep.sbatch "$OUTPUT_DIR")
+# point-to-point, within and across nodes
+pingpong_job=$(sbatch --parsable pingpong.sbatch "$OUTPUT_DIR")
+# single-core FST over (m, n)
+fst_sweep_job=$(sbatch --parsable fst_sweep.sbatch "$OUTPUT_DIR")
+echo "submitted sweep $sweep_job, pingpong $pingpong_job, fst sweep $fst_sweep_job"
+
+# Plot once all three have finished, whether or not they all succeeded;
+# plot_results.py skips figures whose data is missing.
+sbatch --dependency=afterany:$sweep_job:$pingpong_job:$fst_sweep_job \
+    plot.sbatch "$OUTPUT_DIR"
