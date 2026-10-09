@@ -5,6 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
+#SBATCH --mem=16G
 #SBATCH --job-name=fst-sweep
 #SBATCH --output=fst-sweep-%j.log
 
@@ -12,6 +13,7 @@
 # length n = N - 1 for every N in GRID_SIZES, batch size m = 1, 2, 4,
 # ..., N, which covers the local slab sizes N/P of the parallel solver.
 # Appends one row per (m, n) to fst.csv in the output directory.
+# The largest case (m = 8192, n = 8191) needs about 5 GB, hence --mem.
 #
 #   sbatch fst_sweep.sbatch                 # results/
 #   sbatch fst_sweep.sbatch my_results

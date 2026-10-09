@@ -12,19 +12,28 @@
 #
 #   sbatch plot.sbatch                              # results -> ../report/figures
 #   sbatch plot.sbatch my_results my_figures
-#   PYTHON_MODULE=anaconda3 sbatch plot.sbatch      # if "python" is not the module
+#   PYTHON_MODULE=anaconda3/2024.10 sbatch plot.sbatch   # name a module yourself
 #
-# Needs a Python with numpy, pandas and matplotlib.
+# Needs a Python with numpy, pandas and matplotlib.  The modules below
+# are tried in turn until one provides them.
 
 OUTPUT_DIR=${1:-results}
 FIGURES_DIR=${2:-../report/figures}
-PYTHON_MODULE=${PYTHON_MODULE:-python}
+CANDIDATE_PYTHON_MODULES="$PYTHON_MODULE anaconda3 anaconda miniconda3 python"
 
-module load "$PYTHON_MODULE"
-
-if ! python3 -c "import numpy, pandas, matplotlib" 2>/dev/null; then
-    echo "python3 from module '$PYTHON_MODULE' lacks numpy, pandas or matplotlib;" >&2
-    echo "set PYTHON_MODULE, or run plot_results.py where they are installed" >&2
+found_python=no
+for python_module in $CANDIDATE_PYTHON_MODULES; do
+    module load "$python_module" 2>/dev/null
+    if python3 -c "import numpy, pandas, matplotlib" 2>/dev/null; then
+        echo "using python module $python_module"
+        found_python=yes
+        break
+    fi
+    module unload "$python_module" 2>/dev/null
+done
+if [ "$found_python" = no ]; then
+    echo "none of these modules has numpy, pandas and matplotlib: $CANDIDATE_PYTHON_MODULES" >&2
+    echo "set PYTHON_MODULE (see 'module avail'), or run plot_results.py locally" >&2
     exit 1
 fi
 

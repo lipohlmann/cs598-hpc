@@ -37,6 +37,33 @@ if [ ! -x ./test_poisson ]; then
 fi
 mkdir -p "$OUTPUT_DIR"
 
+# What the allocation looks like, for the log.
+echo "=== allocation ==="
+echo "node $(hostname), SLURM_NTASKS=$SLURM_NTASKS, cpus visible to this job: $(nproc)"
+lscpu | grep -E "^CPU\(s\)|Thread\(s\) per core|Core\(s\) per socket|Socket\(s\)"
+mpirun --version | head -1
+
+# Process binding that works here depends on how Slurm hands out cpus
+# (whole cores or hardware threads), so use the first of these that can
+# launch both one rank and a full allocation of ranks.
+MPIRUN_COMMAND=""
+for candidate_command in \
+    "mpirun --map-by core --bind-to core" \
+    "mpirun --map-by hwthread --bind-to hwthread" \
+    "mpirun --bind-to none"; do
+    if $candidate_command -np 1 true >/dev/null 2>&1 &&
+       $candidate_command -np "$SLURM_NTASKS" true >/dev/null 2>&1; then
+        MPIRUN_COMMAND=$candidate_command
+        break
+    fi
+done
+if [ -z "$MPIRUN_COMMAND" ]; then
+    echo "no mpirun binding option could launch $SLURM_NTASKS ranks; the error was:" >&2
+    mpirun --bind-to none -np "$SLURM_NTASKS" true
+    exit 1
+fi
+echo "launching with: $MPIRUN_COMMAND"
+
 for grid_size in $GRID_SIZES; do
     # Rank counts: powers of two up to the allocation, with P <= N - 1.
     rank_counts=""
@@ -54,7 +81,7 @@ for grid_size in $GRID_SIZES; do
                 sample_intervals=$SOLUTION_SAMPLE_INTERVALS
             fi
             echo "=== N=$grid_size P=$num_ranks $transpose_mode ==="
-            mpirun -np "$num_ranks" --map-by core --bind-to core ./test_poisson \
+            $MPIRUN_COMMAND -np "$num_ranks" ./test_poisson \
                 "$grid_size" "$grid_size" 1 1 "$transpose_mode" \
                 "$NUM_REPS" "$sample_intervals" "$OUTPUT_DIR"
         done
