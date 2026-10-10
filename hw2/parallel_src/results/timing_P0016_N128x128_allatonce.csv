@@ -1,0 +1,2 @@
+P,Nx,Ny,mode,M,t_total,t_fst,t_transpose,t_comm,gflops,error
+16,128,128,allatonce,8,2.380180000e-04,6.059300000e-05,1.780460000e-04,1.757220000e-04,1.897385912e+01,1.706940014e-04

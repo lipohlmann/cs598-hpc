@@ -1,0 +1,2 @@
+P,Nx,Ny,mode,M,t_total,t_fst,t_transpose,t_comm,gflops,error
+16,512,512,pairwise,32,3.948508000e-03,1.835126000e-03,2.221815000e-03,2.181019000e-03,2.380736217e+01,1.066743593e-05
