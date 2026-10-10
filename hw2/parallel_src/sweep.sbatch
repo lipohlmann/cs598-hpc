@@ -39,6 +39,7 @@ mkdir -p "$OUTPUT_DIR"
 
 # What the allocation looks like, for the log.
 echo "=== allocation ==="
+echo "cpu model: $(lscpu | grep 'Model name' | sed 's/.*: *//')"
 echo "node $(hostname), SLURM_NTASKS=$SLURM_NTASKS, cpus visible to this job: $(nproc)"
 lscpu | grep -E "^CPU\(s\)|Thread\(s\) per core|Core\(s\) per socket|Socket\(s\)"
 mpirun --version | head -1

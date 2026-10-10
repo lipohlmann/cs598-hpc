@@ -10,9 +10,13 @@
 
 OUTPUT_DIR=${1:-results}
 
+# Build for a cpu every compute node has, not for the login node's
+# (-march=native there gives "Illegal instruction" on the compute nodes).
+ARCH=${ARCH:-x86-64-v3}
+
 module load openmpi
 make clean
-make || exit 1
+make ARCH="$ARCH" || exit 1
 
 # test_poisson over N, P, both transposes
 sweep_job=$(sbatch --parsable sweep.sbatch "$OUTPUT_DIR")

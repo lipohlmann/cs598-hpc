@@ -1,6 +1,11 @@
 MPICC ?= mpicc
 CFLAGS_COMMON = -std=c99 -D_POSIX_C_SOURCE=199309L -Wall -Wextra
-CFLAGS_OPT    = -O3 -march=native -ffast-math -fno-unroll-loops
+# Instruction set to compile for.  "native" is only safe when the code
+# runs on the same kind of cpu it was built on; the cluster's login and
+# compute nodes differ, so ./driver builds with ARCH=x86-64-v3 (AVX2 +
+# FMA), which every compute node can run.
+ARCH ?= native
+CFLAGS_OPT    = -O3 -march=$(ARCH) -ffast-math -fno-unroll-loops
 LIBS = -lm
 
 MAKEFLAGS += -r   # disable make's built-in implicit rules, so a config

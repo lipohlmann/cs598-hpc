@@ -28,6 +28,8 @@ if [ ! -x ./pingpong ]; then
 fi
 mkdir -p "$OUTPUT_DIR"
 
+echo "node $(hostname): $(lscpu | grep 'Model name' | sed 's/.*: *//')"
+
 echo "=== intranode ==="
 mpirun -np 2 --map-by core --bind-to core --report-bindings \
     ./pingpong "$MAX_BYTES" "$OUTPUT_DIR" intranode

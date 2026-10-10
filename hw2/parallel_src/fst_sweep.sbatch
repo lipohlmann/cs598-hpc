@@ -31,6 +31,7 @@ if [ ! -x ./test_block_fst ]; then
     exit 1
 fi
 mkdir -p "$OUTPUT_DIR"
+echo "node $(hostname): $(lscpu | grep 'Model name' | sed 's/.*: *//')"
 rm -f "$OUTPUT_DIR/fst.csv"   # rows are appended, so start a fresh table
 
 for grid_size in $GRID_SIZES; do

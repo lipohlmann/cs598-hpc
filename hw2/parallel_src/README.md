@@ -9,7 +9,7 @@ grid over P ranks and replaces the two serial transposes with
 
 On the campus cluster (compute nodes, via Slurm):
 
-    ./driver                      # module load, make clean, make, then submit
+    ./driver                      # module load, make clean, make ARCH=x86-64-v3, then submit
                                   # sweep, pingpong and fst_sweep jobs, and
                                   # plot when they finish
 
