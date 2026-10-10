@@ -1,0 +1,5 @@
+using python module anaconda3
+skipping: no timing data in results
+skipping: no solution files in results
+wrote ../report/figures/single_core_fst_gflops_versus_batch_size.png
+wrote ../report/figures/pingpong_time_versus_message_size.png
