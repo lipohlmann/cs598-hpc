@@ -131,12 +131,12 @@ The above results would indicate that gains from parallelism would perhaps be be
 % TODO: Might be good to add some kind of relative difference plot here for the 2 methods when they are close.
 
 In \cref{fig:fst-and-communication-time} we compare the communication of the two transpose methods across four different values of $n$.
-In the plot \cref{fig:fst-time-versus-ranks} shows a largely negligible difference in the two algorithms. 
+In the plot \cref{fig:fst-time-versus-ranks} shows a largely negligible difference in the two algorithms.
 The differences in there performances there vary far less than how each method scales with ranks.
 \cref{fig:fst-time-versus-rows-per-rank} tells a similar story.
 The plot which shows to a greater degree how these two differ is \cref{fig:communication-time-versus-ranks}.
 Here we see the all-at-once largely outperform the the pairwise case.
-Notably, the gap is largest at small $n$ where the latency dominates. 
+Notably, the gap is largest at small $n$ where the latency dominates.
 It narrows at larger $n$ where this is not the case.
 
 
@@ -203,6 +203,9 @@ It narrows at larger $n$ where this is not the case.
 \FloatBarrier
 
 \pagebreak
+
+A ping-pong test was performed, with results reported in \cref{fig:pingpong-time-versus-message-size}.
+As expected, the internode message hovers about the same distance away from the intranode messaging, showing how the message communication asymptotically approaches a fixed value of time for jumping a message across nodes.
 
 \begin{figure}[htbp]
   \centering
