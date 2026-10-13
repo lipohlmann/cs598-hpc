@@ -113,7 +113,9 @@ def set_log_log_axes():
 
 
 def plot_solution_contours():
-    solution_paths = sorted(glob.glob(os.path.join(results_directory, "solution_*.csv")))
+    solution_paths = sorted(
+        glob.glob(os.path.join(results_directory, "solution_*.csv"))
+    )
     if not solution_paths:
         print(f"skipping: no solution files in {results_directory}")
     for solution_path in solution_paths:
@@ -148,11 +150,18 @@ def plot_solution_contours():
 def plot_max_error_versus_grid_size(timing_table):
     error_for_grid_size = timing_table.groupby("Nx")["error"].max()
     grid_sizes = error_for_grid_size.index.to_numpy(dtype=float)
-    second_order_reference = error_for_grid_size.iloc[0] * (grid_sizes[0] / grid_sizes) ** 2
+    second_order_reference = (
+        error_for_grid_size.iloc[0] * (grid_sizes[0] / grid_sizes) ** 2
+    )
 
     plt.plot(grid_sizes, error_for_grid_size, marker="o", label="max error")
-    plt.plot(grid_sizes, second_order_reference, color="#898781", linestyle=":",
-             label="second order reference, $N^{-2}$")
+    plt.plot(
+        grid_sizes,
+        second_order_reference,
+        color="#898781",
+        linestyle=":",
+        label="second order reference, $N^{-2}$",
+    )
     set_log_log_axes()
     plt.xlabel("Grid size N = Nx = Ny")
     plt.ylabel("Max error |u computed - u exact|")
@@ -211,11 +220,47 @@ def plot_gflops_versus_ranks(timing_table):
     save_figure("gflops_versus_ranks")
 
 
+def find_efficiency_crossing(run_group, target_efficiency):
+    """Where one efficiency curve first drops below target_efficiency.
+
+    Interpolates linearly in log2(P) between the two neighbouring rank
+    counts that bracket the target.  Returns None if the curve never
+    drops below it, else a dict with the bracketing rank counts, the
+    interpolated rank count, the grid points per rank there, and the
+    aggregate GFLOPS there (GFLOPS = efficiency * P * single rank GFLOPS).
+    """
+    run_group = run_group.sort_values("P")
+    num_ranks = run_group["P"].to_numpy(dtype=float)
+    efficiency = run_group["parallel_efficiency"].to_numpy()
+    below_target = np.flatnonzero(efficiency < target_efficiency)
+    if len(below_target) == 0 or below_target[0] == 0:
+        return None
+    upper = below_target[0]
+    lower = upper - 1
+    fraction = (efficiency[lower] - target_efficiency) / (
+        efficiency[lower] - efficiency[upper]
+    )
+    crossing_ranks = 2 ** (
+        np.log2(num_ranks[lower])
+        + fraction * (np.log2(num_ranks[upper]) - np.log2(num_ranks[lower]))
+    )
+    grid_points = run_group["Nx"].iloc[0] * run_group["Ny"].iloc[0]
+    single_rank_gflops = run_group["gflops"].iloc[0]  # sorted, so this is P = 1
+    return {
+        "lower_ranks": int(num_ranks[lower]),
+        "upper_ranks": int(num_ranks[upper]),
+        "crossing_ranks": crossing_ranks,
+        "grid_points_per_rank": grid_points / crossing_ranks,
+        "gflops": target_efficiency * crossing_ranks * single_rank_gflops,
+    }
+
+
 def plot_parallel_efficiency_versus_points_per_rank(timing_table):
     # efficiency = T(1 rank) / (P * T(P ranks)), per grid size and transpose mode
-    single_rank_time = (
-        timing_table[timing_table["P"] == 1].set_index(["Nx", "mode"])["t_total"]
-    )
+    target_efficiency = 0.8
+    single_rank_time = timing_table[timing_table["P"] == 1].set_index(["Nx", "mode"])[
+        "t_total"
+    ]
     efficiency_table = timing_table.join(
         single_rank_time.rename("single_rank_time"), on=["Nx", "mode"]
     )
@@ -229,7 +274,63 @@ def plot_parallel_efficiency_versus_points_per_rank(timing_table):
     plot_one_curve_per_grid_size_and_mode(
         efficiency_table, "grid_points_per_rank", "parallel_efficiency"
     )
-    plt.axhline(0.8, color="#898781", linestyle=":")
+
+    # The P = 1 point of each curve is the reference run itself, so its
+    # efficiency is 1 by definition: draw it hollow, not as a measurement.
+    print(f"{target_efficiency:.0%} parallel efficiency crossings:")
+    print("    N,  mode,       between P,    P_cross,     n / P,   GFLOPS")
+    for (grid_size, transpose_mode), run_group in efficiency_table.groupby(
+        ["Nx", "mode"]
+    ):
+        reference_run = run_group[run_group["P"] == 1]
+        plt.plot(
+            reference_run["grid_points_per_rank"],
+            reference_run["parallel_efficiency"],
+            color=COLOR_FOR_GRID_SIZE.get(grid_size, "black"),
+            marker=MARKER_FOR_TRANSPOSE_MODE[transpose_mode],
+            markerfacecolor="white",
+            linestyle="none",
+            zorder=3,
+        )
+        crossing = find_efficiency_crossing(run_group, target_efficiency)
+        if crossing is None:
+            continue
+        plt.plot(
+            crossing["grid_points_per_rank"],
+            target_efficiency,
+            color="black",
+            marker="x",
+            markersize=8,
+            linestyle="none",
+            zorder=4,
+        )
+        print(
+            f"{grid_size:5d},  {transpose_mode:9s},  "
+            f"{crossing['lower_ranks']:3d} and {crossing['upper_ranks']:<3d},  "
+            f"{crossing['crossing_ranks']:7.2f},  "
+            f"{crossing['grid_points_per_rank']:8.3g},  {crossing['gflops']:7.2f}"
+        )
+    plt.plot(
+        [],
+        [],
+        color="#898781",
+        marker="o",
+        markerfacecolor="white",
+        linestyle="none",
+        label="P = 1 reference (1 by definition)",
+    )
+    plt.plot(
+        [],
+        [],
+        color="black",
+        marker="x",
+        markersize=8,
+        linestyle="none",
+        label="80% crossing (interpolated)",
+    )
+    add_legend_below_axes()
+
+    plt.axhline(target_efficiency, color="#898781", linestyle=":")
     plt.xscale("log")
     plt.xlabel("Grid points per rank n / P")
     plt.ylabel("Parallel efficiency $T_1 / (P \\, T_P)$")
@@ -338,10 +439,21 @@ def plot_model_versus_measured_solve_time(timing_table, fst_table, pingpong_tabl
             for num_ranks in run_group["P"]
         ]
         color = COLOR_FOR_GRID_SIZE.get(grid_size, "black")
-        plt.plot(run_group["P"], run_group["t_total"], color=color, marker="o",
-                 linestyle="none", label=f"N = {grid_size}, measured")
-        plt.plot(run_group["P"], model_times, color=color, linestyle="--",
-                 label=f"N = {grid_size}, model")
+        plt.plot(
+            run_group["P"],
+            run_group["t_total"],
+            color=color,
+            marker="o",
+            linestyle="none",
+            label=f"N = {grid_size}, measured",
+        )
+        plt.plot(
+            run_group["P"],
+            model_times,
+            color=color,
+            linestyle="--",
+            label=f"N = {grid_size}, model",
+        )
     set_log_log_axes()
     plt.xlabel("Number of ranks P")
     plt.ylabel("Total solve time (s)")
@@ -380,7 +492,11 @@ def main():
     if pingpong_tables:
         plot_pingpong_time_versus_message_size(pingpong_tables)
 
-    if timing_table is not None and fst_table is not None and "intranode" in pingpong_tables:
+    if (
+        timing_table is not None
+        and fst_table is not None
+        and "intranode" in pingpong_tables
+    ):
         plot_model_versus_measured_solve_time(
             timing_table, fst_table, pingpong_tables["intranode"]
         )
