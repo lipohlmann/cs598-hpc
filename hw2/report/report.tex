@@ -18,8 +18,6 @@
   citecolor=black
 }
 
-\usepackage{minted}
-\setminted{frame=single}
 \usepackage[capitalise,noabbrev]{cleveref}
 
 \lstset{
@@ -44,6 +42,8 @@
 \section{Problem 1}
 
 % ---------------------------------------------------------------- verification
+\subsection{Verification}
+
 
 As demonstrated with \cref{fig:solution-contours,fig:max-error-versus-grid-size}, the implemeted algorithm converges to the correct solution with the expected quadratic convergence rate.
 
@@ -86,7 +86,7 @@ As demonstrated with \cref{fig:solution-contours,fig:max-error-versus-grid-size}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.6\textwidth]{figures/max_error_versus_grid_size.png}
+  \includegraphics[width=0.45\textwidth]{figures/max_error_versus_grid_size.png}
   \caption{Maximum error of the computed solution versus grid size
     $N = N_x = N_y$, with an $N^{-2}$ reference line.}
   \label{fig:max-error-versus-grid-size}
@@ -94,7 +94,11 @@ As demonstrated with \cref{fig:solution-contours,fig:max-error-versus-grid-size}
 
 \FloatBarrier
 
+
+
 % ------------------------------------------------------------ parallel scaling
+\subsection{Parallel Scalability}
+
 As indicated by \cref{fig:parallel-scaling}, the benefits of increased number of ranks in a simulation is very much a function of the size of the problem ($N$, in this case).
 For example, as indicated by \cref{fig:total-solve-time-versus-ranks}, the maximum compute time for a single problem size is \emph{maximized} when $P=N/2$, which is in some ways counterintuitive, as one would normally expect the compute time to \emph{strictly decrease} with the number of processors.
 Interestingly, while the gains in GFLOPS achieved by the increase in processors is clear, the decrease in compute time as a function of processors is marginal at best, given that the total solve time goes from less than a second to less than less than a second\footnote{This is indeed stated with a bit of tongue in cheek.}.
@@ -120,6 +124,22 @@ The above results would indicate that gains from parallelism would perhaps be be
     all-at-once, dashed: pairwise).}
   \label{fig:parallel-scaling}
 \end{figure}
+
+\FloatBarrier
+
+\subsection{Transpose Comparison}
+% TODO: Might be good to add some kind of relative difference plot here for the 2 methods when they are close.
+
+In \cref{fig:fst-and-communication-time} we compare the communication of the two transpose methods across four different values of $n$.
+In the plot \cref{fig:fst-time-versus-ranks} shows a largely negligible difference in the two algorithms. 
+The differences in there performances there vary far less than how each method scales with ranks.
+\cref{fig:fst-time-versus-rows-per-rank} tells a similar story.
+The plot which shows to a greater degree how these two differ is \cref{fig:communication-time-versus-ranks}.
+Here we see the all-at-once largely outperform the the pairwise case.
+Notably, the gap is largest at small $n$ where the latency dominates. 
+It narrows at larger $n$ where this is not the case.
+
+
 
 \begin{figure}[htbp]
   \centering
@@ -153,8 +173,12 @@ The above results would indicate that gains from parallelism would perhaps be be
 
 \FloatBarrier
 
-% --------------------------------------------- single core and communication
 
+
+
+\pagebreak
+% --------------------------------------------- single core and communication
+\subsection{Single Core}
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}{0.49\textwidth}
@@ -174,6 +198,11 @@ The above results would indicate that gains from parallelism would perhaps be be
     fast sine transform alone, the latter for each transform length $n$.}
   \label{fig:single-core-performance}
 \end{figure}
+
+
+\FloatBarrier
+
+\pagebreak
 
 \begin{figure}[htbp]
   \centering
