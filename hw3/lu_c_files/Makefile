@@ -1,12 +1,14 @@
-# Hand-coded version: Homebrew GCC
-CC = /opt/homebrew/bin/gcc-15
+# Hand-coded version: GCC (module gcc/13.3.0)
+CC = /sw/apps/gcc/13.3.0/bin/gcc
 
-# Apple Accelerate version: Apple Clang
-ACCEL_CC = /usr/bin/clang
+# BLAS version: same GCC, linked against FlexiBLAS (defaults to OpenBLAS).
+# Select a different backend at runtime with e.g. FLEXIBLAS=NETLIB ./factor_blas
+BLAS_CC   = $(CC)
+BLAS_INC  = -I/usr/include/flexiblas
+BLAS_LIBS = -lflexiblas
 
 CFLAGS = -O3 -march=native -std=c11 -Wall -Wextra
-ACCEL_CFLAGS = -O3 -march=native -std=c11 -Wall -Wextra \
-               -DACCELERATE_NEW_LAPACK
+BLAS_CFLAGS = $(CFLAGS) $(BLAS_INC)
 
 all: factor factor_blas
 
@@ -21,15 +23,15 @@ factor.o: factor.c
 	$(CC) $(CFLAGS) -c factor.c -o factor.o
 
 # ------------------------------------------------------------
-# Apple Accelerate cblas_dgemm
+# CBLAS cblas_dgemm (FlexiBLAS / OpenBLAS)
 # ------------------------------------------------------------
 
 factor_blas: factor_blas.o
-	$(ACCEL_CC) $(ACCEL_CFLAGS) factor_blas.o -o factor_blas \
-	    -framework Accelerate -lm
+	$(BLAS_CC) $(BLAS_CFLAGS) factor_blas.o -o factor_blas \
+	    $(BLAS_LIBS) -lm
 
 factor_blas.o: factor_blas.c
-	$(ACCEL_CC) $(ACCEL_CFLAGS) -c factor_blas.c -o factor_blas.o
+	$(BLAS_CC) $(BLAS_CFLAGS) -c factor_blas.c -o factor_blas.o
 
 # ------------------------------------------------------------
 

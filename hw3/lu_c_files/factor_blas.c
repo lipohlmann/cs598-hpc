@@ -17,7 +17,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#ifdef __APPLE__
 #include <Accelerate/Accelerate.h>
+#else
+#include <cblas.h>
+#endif
 
 #define Aij(a,ld,i,j) ((a)[(size_t)(i) + (size_t)(ld)*(size_t)(j)])
 
