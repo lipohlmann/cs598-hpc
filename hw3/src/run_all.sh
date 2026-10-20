@@ -33,10 +33,7 @@ for s in "${SWEEPS[@]}"; do
 done
 
 dep=$(IFS=:; echo "${ids[*]}")
-plot=$(sbatch --parsable --dependency=afterany:"$dep" \
-    --account=26fa-cs598pa-eng --partition=eng-instruction \
-    --nodes=1 --ntasks=1 --time=00:10:00 --job-name=lu-plot \
-    --output=lu-plot-%j.log \
-    --wrap="cd $PWD && python3 plot_results.py $(printf 'lu-sweep-%s.log ' "${ids[@]}") -o ../report/figs")
+plot=$(sbatch --parsable --dependency=afterany:"$dep" --export=ALL plot.sbatch \
+    $(printf 'lu-sweep-%s.log ' "${ids[@]}"))
 echo "submitted plot job $plot (runs after: $dep)"
 echo "watch with: squeue -u \$USER ; result: lu-plot-$plot.log"
