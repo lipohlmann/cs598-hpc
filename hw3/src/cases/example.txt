@@ -1,0 +1,13 @@
+# <nranks> <executable> [args...]       (optional INPUT=<stdin> prefix)
+# Edit freely: these lines just show the format.
+
+# correctness: same n, several rank counts
+INPUT=8 1  ./factor_parallel 300 301
+INPUT=8 4  ./factor_parallel 300 301
+INPUT=8 6  ./factor_parallel 300 301
+
+# strong scaling: n fixed, ranks increasing
+INPUT=8 1  ./factor_parallel 4000 4001
+INPUT=8 4  ./factor_parallel 4000 4001
+INPUT=8 16 ./factor_parallel 4000 4001
+INPUT=8 64 ./factor_parallel 4000 4001
