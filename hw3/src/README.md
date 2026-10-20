@@ -124,11 +124,15 @@ other ranks get EOF. Command-line arguments reach every rank.
 
 ## Batch jobs (Slurm)
 
-**Not usable with the current `main` yet.** The examples below, and
-`cases/example.txt`, use the planned interface
-`./factor_parallel m n` with the block size on stdin, which the fixed-size
-test `main` doesn't accept. Switch `main` to that interface before
-submitting timing runs.
+`main` now has two modes. With no args (or `nb [P Q]`) it runs the 11 x 12
+print test. With `m n [P Q]` (first arg >= 8) it runs a timed factorization:
+`nb` comes from stdin (default 1), P x Q defaults to `MPI_Dims_create`, and rank 0
+prints one line
+
+    RESULT m n nb P Q nranks time_s gflops gflops_per_rank rel_err
+
+`rel_err` checks x = ones without gathering (column m vs row sums of U), so it
+should be ~1e-14. GFLOPS uses (2/3) m^3.
 
 Both scripts use account `26fa-cs598pa-eng`, partition
 `eng-instruction`, and `--constraint=amd`, which selects the EPYC 7713
@@ -184,3 +188,14 @@ weak scaling are both just lists of lines in a cases file.
     sweep.sbatch     a list of runs in one Slurm job
     cases/           example cases file
     mkl_shim/        cblas.h -> mkl_cblas.h, used only with BLAS=mkl
+
+## Scaling runs and plots (Q1)
+
+    python3 make_cases.py                      # cases/strong.txt weak_*.txt verify.txt
+    sbatch sweep.sbatch cases/strong.txt
+    sbatch sweep.sbatch cases/weak_250k.txt    # likewise weak_1M, weak_4M, verify
+    python3 plot_results.py lu-sweep-*.log -o ../report/figs
+
+`plot_results.py` writes `results.csv`, `strong.png`, `weak.png`, `gflops.png`,
+`efficiency_footprint.png`, and prints peak GFLOPS and the interpolated n^2/(PQ)
+needed for 80% efficiency (efficiency = GFLOPS/rank vs the 1-rank run).
