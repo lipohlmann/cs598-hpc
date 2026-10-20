@@ -109,7 +109,7 @@ def gflops_plot(df, out):
         series(a2, g["np"], g["gflops_rank"], i, f"n²/PQ = {k:.3g}")
     for a in (a1, a2):
         a.set_xscale("log", base=2)
-    a1.set_yscale("log"); a1.plot([1, df["np"].max()], [df[df.np == 1].gflops.max()] * 2, "k:", lw=0)
+    a1.set_yscale("log")
     style(a1, "ranks (P Q)", "total GFLOPS", "Total GFLOPS (weak-scaling runs)")
     style(a2, "ranks (P Q)", "GFLOPS per rank", "GFLOPS per rank")
     a2.set_ylim(bottom=0); a1.legend()
