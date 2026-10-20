@@ -1,7 +1,63 @@
 # hw3 / src: build and test harness
 
-Build and run tooling for the parallel LU code. None of it refers to a
+Parallel LU factorization (no pivoting) on a 2D block-cyclic layout, plus
+the build and run tooling for it. The tooling doesn't refer to any
 specific source file, so it keeps working as the code changes.
+
+## Code
+
+| File                | Contents                                                       |
+|---------------------|----------------------------------------------------------------|
+| `layout.h`          | `Aij` column-major macro, `Layout` struct, helper prototypes   |
+| `layout.c`          | block-cyclic layout helpers, test matrix, gather-and-print     |
+| `factor_parallel.c` | `lu_unblocked` and a small test `main`                         |
+
+### Layout
+
+The m x n matrix is split into `nb x nb` blocks dealt round-robin over a
+P x Q process grid. Rank r sits at grid position
+`(myrow, mycol) = (r % P, r / P)` (column-major). With `nb = 1` this is the
+interleaved layout from `lu.pdf`. Each rank stores only its own
+`mloc x nloc` piece, column-major with `lda = max(1, mloc)`, and all code
+indexes it with local indices.
+
+| Helper                        | Purpose                                                    |
+|-------------------------------|------------------------------------------------------------|
+| `build_local(m,n,nb,P,Q,...)` | fills a `Layout`; aborts if `P*Q` != number of ranks       |
+| `numroc(n,nb,iproc,nprocs)`   | how many of the n rows/cols process coordinate `iproc` owns (ScaLAPACK name) |
+| `global_row/col`              | local index -> global index                                |
+| `owner_row/col`               | global index -> owning process row/col                     |
+| `local_row/col`               | global index -> local index (valid on the owner)           |
+| `spd(a, lda, L)`              | fills my piece of the hw3 test matrix                      |
+| `print_global(a,lda,name,L,comm)` | gathers to rank 0 and prints; all ranks call it; small sizes only |
+
+`numroc(k+1, nb, myrow, P)` is also the first local row whose global index
+is greater than k, which is how the factorization finds the start of its
+trailing matrix.
+
+### Test matrix
+
+From `hw3.pdf`, with N = m + 1: A = S + N*I, where
+s_ij = sqrt(2/N) sin(pi*i*j/N) for i, j = 1..m. S is symmetric and
+orthogonal, so A is SPD (eigenvalues N +/- 1) and needs no pivoting.
+Columns beyond m (the augmented `[A | b]` system from `lu.pdf`) get
+b = A * ones, so the exact solution is all ones.
+
+### Factorization
+
+`lu_unblocked` is the BLAS1 right-looking algorithm from `lu.pdf`, one
+column at a time for k = 0 .. min(m,n)-1:
+
+1. The process row owning row k broadcasts it (columns >= k, so the
+   diagonal entry a(k,k) goes along) down each process column.
+2. The process column owning column k computes the multipliers
+   a(i,k) <- -a(i,k)/a(k,k) for i > k.
+3. It broadcasts them across each process row.
+4. Every rank applies the rank-1 update to its trailing part.
+
+The storage matches `../factor.c`: -L strictly below the diagonal (unit
+diagonal implied), U on and above it. The algorithm is unblocked whatever
+the value of `nb`; `nb` only sets the data distribution. Use `nb = 1` for Q1.
 
 ## Build
 
@@ -42,15 +98,37 @@ The libraries are the single-threaded ones (`-lblis`,
 Small P and small n only. The login node has no InfiniBand, so
 `run_local.sh` switches OpenMPI to shared memory.
 
-    ./run_local.sh 4 ./factor_parallel 300 301
-    INPUT=8 ./run_local.sh 4 ./factor_parallel 300 301     # sends "8" on stdin
-    make check PROG=factor_parallel NP=4 ARGS="300 301" INPUT=8
+The current `main` is a fixed-size correctness test: it builds the
+11 x 12 `[A | b]`, prints it, factors it, and prints the result.
+
+    ./factor_parallel [nb [P Q]]      # defaults: nb=2, P=2, Q=nranks/2
+
+    ./run_local.sh 1 ./factor_parallel 1 1 1      # serial reference
+    ./run_local.sh 4 ./factor_parallel            # nb=2, 2x2 grid
+    ./run_local.sh 4 ./factor_parallel 3 4 1      # nb=3, 4x1 grid
+    ./run_local.sh 6 ./factor_parallel 2 2 3      # nb=2, 2x3 grid
+    make check PROG=factor_parallel NP=4 ARGS="2 2 2"
+
+Pass P and Q together. With 1 rank or an odd number of ranks the default
+P=2 doesn't fit, so give them explicitly. The `LU` block should be
+identical for every nb, P and Q (save each output to a file and `diff`).
+In the last row, U(11,11) and U(11,12) should be equal, because x = ones.
+
+`run_local.sh` can also send stdin to the program:
+
+    INPUT=8 ./run_local.sh 4 ./prog ...           # sends "8" on stdin
 
 **stdin only reaches rank 0.** If the program reads the block size
 with `scanf`, rank 0 has to read it and broadcast it. Otherwise the
 other ranks get EOF. Command-line arguments reach every rank.
 
 ## Batch jobs (Slurm)
+
+**Not usable with the current `main` yet.** The examples below, and
+`cases/example.txt`, use the planned interface
+`./factor_parallel m n` with the block size on stdin, which the fixed-size
+test `main` doesn't accept. Switch `main` to that interface before
+submitting timing runs.
 
 Both scripts use account `26fa-cs598pa-eng`, partition
 `eng-instruction`, and `--constraint=amd`, which selects the EPYC 7713
@@ -97,6 +175,9 @@ weak scaling are both just lists of lines in a cases file.
 
 ## Files
 
+    layout.h         Layout struct, Aij macro, helper prototypes
+    layout.c         block-cyclic helpers, test matrix, print_global
+    factor_parallel.c  lu_unblocked and the test main
     Makefile         build rules described above
     run_local.sh     mpirun on the login node (shared-memory transport)
     run.sbatch       one Slurm run
