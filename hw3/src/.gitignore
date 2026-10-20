@@ -1,0 +1,4 @@
+*.o
+factor_parallel
+results.csv
+lu-*.log

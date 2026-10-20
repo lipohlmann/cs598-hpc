@@ -12,7 +12,8 @@ cd "$(dirname "$0")"
 
 source /etc/profile >/dev/null 2>&1 || true
 module load openmpi amd/aocl-aocc/aocl-aocc-5.0.0
-make
+make clean
+make      # always rebuild: a stale binary would silently run the wrong code
 python3 make_cases.py
 
 # case file : time limit
