@@ -153,6 +153,7 @@ def main():
     df = parse(paths)
     if df.empty:
         raise SystemExit("no RESULT lines found")
+    df = df[df["nb"] == 1]                      # Q1 scaling uses nb = 1 only
     bad = df[(df["err"] > ERR_TOL) | (df["err"] < 0) & (df["n"] == df["m"] + 1)]
     if len(bad):
         print(f"WARNING: {len(bad)} runs with rel_err > {ERR_TOL}:\n{bad}")

@@ -28,16 +28,18 @@ for b in 32 64 128; do
     done
 done
 
-ids=()
+ids=()        # all jobs (the plot job waits for every one)
+plot_ids=()   # jobs whose logs are plotted (verify runs are not)
 for s in "${SWEEPS[@]}"; do
     cases=${s%%:*}; tlim=${s#*:}
     id=$(sbatch --parsable --time="$tlim" sweep.sbatch "$cases")
     echo "submitted $cases -> job $id"
     ids+=("$id")
+    case "$cases" in *q2_verify.txt) ;; *) plot_ids+=("$id") ;; esac
 done
 
 dep=$(IFS=:; echo "${ids[*]}")
 plot=$(sbatch --parsable --dependency=afterany:"$dep" --export=ALL plot.sbatch \
-    $(printf 'lu-sweep-%s.log ' "${ids[@]}"))
+    $(printf 'lu-sweep-%s.log ' "${plot_ids[@]}"))
 echo "submitted plot job $plot (runs after: $dep)"
 echo "watch with: squeue -u \$USER ; result: lu-plot-$plot.log"
