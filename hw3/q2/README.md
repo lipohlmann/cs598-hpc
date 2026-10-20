@@ -9,7 +9,7 @@ Q1 build/run tooling plus the blocked factorization. Branch: `q2-blocked`.
 | `layout.c/.h`      | block-cyclic layout (copy of Q1's)                                |
 | `make_cases.py`    | writes `cases/q2_*.txt`                                           |
 | `plot_results.py`  | parses logs -> `results.csv`, `q2_*.png`, best-b and 80% tables   |
-| `run_all.sh`       | build, submit all sweeps, then a dependent plot job               |
+| `run_all.sh`       | build, submit all sweeps, then a dependent plot job (`plot.sbatch`, loads a python module; override with `PYTHON_MODULE=`) |
 
 ## Algorithm
 Distribution block = pivot block = b (`nb` on stdin). For each diagonal block:
