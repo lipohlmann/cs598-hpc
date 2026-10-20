@@ -1,0 +1,26 @@
+node(s) ccc0392: AMD EPYC 7713 64-Core Processor, SLURM_NTASKS=128
+launching with: mpirun --map-by core --bind-to core
+=== np=1 input=1 cmd=./factor_parallel 1000 1001 1 1 ===
+RESULT 1000 1001 1 1 1 1 8.215307e-02 8.114933 8.114933 6.957e-15
+=== exit 0 ===
+=== np=2 input=1 cmd=./factor_parallel 1414 1415 1 2 ===
+RESULT 1414 1415 1 1 2 2 1.278661e-01 14.740141 7.370071 1.051e-14
+=== exit 0 ===
+=== np=4 input=1 cmd=./factor_parallel 2000 2001 2 2 ===
+RESULT 2000 2001 1 2 2 4 2.082855e-01 25.605876 6.401469 7.129e-15
+=== exit 0 ===
+=== np=8 input=1 cmd=./factor_parallel 2828 2829 2 4 ===
+RESULT 2828 2829 1 2 4 8 9.830257e-01 15.338471 1.917309 1.454e-14
+=== exit 0 ===
+=== np=16 input=1 cmd=./factor_parallel 4000 4001 4 4 ===
+RESULT 4000 4001 1 4 4 16 1.565013e+00 27.262812 1.703926 1.266e-14
+=== exit 0 ===
+=== np=32 input=1 cmd=./factor_parallel 5657 5658 4 8 ===
+RESULT 5657 5658 1 4 8 32 2.927973e+00 41.219261 1.288102 8.435e-14
+=== exit 0 ===
+=== np=64 input=1 cmd=./factor_parallel 8000 8001 8 8 ===
+RESULT 8000 8001 1 8 8 64 7.451579e+00 45.806844 0.715732 1.703e-13
+=== exit 0 ===
+=== np=128 input=1 cmd=./factor_parallel 11314 11315 8 16 ===
+RESULT 11314 11315 1 8 16 128 1.041175e+01 92.732867 0.724476 7.460e-14
+=== exit 0 ===

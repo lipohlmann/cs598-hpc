@@ -1,0 +1,74 @@
+node(s) ccc0393: AMD EPYC 7713 64-Core Processor, SLURM_NTASKS=128
+launching with: mpirun --map-by hwthread --bind-to hwthread
+=== np=1 input=1 cmd=./factor_parallel 1000 1001 1 1 ===
+RESULT 1000 1001 1 1 1 1 8.666789e-02 7.692199 7.692199 6.957e-15
+=== exit 0 ===
+=== np=2 input=1 cmd=./factor_parallel 1000 1001 1 2 ===
+RESULT 1000 1001 1 1 2 2 5.266879e-02 12.657717 6.328859 6.736e-15
+=== exit 0 ===
+=== np=4 input=1 cmd=./factor_parallel 1000 1001 2 2 ===
+RESULT 1000 1001 1 2 2 4 3.752091e-02 17.767869 4.441967 6.736e-15
+=== exit 0 ===
+=== np=8 input=1 cmd=./factor_parallel 1000 1001 2 4 ===
+RESULT 1000 1001 1 2 4 8 2.759771e-02 24.156592 3.019574 6.736e-15
+=== exit 0 ===
+=== np=16 input=1 cmd=./factor_parallel 1000 1001 4 4 ===
+RESULT 1000 1001 1 4 4 16 1.778061e-02 37.494025 2.343377 6.736e-15
+=== exit 0 ===
+=== np=32 input=1 cmd=./factor_parallel 1000 1001 4 8 ===
+RESULT 1000 1001 1 4 8 32 1.680944e-02 39.660264 1.239383 7.068e-15
+=== exit 0 ===
+=== np=64 input=1 cmd=./factor_parallel 1000 1001 8 8 ===
+RESULT 1000 1001 1 8 8 64 3.697628e-02 18.029574 0.281712 7.068e-15
+=== exit 0 ===
+=== np=128 input=1 cmd=./factor_parallel 1000 1001 8 16 ===
+RESULT 1000 1001 1 8 16 128 3.546900e-01 1.879576 0.014684 7.288e-15
+=== exit 0 ===
+=== np=1 input=1 cmd=./factor_parallel 2000 2001 1 1 ===
+RESULT 2000 2001 1 1 1 1 6.815883e-01 7.824860 7.824860 6.906e-15
+=== exit 0 ===
+=== np=2 input=1 cmd=./factor_parallel 2000 2001 1 2 ===
+RESULT 2000 2001 1 1 2 2 3.755771e-01 14.200368 7.100184 7.129e-15
+=== exit 0 ===
+=== np=4 input=1 cmd=./factor_parallel 2000 2001 2 2 ===
+RESULT 2000 2001 1 2 2 4 2.154416e-01 24.755357 6.188839 7.129e-15
+=== exit 0 ===
+=== np=8 input=1 cmd=./factor_parallel 2000 2001 2 4 ===
+RESULT 2000 2001 1 2 4 8 1.389547e-01 38.381823 4.797728 7.129e-15
+=== exit 0 ===
+=== np=16 input=1 cmd=./factor_parallel 2000 2001 4 4 ===
+RESULT 2000 2001 1 4 4 16 9.569026e-02 55.735386 3.483462 7.129e-15
+=== exit 0 ===
+=== np=32 input=1 cmd=./factor_parallel 2000 2001 4 8 ===
+RESULT 2000 2001 1 4 8 32 7.076209e-02 75.369920 2.355310 7.240e-15
+=== exit 0 ===
+=== np=64 input=1 cmd=./factor_parallel 2000 2001 8 8 ===
+RESULT 2000 2001 1 8 8 64 6.034896e-02 88.374905 1.380858 7.240e-15
+=== exit 0 ===
+=== np=128 input=1 cmd=./factor_parallel 2000 2001 8 16 ===
+RESULT 2000 2001 1 8 16 128 7.716319e-02 69.117582 0.539981 7.240e-15
+=== exit 0 ===
+=== np=1 input=1 cmd=./factor_parallel 4000 4001 1 1 ===
+RESULT 4000 4001 1 1 1 1 8.269076e+00 5.159787 5.159787 1.266e-14
+=== exit 0 ===
+=== np=2 input=1 cmd=./factor_parallel 4000 4001 1 2 ===
+RESULT 4000 4001 1 1 2 2 5.199359e+00 8.206140 4.103070 1.289e-14
+=== exit 0 ===
+=== np=4 input=1 cmd=./factor_parallel 4000 4001 2 2 ===
+RESULT 4000 4001 1 2 2 4 4.901873e+00 8.704156 2.176039 1.289e-14
+=== exit 0 ===
+=== np=8 input=1 cmd=./factor_parallel 4000 4001 2 4 ===
+RESULT 4000 4001 1 2 4 8 4.844457e+00 8.807317 1.100915 1.266e-14
+=== exit 0 ===
+=== np=16 input=1 cmd=./factor_parallel 4000 4001 4 4 ===
+RESULT 4000 4001 1 4 4 16 1.589914e+00 26.835831 1.677239 1.266e-14
+=== exit 0 ===
+=== np=32 input=1 cmd=./factor_parallel 4000 4001 4 8 ===
+RESULT 4000 4001 1 4 8 32 3.727130e-01 114.475940 3.577373 1.266e-14
+=== exit 0 ===
+=== np=64 input=1 cmd=./factor_parallel 4000 4001 8 8 ===
+RESULT 4000 4001 1 8 8 64 2.431950e-01 175.442234 2.741285 1.266e-14
+=== exit 0 ===
+=== np=128 input=1 cmd=./factor_parallel 4000 4001 8 16 ===
+RESULT 4000 4001 1 8 16 128 2.349079e-01 181.631439 1.418996 1.266e-14
+=== exit 0 ===
