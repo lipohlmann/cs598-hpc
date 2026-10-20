@@ -3,36 +3,12 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath, amssymb}
 \usepackage{graphicx}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{placeins}
-
-\hypersetup{
-  colorlinks=true,
-  linkcolor=black,
-  filecolor=magenta,
-  urlcolor=blue,
-  citecolor=black
-}
-
-\usepackage{minted}
-\setminted{frame=single}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black]{hyperref}
 \usepackage[capitalise,noabbrev]{cleveref}
 
-\lstset{
-    basicstyle=\ttfamily\small,
-    breaklines=true,
-    frame=single,
-    numbers=left,
-    numberstyle=\tiny,
-    keywordstyle=\color{blue},
-    commentstyle=\color{gray},
-    tabsize=4
-}
-
-\title{\textbf{High Performance Parallel Computing \\ Homework 1}}
+\title{\textbf{High Performance Parallel Computing \\ Homework 3: Parallel LU Factorization}}
 \author{Liam Pohlmann, Alex Shaffer}
 \date{\today}
 
@@ -40,250 +16,298 @@
 
 \maketitle
 
-\section{Problem 1}
+The figures below come from the sweeps run on the \texttt{eng-instruction} partition (AMD EPYC 7713 nodes, up to 128 MPI ranks on one node, one rank per core). The test matrix is $A=S+NI$ with $N=n+1$, factored as the augmented system $[A\,|\,b]$ with $b=A\mathbf{1}$, without pivoting. Throughout, ``GFLOPS'' uses $\tfrac{2}{3}n^3$ operations, and ``efficiency'' is the GFLOPS per rank of a run divided by the GFLOPS of the 1-rank run with the same $n$ (or the same $n^2/PQ$) and block size. $PQ$ is the number of ranks, and the dotted line in every efficiency plot marks 80\%.
 
-Using the provided MatLab code, MatLab version R2025b was run on the \texttt{eng-partition} on a single node with a single single task and 8 CPUs per task.
-The maximum number of GFlops per core is about 80.151, which occurs at $N=1704$.
-
-\inputminted{batch}{../q1_results/matlab_results/batch_matlab.sh}
-
-This produced the results seen in \cref{fig:matlab_gflops}.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{../q1_results/matlab_results/matlab_gflops.png}
-    \caption{MatLab number of Giga-Flops per core for the matrix-matrix product.}
-        \label{fig:matlab_gflops}
-\end{figure}
-
-A naive first iteration was created, with the implementation of a matrix-matrix being:
-
-\inputminted{c}{../q1_results/first_iter/mat_mat_multiply.h}
-\inputminted{c}{../q1_results/first_iter/mat_mat_multiply.c}
-with a \texttt{Makefile}:
-\inputminted{shell}{../q1_results/first_iter/Makefile}
-\inputminted{shell}{../q1_results/first_iter/common.mk}
-
-The second (and all future iterations) were make using Claude Code (Sonnet 5.0).
-This produced the figure seen in \cref{fig:second_iter}, which is an order of magnitude improvement but still off about a factor of five for what is desired.
-
-\inputminted{c}{../q1_results/v2/mat_mat_multiply.h}
-\inputminted{c}{../q1_results/v2/mat_mat_multiply.c}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{../q1_results/v2/optimized.png}
-    \caption{Second iteration.}
-    \label{fig:second_iter}
-\end{figure}
-
-The final iteration is given in \cref{fig:last_iter} using the files:
-\inputminted{c}{../src/mat_mat_multiply.c}
-\inputminted{c}{../include/mat_mat_multiply.h}
-\inputminted{shell}{../Makefile}
-\inputminted{shell}{../batch_q1.sh}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{../q1_results/v3/optimized.png}
-    \caption{Last iteration.}
-    \label{fig:last_iter}
-\end{figure}
-\clearpage
-Notice that with this final iteration, we were able to achieve about half of the performance of MatLab.
-This was only possible after giving Claude some additional information about the HPC that was being run on. 
-This information was reported in the log file after a run and can be seen below.
-\begin{minted}{shell}
-    === compute node CPU ===
-CPU(s):                                  64
-Model name:                              Intel(R) Xeon(R) Platinum 8358 CPU @ 2.60GHz
-L1d cache:                               3 MiB (64 instances)
-L1i cache:                               2 MiB (64 instances)
-L2 cache:                                80 MiB (64 instances)
-L3 cache:                                96 MiB (2 instances)
-=== vector ISA available ===
-avx2
-avx512f
-avx512vl
-fma
-=== ISA gcc -march=native actually resolves to on this node ===
-  -march=                               icelake-server
-  -mavx                                 [enabled]
-  -mavx2                                [enabled]
-  -mavx256-split-unaligned-load         [disabled]
-  -mavx256-split-unaligned-store        [disabled]
-  -mavx5124fmaps                        [disabled]
-  -mavx5124vnniw                        [disabled]
-  -mavx512bf16                          [disabled]
-  -mavx512bitalg                        [enabled]
-  -mavx512bw                            [enabled]
-  -mavx512cd                            [enabled]
-  -mavx512dq                            [enabled]
-  -mavx512er                            [disabled]
-  -mavx512f                             [enabled]
-  -mavx512ifma                          [enabled]
-  -mavx512pf                            [disabled]
-  -mavx512vbmi                          [enabled]
-  -mavx512vbmi2                         [enabled]
-  -mavx512vl                            [enabled]
-  -mavx512vnni                          [enabled]
-  -mavx512vp2intersect                  [disabled]
-  -mavx512vpopcntdq                     [enabled]
-  -mavxvnni                             [disabled]
-  -mfma                                 [enabled]
-  -mfma4                                [disabled]
-  -msse                                 [enabled]
-  -msse2                                [enabled]
-  -msse2avx                             [disabled]
-  -msse3                                [enabled]
-  -msse4                                [enabled]
-  -msse4.1                              [enabled]
-\end{minted}
-
-Raising \texttt{-mprefer-vector-width} to 512 and sizing the register tile in \texttt{mat\_mat\_multiply.c} off the same \texttt{\_\_AVX512F\_\_}/\texttt{\_\_AVX2\_\_} feature macros that \texttt{-march=native} defines (so the tile always matches the vector width actually available, and the code still compiles correctly on a partition node without AVX-512) took the achieved performance from about 7 GFLOPS/core up to a peak of 33.149 GFLOPS/core at $N=808$, shown alongside the MatLab curve in \cref{fig:comparison}.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{../q1_results/comparison_gflops.png}
-    \caption{Final C kernel (1 core) vs. MatLab (8 CPUs / 8) GFLOPS per core.}
-    \label{fig:comparison}
-\end{figure}
-
-\subsection{$N_{1/2}$}
-
-$N_{1/2}$ -- the smallest matrix size at which a curve reaches half of its own peak GFLOPS -- differs sharply between the two:
-\begin{itemize}
-    \item \textbf{C (this work):} peak 33.149 GFLOPS/core; half-peak is 16.575 GFLOPS, first reached at $N_{1/2} = 72$.
-    \item \textbf{MatLab:} peak 80.151 GFLOPS/core; half-peak is 40.076 GFLOPS, first reached at $N_{1/2} = 488$.
-\end{itemize}
-The serial C kernel has essentially no dispatch overhead, so it is already near its (lower) asymptotic rate at very small $N$. MatLab's curve in \cref{fig:comparison} is visibly a step function: below roughly $N=700$ it tracks the C curve or falls under it, then jumps abruptly once $N$ is large enough that MKL's internal multithreading pays for itself, climbing toward its 8-CPU peak. That threading start-up cost is exactly why MatLab needs a much larger $N$ to reach half of its own peak, even though its peak is higher.
-
-\subsection{Comparison to Iteration 1}
-
-Iteration 1 (the naive triple loop, \cref{fig:naive}) peaked at only 0.378 GFLOPS/core (at $N=40$) and settled to a floor of about 0.199 GFLOPS/core for large $N$, since its innermost loop strides through $B$ with stride \texttt{B\_cols} instead of reading it contiguously. Against that baseline, the final version is:
-\begin{itemize}
-    \item $33.149 / 0.378 \approx 88\times$ faster at each curve's own peak.
-    \item $27.372 / 0.199 \approx 138\times$ faster at $N=1992$, comparing large-matrix performance directly.
-\end{itemize}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{../q1_results/naive_implementation_results.png}
-    \caption{Iteration 1 (naive triple loop) GFLOPS per core.}
-    \label{fig:naive}
-\end{figure}
-
-\subsection{Process and Lessons Learned}
-
-The largest single-step gains, in order, came from: (1) loop reordering plus a register-blocked microkernel to stop re-walking $A$ and $B$ from scratch for every output entry, (2) blocking the $K$ and $M$ loops so a slab of $B$ -- already contiguous in row-major storage -- stays cache-resident across many row-blocks of $A$ instead of being re-streamed from memory each time, and (3) matching the microkernel's vector width to what the compute node's CPU actually supports.
-
-Step (2) is a cautionary tale about environment mismatch: it produced a large, clean improvement on a local development machine (eliminating a severe falloff at large $N$), but made \emph{no measurable difference at all} on the actual cluster node -- the peak GFLOPS was identical before and after, and unaffected by changing \texttt{--cpus-per-task} from 1 to 8 and back. That flat ceiling was the signal that the bottleneck on the real hardware wasn't memory bandwidth at all. Rather than keep guessing, we added a short diagnostic block to \texttt{batch\_q1.sh} to print the compute node's CPU model, advertised vector ISA, and what \texttt{-march=native} actually resolves to -- which is what surfaced step (3): the node is an Ice Lake Xeon with full AVX-512, but the Makefile was hard-capping vectorization at 256 bits and the microkernel tile was only sized for one 256-bit register per row, together leaving roughly half of the chip's per-core throughput unused. That single fix accounted for most of the total improvement. The broader lesson: a local machine is not a reliable proxy for the target HPC hardware, and it's worth pulling concrete diagnostics from the actual compute node early rather than assuming the same bottleneck applies everywhere.
-
-We are satisfied with the final result. A peak of 33.149 GFLOPS/core against MatLab's 80.151 is a real gap, but part of that gap is not apples-to-apples: MatLab's ``per-core'' figure is an 8-CPU MKL run divided by 8, not a directly measured single-core run, and the plateau in \cref{fig:comparison} strongly suggests it depends on multithreading to reach its peak at all. Closing more of the remaining gap on the C side would mean packing $A$/$B$ into aligned contiguous panels and retuning the $K/M$ block sizes for the Ice Lake node's actual cache sizes rather than the development machine's, but the current result is a reasonable, well-understood stopping point for a serial kernel.
-
-\section{Problem 2}
+\section{Question 1: unblocked (BLAS1) factorization, block size 1}
 \FloatBarrier
 
-Here we created the ping pong test to measure properties of the communication on one node and between 2 nodes. The ping pong test was run on the \texttt{eng-partition} of the campus cluster.
-
-One note: though the assignment didn't ask us to measure this, it became clear that the inter/intra socket communication on one node has a significant effect on the results. for this reason the plots are also broken up by socket.
-\subsection*{2a.}
-Here we look at single node communication performance. We record the latency, inverse bandwidth, $m_2$ and eager limit.
-These are recorded for $P=64$ in \cref{tab:pp64} and plotted in \cref{fig:pp64}. As noted before, the communication performance is measurably different depending on whether the communication is intra-socket or inter-socket. The eager limit is measured the same across these.
-
-\begin{figure}
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.8\textwidth]{figures/pp_P64_n1.pdf}
-    \caption{Half round-trip time vs.\ message size from rank 0 to every rank $p$, $P=64$ on one node. Thin lines are individual partner ranks; heavy lines are the per-socket medians.}
-    \label{fig:pp64}
+    \includegraphics[width=\textwidth]{figs/strong.png}
+    \caption{Q1 strong scaling (fixed $n$, increasing $P\times Q$), log--log. Left: time to factor; dashed lines are ideal $1/(PQ)$ scaling from the 1-rank run. Right: speedup over one rank against the ideal. The larger systems keep scaling up to 32--64 ranks, while the small systems ($n=1000$, $n=2000$) stop scaling early and slow down at 128 ranks, where the per-column broadcasts dominate the arithmetic.}
+    \label{fig:q1_strong}
 \end{figure}
 
-\begin{table}
+\begin{figure}[htbp]
     \centering
-    \input{../q2/analysis/out/summary_pp_P64_n1.tex}
-    \caption{Ping-pong summary, $P=64$ on one node: median over the ranks in each group (self, same node, across nodes, by partner socket).}
-    \label{tab:pp64}
-\end{table}
-
-\FloatBarrier
-\subsection*{2b.}
-
-We move to $P=128$ in \cref{tab:pp128n1} and \cref{fig:pp128n1}. The same trends are observed, but the latency is slightly higher for non-self communication.
-
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/pp_P128_n1.pdf}
-    \caption{As \cref{fig:pp64}, $P=128$ on one node.}
-    \label{fig:pp128n1}
+    \includegraphics[width=\textwidth]{figs/weak.png}
+    \caption{Q1 weak scaling: $n^2/(PQ)$ held fixed per curve while $P\times Q$ grows. Left: time. LU does $O(n^3)$ work, so with $n^2/PQ$ fixed the work per rank grows like $\sqrt{PQ}$ and even a perfect code is not flat; efficiency (right, GFLOPS per rank relative to one rank) is the fair measure. Efficiency drops quickly as ranks are added, because every one of the $n$ elimination steps costs two broadcasts.}
+    \label{fig:q1_weak}
 \end{figure}
 
-\begin{table}
+\begin{figure}[htbp]
     \centering
-    \input{../q2/analysis/out/summary_pp_P128_n1.tex}
-    \caption{Ping-pong summary, $P=128$ on one node: median over the ranks in each group (self, same node, across nodes, by partner socket).}
-    \label{tab:pp128n1}
-\end{table}
-
-\FloatBarrier
-
-We then move to $P=128$ on two nodes in \cref{tab:pp128n2} and \cref{fig:pp128n2}. We see higher latency for the inter-node communication, the inter-node inverse bandwidth was measured to depend suprisingly on the socket.
-Socket S1 on node 2 was suprisingly close to the Socket 1 on node 1 for inverse bandwidth, but Socket 0 on node 2 was significantly worse. My guess is that this is due to the physical network connections on the cluster.
-The $m_2$ value is strikingly higher for the inter-node communication and again depends on the socket. The eager limit is measured to be the same across all sockets and nodes.
-
-As we continue to increase in ranks on 2 nodes up to $P=196$ and $P=256$ we see the same trends. 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/pp_P128_n2.pdf}
-    \caption{As \cref{fig:pp64}, $P=128$ on two nodes.}
-    \label{fig:pp128n2}
+    \includegraphics[width=\textwidth]{figs/gflops.png}
+    \caption{Q1 performance. Left: total GFLOPS against ranks for each local footprint $n^2/(PQ)$ (log scale). Right: GFLOPS per rank. A single rank reaches about 8 GFLOPS for the unblocked rank-1-update kernel, and the best total in these runs is roughly 280 GFLOPS (128 ranks, $n^2/PQ=2.5\times10^5$).}
+    \label{fig:q1_gflops}
 \end{figure}
 
-\begin{table}
+\begin{figure}[htbp]
     \centering
-    \input{../q2/analysis/out/summary_pp_P128_n2.tex}
-    \caption{Ping-pong summary, $P=128$ on two nodes: median over the ranks in each group (self, same node, across nodes, by partner socket).}
-    \label{tab:pp128n2}
-\end{table}
-
-\FloatBarrier
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/pp_P192_n2.pdf}
-    \caption{As \cref{fig:pp64}, $P=192$ on two nodes.}
-    \label{fig:pp192n2}
+    \includegraphics[width=0.7\textwidth]{figs/efficiency_footprint.png}
+    \caption{Q1 parallel efficiency against the local memory footprint $n^2/(PQ)$ (doubles per rank), one curve per rank count, from the strong- and weak-scaling runs. Two ranks reach 80\% at roughly $5\times10^5$ doubles per rank. Four ranks come close to 80\% near $10^6$, and curves for larger rank counts stay below 80\% over the range we measured, so for $PQ\ge 8$ the footprint needed for 80\% efficiency is larger than what we ran.}
+    \label{fig:q1_eff}
 \end{figure}
 
-\begin{table}
-    \centering
-    \input{../q2/analysis/out/summary_pp_P192_n2.tex}
-    \caption{Ping-pong summary, $P=192$ on two nodes: median over the ranks in each group (self, same node, across nodes, by partner socket).}
-    \label{tab:pp192n2}
-\end{table}
 
 \FloatBarrier
+\section{Question 2: blocked (BLAS3) factorization}
+\FloatBarrier
 
-\begin{figure}
+The blocked code uses the same layout with the distribution block equal to the pivot block size $b$: each step factors the diagonal block, solves for the $L$ and $U$ panels with \texttt{dtrsm}, broadcasts the panels along process rows and columns, and updates the trailing matrix with AOCL-BLIS \texttt{dgemm}. We first swept $b$, then ran strong and weak scaling for $b=32$, $64$ and $128$. Results for the remaining block sizes are in the appendix.
+
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.8\textwidth]{figures/pp_P256_n2.pdf}
-    \caption{As \cref{fig:pp64}, $P=256$ on two nodes.}
-    \label{fig:pp256n2}
+    \includegraphics[width=0.75\textwidth]{figs/q2_bsweep.png}
+    \caption{Block size sweep: GFLOPS per rank against $b$ ($b=4,8,16,20,32,48,64,96,128$) for $n=4000$ and $n=8000$ on 1, 16 and 64 ranks. On one rank the rate rises from under 10 GFLOPS at $b=4$ to about 44 GFLOPS at $b=128$, with the largest $b$ best. With many ranks the gain from larger $b$ is smaller, since communication rather than \texttt{dgemm} limits the speed, and for 64 ranks the curve is nearly flat.}
+    \label{fig:q2_bsweep}
 \end{figure}
 
-\begin{table}
+\FloatBarrier
+\subsection*{Block size $b=32$}
+
+\begin{figure}[htbp]
     \centering
-    \input{../q2/analysis/out/summary_pp_P256_n2.tex}
-    \caption{Ping-pong summary, $P=256$ on two nodes: median over the ranks in each group (self, same node, across nodes, by partner socket).}
-    \label{tab:pp256n2}
-\end{table}
+    \includegraphics[width=\textwidth]{figs/q2_strong_b32.png}
+    \caption{Q2 strong scaling for block size $b=32$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
+    \label{fig:q2_strong_b32}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_weak_b32.png}
+    \caption{Q2 weak scaling for $b=32$: time (left) and efficiency relative to one rank (right) for fixed $n^2/(PQ)$. Dotted line: 80\%. }
+    \label{fig:q2_weak_b32}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_gflops_b32.png}
+    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=32$, one curve per local footprint $n^2/(PQ)$.}
+    \label{fig:q2_gflops_b32}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b32.png}
+    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=32$, one curve per rank count; dotted line: 80\%. }
+    \label{fig:q2_eff_b32}
+\end{figure}
 
 \FloatBarrier
+\subsection*{Block size $b=64$}
 
-\begin{figure}
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{figures/pp_compare.pdf}
-    \caption{Per-socket median curves of all five configurations: same node (left) and across nodes (right).}
-    \label{fig:pp_compare}
+    \includegraphics[width=\textwidth]{figs/q2_strong_b64.png}
+    \caption{Q2 strong scaling for block size $b=64$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). For $n=16000$ the speedup at 128 ranks is about 30$\times$, i.e.\ roughly 25\% efficiency, and smaller $n$ saturate earlier.}
+    \label{fig:q2_strong_b64}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_weak_b64.png}
+    \caption{Q2 weak scaling for $b=64$: time (left) and efficiency relative to one rank (right) for fixed $n^2/(PQ)$. Dotted line: 80\%. Efficiency falls with rank count at every footprint, but the larger footprints stay above 80\% for more ranks.}
+    \label{fig:q2_weak_b64}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_gflops_b64.png}
+    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=64$, one curve per local footprint $n^2/(PQ)$.}
+    \label{fig:q2_gflops_b64}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b64.png}
+    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=64$, one curve per rank count; dotted line: 80\%. Two ranks pass 80\% at about $2\times10^6$ doubles per rank; four and sixteen ranks reach it near $1.6\times10^7$, eight ranks near $3\times10^7$, and 32 or more ranks did not reach 80\% in the sizes we ran.}
+    \label{fig:q2_eff_b64}
+\end{figure}
+
+\FloatBarrier
+\subsection*{Block size $b=128$}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_strong_b128.png}
+    \caption{Q2 strong scaling for block size $b=128$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
+    \label{fig:q2_strong_b128}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_weak_b128.png}
+    \caption{Q2 weak scaling for $b=128$: time (left) and efficiency relative to one rank (right) for fixed $n^2/(PQ)$. Dotted line: 80\%. }
+    \label{fig:q2_weak_b128}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_gflops_b128.png}
+    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=128$, one curve per local footprint $n^2/(PQ)$.}
+    \label{fig:q2_gflops_b128}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b128.png}
+    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=128$, one curve per rank count; dotted line: 80\%. }
+    \label{fig:q2_eff_b128}
+\end{figure}
+
+
+\FloatBarrier
+\appendix
+\section{Q2 results for additional block sizes}
+\FloatBarrier
+Strong scaling, GFLOPS and efficiency plots for the remaining block sizes of the sweep (weak-scaling runs were done only for $b=32,64,128$). Axes and legends are as in the main text.
+
+\subsection*{Block size $b=4$}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_strong_b4.png}
+    \caption{Q2 strong scaling for block size $b=4$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
+    \label{fig:q2_strong_b4}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_gflops_b4.png}
+    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=4$, one curve per local footprint $n^2/(PQ)$.}
+    \label{fig:q2_gflops_b4}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b4.png}
+    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=4$, one curve per rank count; dotted line: 80\%. }
+    \label{fig:q2_eff_b4}
+\end{figure}
+
+\subsection*{Block size $b=8$}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_strong_b8.png}
+    \caption{Q2 strong scaling for block size $b=8$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
+    \label{fig:q2_strong_b8}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_gflops_b8.png}
+    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=8$, one curve per local footprint $n^2/(PQ)$.}
+    \label{fig:q2_gflops_b8}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b8.png}
+    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=8$, one curve per rank count; dotted line: 80\%. }
+    \label{fig:q2_eff_b8}
+\end{figure}
+
+\subsection*{Block size $b=16$}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_strong_b16.png}
+    \caption{Q2 strong scaling for block size $b=16$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
+    \label{fig:q2_strong_b16}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_gflops_b16.png}
+    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=16$, one curve per local footprint $n^2/(PQ)$.}
+    \label{fig:q2_gflops_b16}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b16.png}
+    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=16$, one curve per rank count; dotted line: 80\%. }
+    \label{fig:q2_eff_b16}
+\end{figure}
+
+\subsection*{Block size $b=20$}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_strong_b20.png}
+    \caption{Q2 strong scaling for block size $b=20$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
+    \label{fig:q2_strong_b20}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_gflops_b20.png}
+    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=20$, one curve per local footprint $n^2/(PQ)$.}
+    \label{fig:q2_gflops_b20}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b20.png}
+    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=20$, one curve per rank count; dotted line: 80\%. }
+    \label{fig:q2_eff_b20}
+\end{figure}
+
+\subsection*{Block size $b=48$}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_strong_b48.png}
+    \caption{Q2 strong scaling for block size $b=48$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
+    \label{fig:q2_strong_b48}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_gflops_b48.png}
+    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=48$, one curve per local footprint $n^2/(PQ)$.}
+    \label{fig:q2_gflops_b48}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b48.png}
+    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=48$, one curve per rank count; dotted line: 80\%. }
+    \label{fig:q2_eff_b48}
+\end{figure}
+
+\subsection*{Block size $b=96$}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_strong_b96.png}
+    \caption{Q2 strong scaling for block size $b=96$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
+    \label{fig:q2_strong_b96}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_gflops_b96.png}
+    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=96$, one curve per local footprint $n^2/(PQ)$.}
+    \label{fig:q2_gflops_b96}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b96.png}
+    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=96$, one curve per rank count; dotted line: 80\%. }
+    \label{fig:q2_eff_b96}
+\end{figure}
+
+\subsection*{Block size $b=1$}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figs/q2_strong_b1.png}
+    \caption{Q2 strong scaling for $b=1$ (the blocked code with block size 1, which reduces to the unblocked algorithm), for comparison with Question 1.}
+    \label{fig:q2_strong_b1}
 \end{figure}
 
 \end{document}

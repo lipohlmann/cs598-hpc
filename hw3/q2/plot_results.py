@@ -19,8 +19,8 @@ import numpy as np
 import pandas as pd
 
 COLS = ["m", "n", "nb", "P", "Q", "np", "time", "gflops", "gflops_rank", "err"]
-PALETTE = ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#E69F00", "#56B4E9"]
-MARKERS = "osD^vP"
+PALETTE = ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#000000", "#882255", "#999999"]
+MARKERS = "osD^vPXhp"
 ERR_TOL = 1e-8
 
 
@@ -65,7 +65,7 @@ def style(ax, xlabel, ylabel, title):
 
 
 def series(ax, x, y, i, label):
-    ax.plot(x, y, marker=MARKERS[i % 6], color=PALETTE[i % 6], lw=1.8, ms=6, label=label)
+    ax.plot(x, y, marker=MARKERS[i % len(MARKERS)], color=PALETTE[i % len(PALETTE)], lw=1.8, ms=6, label=label)
 
 
 def strong_plot(df, out, tag=""):
@@ -77,7 +77,7 @@ def strong_plot(df, out, tag=""):
         series(a1, g["np"], g["time"], i, f"n={m}")
         series(a2, g["np"], g["speedup"], i, f"n={m}")
         if g["np"].min() == 1:
-            a1.plot(g["np"], g["time"].iloc[0] / g["np"], "--", color=PALETTE[i % 6], alpha=0.4, lw=1)
+            a1.plot(g["np"], g["time"].iloc[0] / g["np"], "--", color=PALETTE[i % len(PALETTE)], alpha=0.4, lw=1)
     npmax = df["np"].max()
     a2.plot([1, npmax], [1, npmax], "k--", lw=1, alpha=0.5, label="ideal")
     for a in (a1, a2):
