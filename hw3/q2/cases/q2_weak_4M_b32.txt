@@ -1,0 +1,9 @@
+# weak scaling, n^2/(P Q)=4000000, b=32
+INPUT=32 1 ./factor_blocked 2000 2001 1 1
+INPUT=32 2 ./factor_blocked 2828 2829 1 2
+INPUT=32 4 ./factor_blocked 4000 4001 2 2
+INPUT=32 8 ./factor_blocked 5657 5658 2 4
+INPUT=32 16 ./factor_blocked 8000 8001 4 4
+INPUT=32 32 ./factor_blocked 11314 11315 4 8
+INPUT=32 64 ./factor_blocked 16000 16001 8 8
+INPUT=32 128 ./factor_blocked 22627 22628 8 16

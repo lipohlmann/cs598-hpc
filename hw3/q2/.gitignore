@@ -1,0 +1,4 @@
+*.o
+factor_blocked
+results.csv
+lu-*.log
