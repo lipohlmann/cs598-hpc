@@ -1,9 +1,0 @@
-# weak scaling: n^2/(P Q) = 250000
-INPUT=1 1 ./factor_parallel 500 501 1 1
-INPUT=1 2 ./factor_parallel 707 708 1 2
-INPUT=1 4 ./factor_parallel 1000 1001 2 2
-INPUT=1 8 ./factor_parallel 1414 1415 2 4
-INPUT=1 16 ./factor_parallel 2000 2001 4 4
-INPUT=1 32 ./factor_parallel 2828 2829 4 8
-INPUT=1 64 ./factor_parallel 4000 4001 8 8
-INPUT=1 128 ./factor_parallel 5657 5658 8 16

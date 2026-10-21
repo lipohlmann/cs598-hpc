@@ -37,14 +37,25 @@ echo "cmd: $*"
 # Which process binding works depends on how Slurm hands out cpus (whole
 # cores or hardware threads; --exclusive changes it), so use the first
 # of these that can launch both one rank and the full allocation.
+# spread.sh comes first: it pins rank r to a core on CCD r % 16 (8 cores
+# sharing one L3 and one memory link), so small rank counts are not all
+# squeezed onto one CCD's memory bandwidth.  (--map-by l3cache is refused
+# in these allocations, and pe-lists depend on each node's numbering.)
+export SPREAD_CPUS=$(./spread.sh)
+echo "rank -> cpu order: $SPREAD_CPUS"
+SPREAD="mpirun --bind-to none -x SPREAD_CPUS"
 MPIRUN=""
+PIN=""        # ./spread.sh with $SPREAD; goes after -np, before the program
 for candidate in \
+    "$SPREAD" \
     "mpirun --map-by core --bind-to core" \
     "mpirun --map-by hwthread --bind-to hwthread" \
     "mpirun --bind-to none"; do
-    if $candidate -np 1 true >/dev/null 2>&1 &&
-       $candidate -np "$SLURM_NTASKS" true >/dev/null 2>&1; then
+    pin=""; [ "$candidate" = "$SPREAD" ] && pin=./spread.sh
+    if $candidate -np 1 $pin true >/dev/null 2>&1 &&
+       $candidate -np "$SLURM_NTASKS" $pin true >/dev/null 2>&1; then
         MPIRUN=$candidate
+        PIN=$pin
         break
     fi
 done
@@ -53,10 +64,10 @@ if [ -z "$MPIRUN" ]; then
     mpirun --bind-to none -np "$SLURM_NTASKS" true
     exit 1
 fi
-echo "launching with: $MPIRUN"
+echo "launching with: $MPIRUN -np <n> $PIN"
 
 if [ -n "$INPUT" ]; then
-    echo "$INPUT" | $MPIRUN -np "$SLURM_NTASKS" "$@"
+    echo "$INPUT" | $MPIRUN -np "$SLURM_NTASKS" $PIN "$@"
 else
-    $MPIRUN -np "$SLURM_NTASKS" "$@" </dev/null
+    $MPIRUN -np "$SLURM_NTASKS" $PIN "$@" </dev/null
 fi
