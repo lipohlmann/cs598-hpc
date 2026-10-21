@@ -31,8 +31,12 @@ We consider two different, but related, approaches to solving this problem in a 
 
 
 \section*{Question 1: unblocked (BLAS1) factorization}
+
+
+
+\subsection{Correctness}
 We began by verifying that our facorization is correct. For small matrices we looked at different P and Q and measured the residual norm.
-\cref{tab:lu-correctness} shows that we reach near or below machine precision as expected for a correct factorization using a well conditioned matrix such as the one from the homework. 
+\cref{tab:lu-correctness} shows that we reach near machine precision as expected for a correct factorization using a well conditioned matrix such as the one from the homework. 
 \begin{table}[htbp]
   \centering
   \begin{tabular}{rrr ccc}
@@ -42,19 +46,19 @@ We began by verifying that our facorization is correct. For small matrices we lo
     $\dfrac{\|b - A\hat{x}\|_\infty}{\|A\|_\infty \|\hat{x}\|_\infty}$ &
     $\|\hat{x} - \mathbf{1}\|_\infty$ \\
     \midrule
-    1 & 1 &  1 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    1 & 2 &  2 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    2 & 1 &  2 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    1 & 4 &  4 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    4 & 1 &  4 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    2 & 2 &  4 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    2 & 3 &  6 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    3 & 2 &  6 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    2 & 4 &  8 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    4 & 2 &  8 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    3 & 4 & 12 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    4 & 3 & 12 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
-    4 & 4 & 16 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    1 & 1 &  1 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    1 & 2 &  2 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    2 & 1 &  2 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    1 & 4 &  4 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    4 & 1 &  4 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    2 & 2 &  4 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    2 & 3 &  6 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    3 & 2 &  6 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    2 & 4 &  8 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    4 & 2 &  8 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    3 & 4 & 12 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    4 & 3 & 12 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    4 & 4 & 16 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
     \bottomrule
   \end{tabular}
   \caption{Correctness of the parallel unblocked LU factorization for
@@ -64,14 +68,19 @@ We began by verifying that our facorization is correct. For small matrices we lo
     \label{tab:lu-correctness}
 \end{table}
 
-
-\subsection{Correctness}
-% TODO
-
 \subsection{Strong and weak scaling}
 
-We then moved on to strong and weak scaling pictured in \cref{fig:q1_strong} and \cref{fig:q1_weak}. 
-In the strong scaling plots we look at a few differnt linear system sizes $n$ and plot both the time 
+We then moved on to strong and weak scaling pictured in \cref{fig:q1_strong} and \cref{fig:q1_weak} respectivly. 
+In the strong scaling plots we look at a few differnt linear system sizes $n$ and plot both the total time and the speed up factor.
+We see what we expect here. The total time goes down as the number of ranks increases, and for a while it goes down very near the ideal.
+Eventaully, when $PQ$ becomes large relative to the problem size the speedup stagnates. This is particularly visible for the largest case.
+In that case it seems that cache size and memory contention play a role. 
+In the case of the weak scaling, we again see the expoected trend. We keep the local memory per rank constant, but for the LU factorization the FLOPS per rank grows.
+This means that the total time increases as we weak scale.
+The time doessn't quite grow like the expected $O(\sqrt(PQ))$ but deviating from that is expected as communication starts to play a bigger role at larger $PQ$.
+The efficiency panel for the weak scaling shows curves that stay efficient at small ranks but begin to fall more precipitously at higher ones.
+All cases drop below 80 \% parallel efficiency between 4 and 16 ranks.
+
 
 \begin{figure}[htbp]
     \centering
@@ -88,7 +97,11 @@ In the strong scaling plots we look at a few differnt linear system sizes $n$ an
 \end{figure}
 
 \FloatBarrier
+
 \subsection{Local memory footprint for 80\% efficiency}
+Next, we looked at the relationship between local memory footprint and parallel efficiency.
+\cref{fig:q1_eff_footprint} and \cref{fig:q1_eff_total} show the efficiency versus the local footprint and efficiency versus the total matrix size respectivly.
+In \cref{fig:q1_eff_footprint} we see that for the rank counts that hit the 80\% parallel efficiency that local footprint was in the range of $10^6 - 10^7$ doubles per rank.
 
 \begin{figure}[htbp]
     \centering
@@ -110,7 +123,11 @@ In the strong scaling plots we look at a few differnt linear system sizes $n$ an
 
 \FloatBarrier
 \subsection{Observed GFLOPS}
-
+We also looked at the GFLOPS of the runs. \cref{fig:q1_gflops} shows total GFLOPS and GFLOPS per rank versus the total number of ranks. 
+We see that initially the total GLFOPS increase, but then begin to decrease past around $16$ ranks for these runs.
+This is consistent with were we have seen the performance fall off in the earlier runs. It seems that memory and communication become more expensive there.
+The GFLOPS per rank decreases steadly in each case until it drops more quickly, again around $16$ ranks.
+In this figure we see a maximum total GFLOPS of around 300.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{figs/gflops.png}
@@ -125,9 +142,59 @@ In the strong scaling plots we look at a few differnt linear system sizes $n$ an
 The blocked code uses the same layout with the distribution block equal to the pivot block size $b$: each step factors the diagonal block, solves for the $L$ and $U$ panels with \texttt{dtrsm}, broadcasts the panels along process rows and columns, and updates the trailing matrix with AOCL-BLIS \texttt{dgemm}. We first swept $b$, then ran strong and weak scaling for $b=32$, $64$ and $128$.
 
 \subsection{Correctness}
-% TODO
+As before we verified correctness of the code for some small matrix sizes. This time we also varied b along with P and Q.
+We measured the residual norm and see that the error is again around machine precision.
+\begin{table}
+\centering
+  \begin{tabular}{rrrr ccc}
+    \toprule
+    $b$ & $P$ & $Q$ & Ranks &
+    $\dfrac{\|A - LU\|_F}{\|A\|_F}$ &
+    $\dfrac{\|b - A\hat{x}\|_\infty}{\|A\|_\infty \|\hat{x}\|_\infty}$ &
+    $\|\hat{x} - \mathbf{1}\|_\infty$ \\
+    \midrule
+     1 & 1 & 1 &  1 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+     1 & 1 & 4 &  4 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+     1 & 4 & 1 &  4 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+     1 & 2 & 2 &  4 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+     1 & 2 & 3 &  6 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+     1 & 3 & 2 &  6 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+     1 & 4 & 4 & 16 & $4.97\times10^{-16}$ & $3.50\times10^{-15}$ & $3.77\times10^{-15}$ \\
+    \midrule
+    16 & 1 & 1 &  1 & $1.50\times10^{-16}$ & $2.32\times10^{-15}$ & $3.55\times10^{-15}$ \\
+    16 & 1 & 4 &  4 & $1.50\times10^{-16}$ & $2.32\times10^{-15}$ & $3.55\times10^{-15}$ \\
+    16 & 4 & 1 &  4 & $1.50\times10^{-16}$ & $2.32\times10^{-15}$ & $3.55\times10^{-15}$ \\
+    16 & 2 & 2 &  4 & $1.50\times10^{-16}$ & $2.32\times10^{-15}$ & $3.55\times10^{-15}$ \\
+    16 & 2 & 3 &  6 & $1.50\times10^{-16}$ & $2.32\times10^{-15}$ & $3.55\times10^{-15}$ \\
+    16 & 3 & 2 &  6 & $1.50\times10^{-16}$ & $2.32\times10^{-15}$ & $3.55\times10^{-15}$ \\
+    16 & 4 & 4 & 16 & $1.50\times10^{-16}$ & $2.32\times10^{-15}$ & $3.55\times10^{-15}$ \\
+    \midrule
+    64 & 1 & 1 &  1 & $1.92\times10^{-16}$ & $2.27\times10^{-15}$ & $3.33\times10^{-15}$ \\
+    64 & 1 & 4 &  4 & $1.92\times10^{-16}$ & $2.27\times10^{-15}$ & $3.33\times10^{-15}$ \\
+    64 & 4 & 1 &  4 & $1.92\times10^{-16}$ & $2.27\times10^{-15}$ & $3.33\times10^{-15}$ \\
+    64 & 2 & 2 &  4 & $1.92\times10^{-16}$ & $2.27\times10^{-15}$ & $3.33\times10^{-15}$ \\
+    64 & 2 & 3 &  6 & $1.92\times10^{-16}$ & $2.27\times10^{-15}$ & $3.33\times10^{-15}$ \\
+    64 & 3 & 2 &  6 & $1.92\times10^{-16}$ & $2.27\times10^{-15}$ & $3.33\times10^{-15}$ \\
+    64 & 4 & 4 & 16 & $1.92\times10^{-16}$ & $2.27\times10^{-15}$ & $3.33\times10^{-15}$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{Correctness of the parallel blocked LU factorization for
+    $m = 503$, $n = m+1$ (augmented $[A \mid{} b]$ with $b = A\mathbf{1}$)
+    for block sizes $b = 1$, $16$ and $64$ on a range of $P \times Q$ process grids.
+    Since $m$ is prime, every $b > 1$ leaves a partial trailing block.
+    $\hat{x}$ is obtained by back substitution with the computed $U$.}
+    \label{tab:lu-correctness-q2}
+\end{table}
+
+\FloatBarrier
 
 \subsection{Strong and weak scaling}
+We proceed as in Q1, with strong and weak scaling.
+\cref{fig:q2_strong} shows the strong scaling results for $b = 32, 64, 128$. We see that in general as we increas b here, the strong scaling graphs get closer to the ideal.
+This is likely due to the BLAS3 nature making better use of the memory than the BLAS1 case above.
+
+Weak scaling in \cref{fig:q2_weak} tells a similar story. At a lower $b$ the weak scaling plots are closer to the BLAS1 case,
+but as we increase $b$ they perform better, hitting an 80\% parallel efficiency at a much higer rank count in the $b=128$ case.
 
 \begin{figure}[p]
     \centering
@@ -187,6 +254,10 @@ The blocked code uses the same layout with the distribution block equal to the p
 
 \FloatBarrier
 \subsection{Local memory footprint for 80\% efficiency}
+We again look at the total memory footprint, this time taking in to account the different block sizes in \cref{fig:q2_eff}.
+As in the last two parts we see that at $b=128$ most of runs hit 80\% parallel efficiency for some local footprint tested.
+This was not the case in the unblocked version, or even in the $b = 32$ or $b = 64$. 
+This confirms the hypothesis that with the BLAS3 version we are more efficient with the local memory. 
 
 \begin{figure}[htbp]
     \centering
@@ -216,6 +287,9 @@ The blocked code uses the same layout with the distribution block equal to the p
 
 \FloatBarrier
 \subsection{Observed GFLOPS}
+In \cref{fig:q2_gflops} we see that we get many times more GFLOPS in the blocked case compared to the unblocked case, getting near or above $1000$ for all $b$ tried.
+This makes sense as the BLAS3 nature alows the processor to spend more time on FLOPS and less on memory accesses.
+We also see an increase in peak GFLOPS as $b$ increases with the runs at $b=32$ being around half as large as $b=128$.
 
 \begin{figure}[p]
     \centering
@@ -247,6 +321,9 @@ The blocked code uses the same layout with the distribution block equal to the p
 
 \FloatBarrier
 \subsection{Optimal block size}
+Looking for the optimal block size, we see that in every case bigger $b$ is better though the results get noisier as $b$ gets larger.
+The homework doc suggests looking up to 128 but it is likely a truely optimal block size lies a bit higher than that. 
+Notable for higher rank runs, the GFLOPS per rank in \cref{fig:q2_bsweep} are less sensitive to block size.
 
 \begin{figure}[!htbp]
     \centering
