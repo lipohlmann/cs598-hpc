@@ -35,19 +35,31 @@ if [ ! -r "$CASES" ]; then
     exit 1
 fi
 
+echo "cases: $CASES"
 echo "node(s) $SLURM_JOB_NODELIST: $(lscpu | grep 'Model name' | sed 's/.*: *//'), SLURM_NTASKS=$SLURM_NTASKS"
 
 # Which process binding works depends on how Slurm hands out cpus (whole
 # cores or hardware threads; --exclusive changes it), so use the first
 # of these that can launch both one rank and the full allocation.
+# spread.sh comes first: it pins rank r to a core on CCD r % 16 (8 cores
+# sharing one L3 and one memory link), so small rank counts are not all
+# squeezed onto one CCD's memory bandwidth.  (--map-by l3cache is refused
+# in these allocations, and pe-lists depend on each node's numbering.)
+export SPREAD_CPUS=$(./spread.sh)
+echo "rank -> cpu order: $SPREAD_CPUS"
+SPREAD="mpirun --bind-to none -x SPREAD_CPUS"
 MPIRUN=""
+PIN=""        # ./spread.sh with $SPREAD; goes after -np, before the program
 for candidate in \
+    "$SPREAD" \
     "mpirun --map-by core --bind-to core" \
     "mpirun --map-by hwthread --bind-to hwthread" \
     "mpirun --bind-to none"; do
-    if $candidate -np 1 true >/dev/null 2>&1 &&
-       $candidate -np "$SLURM_NTASKS" true >/dev/null 2>&1; then
+    pin=""; [ "$candidate" = "$SPREAD" ] && pin=./spread.sh
+    if $candidate -np 1 $pin true >/dev/null 2>&1 &&
+       $candidate -np "$SLURM_NTASKS" $pin true >/dev/null 2>&1; then
         MPIRUN=$candidate
+        PIN=$pin
         break
     fi
 done
@@ -56,7 +68,14 @@ if [ -z "$MPIRUN" ]; then
     mpirun --bind-to none -np "$SLURM_NTASKS" true
     exit 1
 fi
-echo "launching with: $MPIRUN"
+if [ -z "$PIN" ] && [ -z "$ALLOW_PACKED" ]; then
+    echo "spread.sh could not launch; refusing to time with packed ranks" >&2
+    echo "(set ALLOW_PACKED=1 to run anyway)" >&2
+    exit 1
+fi
+echo "launching with: $MPIRUN -np <n> $PIN"
+# record where ranks really land (each prints its cpu affinity)
+$MPIRUN -np 4 $PIN grep Cpus_allowed_list /proc/self/status
 
 while read -r line <&3; do
     case "$line" in ''|\#*) continue ;; esac
@@ -73,9 +92,9 @@ while read -r line <&3; do
     echo "=== np=$np input=$input cmd=$cmd ==="
     # shellcheck disable=SC2086   # word-split cmd into program + args
     if [ -n "$input" ]; then
-        echo "$input" | $MPIRUN -np "$np" $cmd
+        echo "$input" | $MPIRUN -np "$np" $PIN $cmd
     else
-        $MPIRUN -np "$np" $cmd </dev/null
+        $MPIRUN -np "$np" $PIN $cmd </dev/null
     fi
     echo "=== exit $? ==="
 done 3< "$CASES"

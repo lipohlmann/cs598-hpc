@@ -3,6 +3,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath, amssymb}
 \usepackage{graphicx}
+\usepackage{subcaption}
 \usepackage{booktabs}
 \usepackage{placeins}
 \usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black]{hyperref}
@@ -18,6 +19,7 @@
 
 %The figures below come from the sweeps run on the \texttt{eng-instruction} partition (AMD EPYC 7713 nodes, up to 128 MPI ranks on one node, one rank per core). The test matrix is $A=S+NI$ with $N=n+1$, factored as the augmented system $[A\,|\,b]$ with $b=A\mathbf{1}$, without pivoting. Throughout, ``GFLOPS'' uses $\tfrac{2}{3}n^3$ operations, and ``efficiency'' is the GFLOPS per rank of a run divided by the GFLOPS of the 1-rank run with the same $n$ (or the same $n^2/PQ$) and block size. $PQ$ is the number of ranks, and the dotted line in every efficiency plot marks 80\%.
 
+% =====================================================================
 For this homework assignment we consider factoring the augmented linear system $[A \ | \ \underbar{b}] = LU$ with $\underbar{b} = A\underbar{1}$.
 We lay the matrix out on a 2D $P \times Q$ block-cyclic processor grid with block size $b$.
 We consider two different, but related, approaches to solving this problem in a parallel manner. 
@@ -62,7 +64,11 @@ We began by verifying that our facorization is correct. For small matrices we lo
     \label{tab:lu-correctness}
 \end{table}
 
-\FloatBarrier
+
+\subsection{Correctness}
+% TODO
+
+\subsection{Strong and weak scaling}
 
 We then moved on to strong and weak scaling pictured in \cref{fig:q1_strong} and \cref{fig:q1_weak}. 
 In the strong scaling plots we look at a few differnt linear system sizes $n$ and plot both the time 
@@ -70,254 +76,227 @@ In the strong scaling plots we look at a few differnt linear system sizes $n$ an
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{figs/strong.png}
-    \caption{Q1 strong scaling (fixed $n$, increasing $P\times Q$), log--log. Left: time to factor; dashed lines are ideal $1/(PQ)$ scaling from the 1-rank run. Right: speedup over one rank against the ideal. The larger systems keep scaling up to 32--64 ranks, while the small systems ($n=1000$, $n=2000$) stop scaling early and slow down at 128 ranks, where the per-column broadcasts dominate the arithmetic.}
+    \caption{Q1 strong scaling for $n=4000$, $8000$ and $16000$ on 1 to 128 ranks, log--log. Left: time to factor; dashed lines are ideal $1/(PQ)$ scaling from the 1-rank run. Right: speedup over the 1-rank run; dashed line is ideal.}
     \label{fig:q1_strong}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{figs/weak.png}
-    \caption{Q1 weak scaling: $n^2/(PQ)$ held fixed per curve while $P\times Q$ grows. Left: time. LU does $O(n^3)$ work, so with $n^2/PQ$ fixed the work per rank grows like $\sqrt{PQ}$ and even a perfect code is not flat; efficiency (right, GFLOPS per rank relative to one rank) is the fair measure. Efficiency drops quickly as ranks are added, because every one of the $n$ elimination steps costs two broadcasts.}
+    \caption{Q1 weak scaling for $n^2/(PQ)=10^6$, $4\times10^6$ and $1.6\times10^7$ doubles per rank on 1 to 128 ranks. Left: time to factor (log scale); the flops per rank grow as $\sqrt{PQ}$. Right: efficiency, GFLOPS per rank divided by that of the 1-rank run with the same $n^2/(PQ)$; dotted line is 80\%.}
     \label{fig:q1_weak}
 \end{figure}
+
+\FloatBarrier
+\subsection{Local memory footprint for 80\% efficiency}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/efficiency_footprint.png}
+        \caption{Against the local footprint $n^2/(PQ)$ (doubles per rank).}
+        \label{fig:q1_eff_footprint}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/efficiency_total.png}
+        \caption{Against the size of the whole matrix, $8n^2$ bytes; the dashed line is the node's combined L3 cache (512\,MiB).}
+        \label{fig:q1_eff_total}
+    \end{subfigure}
+    \caption{Q1 efficiency of every strong- and weak-scaling run with more than one rank, one curve per rank count. Here efficiency is GFLOPS per rank divided by the best 1-rank GFLOPS (8.50), so that strong and weak runs share one baseline. Dotted line: 80\%.}
+    \label{fig:q1_eff}
+\end{figure}
+
+\FloatBarrier
+\subsection{Observed GFLOPS}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{figs/gflops.png}
-    \caption{Q1 performance. Left: total GFLOPS against ranks for each local footprint $n^2/(PQ)$ (log scale). Right: GFLOPS per rank. A single rank reaches about 8 GFLOPS for the unblocked rank-1-update kernel, and the best total in these runs is roughly 280 GFLOPS (128 ranks, $n^2/PQ=2.5\times10^5$).}
+    \caption{Q1 GFLOPS of the weak-scaling runs against the number of ranks, one curve per $n^2/(PQ)$. Left: total GFLOPS (log scale). Right: GFLOPS per rank.}
     \label{fig:q1_gflops}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/efficiency_footprint.png}
-    \caption{Q1 parallel efficiency against the local memory footprint $n^2/(PQ)$ (doubles per rank), one curve per rank count, from the strong- and weak-scaling runs. Two ranks reach 80\% at roughly $5\times10^5$ doubles per rank. Four ranks come close to 80\% near $10^6$, and curves for larger rank counts stay below 80\% over the range we measured, so for $PQ\ge 8$ the footprint needed for 80\% efficiency is larger than what we ran.}
-    \label{fig:q1_eff}
-\end{figure}
-
-
+% =====================================================================
 \FloatBarrier
 \section{Question 2: blocked (BLAS3) factorization}
-\FloatBarrier
 
-The blocked code uses the same layout with the distribution block equal to the pivot block size $b$: each step factors the diagonal block, solves for the $L$ and $U$ panels with \texttt{dtrsm}, broadcasts the panels along process rows and columns, and updates the trailing matrix with AOCL-BLIS \texttt{dgemm}. We first swept $b$, then ran strong and weak scaling for $b=32$, $64$ and $128$. Results for the remaining block sizes are in the appendix.
+The blocked code uses the same layout with the distribution block equal to the pivot block size $b$: each step factors the diagonal block, solves for the $L$ and $U$ panels with \texttt{dtrsm}, broadcasts the panels along process rows and columns, and updates the trailing matrix with AOCL-BLIS \texttt{dgemm}. We first swept $b$, then ran strong and weak scaling for $b=32$, $64$ and $128$.
+
+\subsection{Correctness}
+% TODO
+
+\subsection{Strong and weak scaling}
+
+\begin{figure}[p]
+    \centering
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.92\textwidth]{figs/q2_strong_b32.png}
+        \caption{$b=32$}
+        \label{fig:q2_strong_b32}
+    \end{subfigure}
+
+    \medskip
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.92\textwidth]{figs/q2_strong_b64.png}
+        \caption{$b=64$}
+        \label{fig:q2_strong_b64}
+    \end{subfigure}
+
+    \medskip
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.92\textwidth]{figs/q2_strong_b128.png}
+        \caption{$b=128$}
+        \label{fig:q2_strong_b128}
+    \end{subfigure}
+    \caption{Q2 strong scaling for $n=10000$, $20000$ and $40000$ on 1 to 128 ranks, log--log, for block sizes $b=32$, $64$ and $128$. Left panels: time to factor; dashed lines are ideal $1/(PQ)$ scaling from the 1-rank run. Right panels: speedup over the 1-rank run; dashed line is ideal.}
+    \label{fig:q2_strong}
+\end{figure}
+
+\begin{figure}[p]
+    \centering
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.92\textwidth]{figs/q2_weak_b32.png}
+        \caption{$b=32$}
+        \label{fig:q2_weak_b32}
+    \end{subfigure}
+
+    \medskip
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.92\textwidth]{figs/q2_weak_b64.png}
+        \caption{$b=64$}
+        \label{fig:q2_weak_b64}
+    \end{subfigure}
+
+    \medskip
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.92\textwidth]{figs/q2_weak_b128.png}
+        \caption{$b=128$}
+        \label{fig:q2_weak_b128}
+    \end{subfigure}
+    \caption{Q2 weak scaling for $n^2/(PQ)=4\times10^6$, $1.6\times10^7$ and $6.4\times10^7$ doubles per rank on 1 to 128 ranks, for block sizes $b=32$, $64$ and $128$. Left panels: time to factor (log scale). Right panels: efficiency, GFLOPS per rank divided by that of the 1-rank run with the same $b$ and $n^2/(PQ)$; dotted line is 80\%.}
+    \label{fig:q2_weak}
+\end{figure}
+
+\FloatBarrier
+\subsection{Local memory footprint for 80\% efficiency}
 
 \begin{figure}[htbp]
     \centering
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/q2_efficiency_footprint_b32.png}
+        \caption{$b=32$ (best 1-rank: 37.4 GFLOPS)}
+        \label{fig:q2_eff_b32}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/q2_efficiency_footprint_b64.png}
+        \caption{$b=64$ (best 1-rank: 41.0 GFLOPS)}
+        \label{fig:q2_eff_b64}
+    \end{subfigure}
+
+    \medskip
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/q2_efficiency_footprint_b128.png}
+        \caption{$b=128$ (best 1-rank: 45.8 GFLOPS)}
+        \label{fig:q2_eff_b128}
+    \end{subfigure}
+    \caption{Q2 efficiency against the local footprint $n^2/(PQ)$ (doubles per rank) for $b=32$, $64$ and $128$, one curve per rank count, from every strong-scaling, weak-scaling and block-size-sweep run with more than one rank. Efficiency is GFLOPS per rank divided by the best 1-rank GFLOPS for that $b$. Dotted line: 80\%.}
+    \label{fig:q2_eff}
+\end{figure}
+
+\FloatBarrier
+\subsection{Observed GFLOPS}
+
+\begin{figure}[p]
+    \centering
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.92\textwidth]{figs/q2_gflops_b32.png}
+        \caption{$b=32$}
+        \label{fig:q2_gflops_b32}
+    \end{subfigure}
+
+    \medskip
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.92\textwidth]{figs/q2_gflops_b64.png}
+        \caption{$b=64$}
+        \label{fig:q2_gflops_b64}
+    \end{subfigure}
+
+    \medskip
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.92\textwidth]{figs/q2_gflops_b128.png}
+        \caption{$b=128$}
+        \label{fig:q2_gflops_b128}
+    \end{subfigure}
+    \caption{Q2 GFLOPS of the weak-scaling runs against the number of ranks for $b=32$, $64$ and $128$, one curve per $n^2/(PQ)$. Left panels: total GFLOPS (log scale). Right panels: GFLOPS per rank.}
+    \label{fig:q2_gflops}
+\end{figure}
+
+\FloatBarrier
+\subsection{Optimal block size}
+
+\begin{figure}[!htbp]
+    \centering
     \includegraphics[width=0.75\textwidth]{figs/q2_bsweep.png}
-    \caption{Block size sweep: GFLOPS per rank against $b$ ($b=4,8,16,20,32,48,64,96,128$) for $n=4000$ and $n=8000$ on 1, 16 and 64 ranks. On one rank the rate rises from under 10 GFLOPS at $b=4$ to about 44 GFLOPS at $b=128$, with the largest $b$ best. With many ranks the gain from larger $b$ is smaller, since communication rather than \texttt{dgemm} limits the speed, and for 64 ranks the curve is nearly flat.}
+    \caption{Block size sweep: GFLOPS per rank against $b=4$, $8$, $16$, $20$, $32$, $48$, $64$, $96$ and $128$ (log scale) for $n=4000$ and $n=8000$ on 1, 16 and 64 ranks.}
     \label{fig:q2_bsweep}
 \end{figure}
 
-\FloatBarrier
-\subsection*{Block size $b=32$}
-
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
     \centering
-    \includegraphics[width=\textwidth]{figs/q2_strong_b32.png}
-    \caption{Q2 strong scaling for block size $b=32$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
-    \label{fig:q2_strong_b32}
-\end{figure}
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/q2_efficiency_footprint_b4.png}
+        \caption{$b=4$}
+        \label{fig:q2_eff_b4}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/q2_efficiency_footprint_b8.png}
+        \caption{$b=8$}
+        \label{fig:q2_eff_b8}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/q2_efficiency_footprint_b16.png}
+        \caption{$b=16$}
+        \label{fig:q2_eff_b16}
+    \end{subfigure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_weak_b32.png}
-    \caption{Q2 weak scaling for $b=32$: time (left) and efficiency relative to one rank (right) for fixed $n^2/(PQ)$. Dotted line: 80\%. }
-    \label{fig:q2_weak_b32}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_gflops_b32.png}
-    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=32$, one curve per local footprint $n^2/(PQ)$.}
-    \label{fig:q2_gflops_b32}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b32.png}
-    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=32$, one curve per rank count; dotted line: 80\%. }
-    \label{fig:q2_eff_b32}
-\end{figure}
-
-\FloatBarrier
-\subsection*{Block size $b=64$}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_strong_b64.png}
-    \caption{Q2 strong scaling for block size $b=64$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). For $n=16000$ the speedup at 128 ranks is about 30$\times$, i.e.\ roughly 25\% efficiency, and smaller $n$ saturate earlier.}
-    \label{fig:q2_strong_b64}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_weak_b64.png}
-    \caption{Q2 weak scaling for $b=64$: time (left) and efficiency relative to one rank (right) for fixed $n^2/(PQ)$. Dotted line: 80\%. Efficiency falls with rank count at every footprint, but the larger footprints stay above 80\% for more ranks.}
-    \label{fig:q2_weak_b64}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_gflops_b64.png}
-    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=64$, one curve per local footprint $n^2/(PQ)$.}
-    \label{fig:q2_gflops_b64}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b64.png}
-    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=64$, one curve per rank count; dotted line: 80\%. Two ranks pass 80\% at about $2\times10^6$ doubles per rank; four and sixteen ranks reach it near $1.6\times10^7$, eight ranks near $3\times10^7$, and 32 or more ranks did not reach 80\% in the sizes we ran.}
-    \label{fig:q2_eff_b64}
-\end{figure}
-
-\FloatBarrier
-\subsection*{Block size $b=128$}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_strong_b128.png}
-    \caption{Q2 strong scaling for block size $b=128$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
-    \label{fig:q2_strong_b128}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_weak_b128.png}
-    \caption{Q2 weak scaling for $b=128$: time (left) and efficiency relative to one rank (right) for fixed $n^2/(PQ)$. Dotted line: 80\%. }
-    \label{fig:q2_weak_b128}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_gflops_b128.png}
-    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=128$, one curve per local footprint $n^2/(PQ)$.}
-    \label{fig:q2_gflops_b128}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b128.png}
-    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=128$, one curve per rank count; dotted line: 80\%. }
-    \label{fig:q2_eff_b128}
-\end{figure}
-
-
-\FloatBarrier
-\appendix
-\section{Q2 results for additional block sizes}
-\FloatBarrier
-Strong scaling and efficiency plots for the remaining block sizes of the sweep. These runs covered 1, 16 and 64 ranks only, and weak scaling and the GFLOPS-against-ranks plots exist only for $b=32,64,128$. Axes and legends are as in the main text.
-
-\subsection*{Block size $b=4$}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_strong_b4.png}
-    \caption{Q2 strong scaling for block size $b=4$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
-    \label{fig:q2_strong_b4}
-\end{figure}
-
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b4.png}
-    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=4$, one curve per rank count; dotted line: 80\%. }
-    \label{fig:q2_eff_b4}
-\end{figure}
-
-\subsection*{Block size $b=8$}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_strong_b8.png}
-    \caption{Q2 strong scaling for block size $b=8$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
-    \label{fig:q2_strong_b8}
-\end{figure}
-
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b8.png}
-    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=8$, one curve per rank count; dotted line: 80\%. }
-    \label{fig:q2_eff_b8}
-\end{figure}
-
-\subsection*{Block size $b=16$}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_strong_b16.png}
-    \caption{Q2 strong scaling for block size $b=16$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
-    \label{fig:q2_strong_b16}
-\end{figure}
-
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b16.png}
-    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=16$, one curve per rank count; dotted line: 80\%. }
-    \label{fig:q2_eff_b16}
-\end{figure}
-
-\subsection*{Block size $b=20$}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_strong_b20.png}
-    \caption{Q2 strong scaling for block size $b=20$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
-    \label{fig:q2_strong_b20}
-\end{figure}
-
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b20.png}
-    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=20$, one curve per rank count; dotted line: 80\%. }
-    \label{fig:q2_eff_b20}
-\end{figure}
-
-\subsection*{Block size $b=48$}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_strong_b48.png}
-    \caption{Q2 strong scaling for block size $b=48$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
-    \label{fig:q2_strong_b48}
-\end{figure}
-
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b48.png}
-    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=48$, one curve per rank count; dotted line: 80\%. }
-    \label{fig:q2_eff_b48}
-\end{figure}
-
-\subsection*{Block size $b=96$}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_strong_b96.png}
-    \caption{Q2 strong scaling for block size $b=96$, log--log. Left: time (dashed = ideal). Right: speedup over one rank (dashed = ideal). }
-    \label{fig:q2_strong_b96}
-\end{figure}
-
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/q2_efficiency_footprint_b96.png}
-    \caption{Q2 efficiency against local footprint $n^2/(PQ)$ for $b=96$, one curve per rank count; dotted line: 80\%. }
-    \label{fig:q2_eff_b96}
-\end{figure}
-
-\subsection*{Block size $b=1$}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_strong_b1.png}
-    \caption{Q2 strong scaling for $b=1$ (the blocked code with block size 1, which reduces to the unblocked algorithm), for comparison with Question 1.}
-    \label{fig:q2_strong_b1}
+    \medskip
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/q2_efficiency_footprint_b20.png}
+        \caption{$b=20$}
+        \label{fig:q2_eff_b20}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/q2_efficiency_footprint_b48.png}
+        \caption{$b=48$}
+        \label{fig:q2_eff_b48}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/q2_efficiency_footprint_b96.png}
+        \caption{$b=96$}
+        \label{fig:q2_eff_b96}
+    \end{subfigure}
+    \caption{Efficiency against the local footprint $n^2/(PQ)$ for the block sizes run only in the block size sweep ($n=4000$ and $8000$ on 16 and 64 ranks). Efficiency is GFLOPS per rank divided by the best 1-rank GFLOPS for that $b$ in the sweep. Dotted line: 80\%.}
+    \label{fig:q2_eff_sweep}
 \end{figure}
 
 \end{document}

@@ -193,9 +193,14 @@ weak scaling are both just lists of lines in a cases file.
 
     python3 make_cases.py                      # cases/strong.txt weak_*.txt verify.txt
     sbatch sweep.sbatch cases/strong.txt
-    sbatch sweep.sbatch cases/weak_250k.txt    # likewise weak_1M, weak_4M, verify
+    sbatch sweep.sbatch cases/weak_1M.txt      # likewise weak_4M, weak_16M, verify
     python3 plot_results.py lu-sweep-*.log -o ../report/figs
 
 `plot_results.py` writes `results.csv`, `strong.png`, `weak.png`, `gflops.png`,
-`efficiency_footprint.png`, and prints peak GFLOPS and the interpolated n^2/(PQ)
-needed for 80% efficiency (efficiency = GFLOPS/rank vs the 1-rank run).
+`efficiency_footprint.png`, `efficiency_total.png`, and prints peak GFLOPS and,
+per rank count, the smallest measured n^2/(PQ) from which every run reaches 80%
+efficiency, plus the best efficiency seen. Strong scaling uses only runs from
+`strong*` case files, weak scaling only `weak*` ones. On the footprint and
+total-size plots efficiency = GFLOPS/rank / best 1-rank GFLOPS, so strong and
+weak runs mean the same thing; the weak plot uses the 1-rank run with the same
+n^2/(PQ).

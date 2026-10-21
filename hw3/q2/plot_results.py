@@ -3,13 +3,13 @@
 
     python3 plot_results.py lu-sweep-*.log -o ../report/figs
 
-Q2 (blocked LU).  Efficiency of a run = (its GFLOPS per rank) / (GFLOPS of the
-1-rank run with the same n and block size b, else the 1-rank run with the same
-b and n^2/(P Q)).  Figures are prefixed q2_; b is part of every series label.
+Q2 (blocked LU).  Weak-scaling efficiency of a run = (its GFLOPS per rank) /
+(GFLOPS of the 1-rank run with the same block size b and n^2/(P Q)); footprint
+plots divide by the best 1-rank GFLOPS for that b.  Figures are prefixed q2_;
+b is part of every series label.
 """
 import argparse
 import glob
-import math
 import re
 
 import matplotlib
@@ -25,31 +25,39 @@ ERR_TOL = 1e-8
 
 
 def parse(paths):
-    rows = []
+    rows, kinds = [], []
     for p in paths:
+        kind = "strong,weak"                         # logs without a "cases:" line
         with open(p, "rb") as f:                     # OpenMPI may leave NUL bytes
             for raw in f:
+                if raw.startswith(b"cases:"):        # which sweep the log is from
+                    name = raw.decode(errors="ignore")
+                    kind = next((k for k in ("strong", "weak") if k in name), "other")
                 if b"RESULT" in raw:
                     t = re.sub(r"\x00", "", raw.decode(errors="ignore")).split()
                     i = t.index("RESULT")
                     rows.append([float(x) for x in t[i + 1:i + 1 + len(COLS)]])
+                    kinds.append(kind)
     df = pd.DataFrame(rows, columns=COLS)
     df[COLS[:6]] = df[COLS[:6]].astype(int)
+    df["kind"] = kinds
     return df
 
 
 def add_derived(df):
     df = (df.groupby(["m", "n", "nb", "P", "Q", "np"], as_index=False)
             .agg(time=("time", "median"), gflops=("gflops", "median"),
-                 gflops_rank=("gflops_rank", "median"), err=("err", "max")))
+                 gflops_rank=("gflops_rank", "median"), err=("err", "max"),
+                 kind=("kind", lambda k: ",".join(sorted(set(",".join(k).split(",")))))))
     df["foot"] = df["m"] ** 2 / df["np"]            # n^2/(P Q), doubles per rank
     df["foot_key"] = df["foot"].map(lambda x: float(f"{x:.1e}"))
     one = df[df["np"] == 1]
-    by_n = one.set_index(["m", "nb"])["gflops_rank"]
+    # weak-scaling efficiency: vs the 1-rank run with the same b and n^2/(P Q)
     by_f = one.assign(k=one["foot"].map(lambda x: float(f"{x:.1e}"))).set_index(["k", "nb"])["gflops_rank"]
-    base = [by_n.get((m, b), by_f.get((k, b), np.nan))
-            for m, b, k in zip(df["m"], df["nb"], df["foot_key"])]
-    df["eff"] = df["gflops_rank"] / np.array(base)
+    df["eff"] = [by_f.get((k, b), np.nan) for k, b in zip(df["foot_key"], df["nb"])]
+    df["eff"] = df["gflops_rank"] / df["eff"]
+    peak = one.groupby("nb")["gflops_rank"].max()     # best 1-rank rate per b
+    df["eff_peak"] = df["gflops_rank"] / df["nb"].map(peak)
     t1 = one.set_index(["m", "nb"])["time"]
     df["speedup"] = [t1.get((m, b), np.nan) / t for m, b, t in zip(df["m"], df["nb"], df["time"])]
     return df.sort_values(["m", "nb", "np"])
@@ -69,6 +77,7 @@ def series(ax, x, y, i, label):
 
 
 def strong_plot(df, out, tag=""):
+    df = df[df["kind"].str.contains("strong")]
     groups = [(m, g) for m, g in df.groupby("m") if g["np"].nunique() >= 3]
     if not groups:
         return
@@ -89,6 +98,7 @@ def strong_plot(df, out, tag=""):
 
 
 def weak_plot(df, out, tag=""):
+    df = df[df["kind"].str.contains("weak")]
     groups = [(k, g) for k, g in df.groupby("foot_key") if g["np"].nunique() >= 3]
     if not groups:
         return
@@ -108,6 +118,7 @@ def weak_plot(df, out, tag=""):
 
 
 def gflops_plot(df, out, tag=""):
+    df = df[df["kind"].str.contains("weak")]
     groups = [(k, g) for k, g in df.groupby("foot_key") if g["np"].nunique() >= 3]
     if not groups:                                  # nothing to draw
         return
@@ -124,25 +135,30 @@ def gflops_plot(df, out, tag=""):
     fig.tight_layout(); fig.savefig(f"{out}/q2_gflops{tag}.png", dpi=200); plt.close(fig)
 
 
+def threshold_80(foot, eff):
+    """Smallest measured footprint from which every larger measured footprint
+    also reaches 80% efficiency; nan if the largest one does not."""
+    below = np.where(eff < 0.8)[0]
+    if not len(below):
+        return foot[0]
+    j = below[-1] + 1
+    return foot[j] if j < len(foot) else np.nan
+
+
 def footprint_plot(df, out, tag=""):
-    d = df.dropna(subset=["eff"])
+    d = df.dropna(subset=["eff_peak"])
     fig, ax = plt.subplots(figsize=(6.5, 4.4))
     rows = []
     for i, (p, g) in enumerate(d[d["np"] > 1].groupby("np")):
         g = g.sort_values("foot")
-        series(ax, g["foot"], g["eff"], i, f"{p} ranks")
-        x, y = np.log(g["foot"].values), g["eff"].values
-        ok = np.where(y >= 0.8)[0]
-        if len(ok):
-            j = ok[0]
-            f = math.exp(x[j]) if j == 0 else math.exp(
-                x[j - 1] + (0.8 - y[j - 1]) * (x[j] - x[j - 1]) / (y[j] - y[j - 1]))
-        else:
-            f = np.nan
-        rows.append((p, f))
+        series(ax, g["foot"], g["eff_peak"], i, f"{p} ranks")
+        j = g["eff_peak"].idxmax()
+        rows.append((p, threshold_80(g["foot"].values, g["eff_peak"].values),
+                     g.loc[j, "eff_peak"], g.loc[j, "foot"]))
     ax.axhline(0.8, color="k", ls=":", lw=1)
-    ax.set_xscale("log")
-    style(ax, "local footprint n²/(P Q)  [doubles per rank]", "parallel efficiency", "Efficiency vs local footprint")
+    ax.set_xscale("log"); ax.set_ylim(bottom=0)
+    style(ax, "local footprint n²/(P Q)  [doubles per rank]",
+          "efficiency (GFLOPS/rank vs best 1-rank)", "Efficiency vs local footprint")
     ax.legend(ncol=2, fontsize=8)
     fig.tight_layout(); fig.savefig(f"{out}/q2_efficiency_footprint{tag}.png", dpi=200); plt.close(fig)
     return rows
@@ -199,16 +215,17 @@ def main():
         rows_by_b[b] = footprint_plot(d, args.out, tag)
 
     pd.set_option("display.width", 160)
-    print(df[["m", "nb", "P", "Q", "np", "time", "gflops", "gflops_rank", "eff", "err"]].to_string(index=False))
+    print(df[["m", "nb", "P", "Q", "np", "time", "gflops", "gflops_rank", "eff", "eff_peak", "err"]].to_string(index=False))
     print(f"\nPeak: {df.gflops.max():.2f} GFLOPS total, {df.gflops_rank.max():.2f} GFLOPS/rank")
     if best:
         print("Best block size (GFLOPS per rank):")
         for m, p, b, gf in best:
             print(f"  n={m:6d} ranks={p:4d}: b={b:4d} ({gf:.2f})")
     for b, rows in rows_by_b.items():
-        print(f"Smallest n²/(P Q) with >= 80% efficiency, b={b} (interpolated):")
-        for p, f in rows:
-            print(f"  {p:4d} ranks: " + (f"{f:,.0f} doubles ({f * 8 / 2**20:.1f} MiB)" if f == f else "not reached"))
+        print(f"Smallest measured n²/(P Q) from which every run reaches >= 80% of the best 1-rank GFLOPS, b={b}:")
+        for p, f, e, fe in rows:
+            print(f"  {p:4d} ranks: " + (f"{f:,.0f} doubles ({f * 8 / 2**20:.1f} MiB)" if f == f else "not reached")
+                  + f"   [best {e:.2f} at {fe:,.0f}]")
 
 
 if __name__ == "__main__":

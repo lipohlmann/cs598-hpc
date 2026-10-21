@@ -23,8 +23,8 @@ SWEEPS=(
     "cases/q2_bsweep.txt:01:00:00"
 )
 for b in 32 64 128; do
-    SWEEPS+=("cases/q2_strong_b$b.txt:01:00:00")
-    for tag in 1M 4M 16M; do
+    SWEEPS+=("cases/q2_strong_b$b.txt:03:00:00")
+    for tag in 4M 16M 64M; do
         SWEEPS+=("cases/q2_weak_${tag}_b$b.txt:01:00:00")
     done
 done

@@ -19,10 +19,10 @@ python3 make_cases.py
 # case file : time limit
 SWEEPS=(
     "cases/verify.txt:00:15:00"
-    "cases/strong.txt:01:00:00"
-    "cases/weak_250k.txt:01:00:00"
+    "cases/strong.txt:02:00:00"
     "cases/weak_1M.txt:01:00:00"
-    "cases/weak_4M.txt:02:00:00"
+    "cases/weak_4M.txt:01:00:00"
+    "cases/weak_16M.txt:02:00:00"
 )
 
 ids=()        # all jobs (the plot job waits for every one)

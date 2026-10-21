@@ -14,8 +14,8 @@ BS_SWEEP = [4, 8, 16, 20, 32, 48, 64, 96, 128]
 BS_SCALE = [32, 64, 128]                       # block sizes used for scaling runs
 SWEEP_N = [4000, 8000]
 SWEEP_NP = [1, 16, 64]
-STRONG_N = [4000, 8000, 16000]
-WEAK_LOCAL = {"1M": 1_000_000, "4M": 4_000_000, "16M": 16_000_000}  # n^2/(P Q)
+STRONG_N = [10000, 20000, 40000]
+WEAK_LOCAL = {"4M": 4_000_000, "16M": 16_000_000, "64M": 64_000_000}  # n^2/(P Q)
 
 
 def grid(np_):

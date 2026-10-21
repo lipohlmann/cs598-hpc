@@ -30,4 +30,4 @@ prints `RESULT m n b P Q nranks time gflops gflops_per_rank rel_err`.
 Check `cases/q2_verify.txt` results first (rel_err ~1e-14).
 
 Experiments: `q2_bsweep` (b = 4..128, n = 4000/8000, 1/16/64 ranks), strong and weak
-scaling at b = 32, 64, 128 (weak n²/PQ = 1M, 4M, 16M).
+scaling at b = 32, 64, 128 (strong n = 10000, 20000, 40000; weak n²/PQ = 4M, 16M, 64M).
