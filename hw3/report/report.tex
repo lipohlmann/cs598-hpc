@@ -16,10 +16,56 @@
 
 \maketitle
 
-The figures below come from the sweeps run on the \texttt{eng-instruction} partition (AMD EPYC 7713 nodes, up to 128 MPI ranks on one node, one rank per core). The test matrix is $A=S+NI$ with $N=n+1$, factored as the augmented system $[A\,|\,b]$ with $b=A\mathbf{1}$, without pivoting. Throughout, ``GFLOPS'' uses $\tfrac{2}{3}n^3$ operations, and ``efficiency'' is the GFLOPS per rank of a run divided by the GFLOPS of the 1-rank run with the same $n$ (or the same $n^2/PQ$) and block size. $PQ$ is the number of ranks, and the dotted line in every efficiency plot marks 80\%.
+%The figures below come from the sweeps run on the \texttt{eng-instruction} partition (AMD EPYC 7713 nodes, up to 128 MPI ranks on one node, one rank per core). The test matrix is $A=S+NI$ with $N=n+1$, factored as the augmented system $[A\,|\,b]$ with $b=A\mathbf{1}$, without pivoting. Throughout, ``GFLOPS'' uses $\tfrac{2}{3}n^3$ operations, and ``efficiency'' is the GFLOPS per rank of a run divided by the GFLOPS of the 1-rank run with the same $n$ (or the same $n^2/PQ$) and block size. $PQ$ is the number of ranks, and the dotted line in every efficiency plot marks 80\%.
 
-\section{Question 1: unblocked (BLAS1) factorization, block size 1}
+For this homework assignment we consider factoring the augmented linear system $[A \ | \ \underbar{b}] = LU$ with $\underbar{b} = A\underbar{1}$.
+We lay the matrix out on a 2D $P \times Q$ block-cyclic processor grid with block size $b$.
+We consider two different, but related, approaches to solving this problem in a parallel manner. 
+
+\begin{itemize}
+    \item unblocked (BLAS1)
+    \item blocked (BLAS3)
+\end{itemize}
+
+
+\section*{Question 1: unblocked (BLAS1) factorization}
+We began by verifying that our facorization is correct. For small matrices we looked at different P and Q and measured the residual norm.
+\cref{tab:lu-correctness} shows that we reach near or below machine precision as expected for a correct factorization using a well conditioned matrix such as the one from the homework. 
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rrr ccc}
+    \toprule
+    $P$ & $Q$ & Ranks &
+    $\dfrac{\|A - LU\|_F}{\|A\|_F}$ &
+    $\dfrac{\|b - A\hat{x}\|_\infty}{\|A\|_\infty \|\hat{x}\|_\infty}$ &
+    $\|\hat{x} - \mathbf{1}\|_\infty$ \\
+    \midrule
+    1 & 1 &  1 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    1 & 2 &  2 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    2 & 1 &  2 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    1 & 4 &  4 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    4 & 1 &  4 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    2 & 2 &  4 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    2 & 3 &  6 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    3 & 2 &  6 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    2 & 4 &  8 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    4 & 2 &  8 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    3 & 4 & 12 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    4 & 3 & 12 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    4 & 4 & 16 & $8.20\times10^{-19}$ & $3.51\times10^{-15}$ & $3.78\times10^{-15}$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{Correctness of the parallel unblocked LU factorization for
+    $m = 503$, $n = m+1$ (augmented $[A \mid b]$ with $b = A\mathbf{1}$),
+    block size $n_b = 1$, on a range of $P \times Q$ process grids.
+    $\hat{x}$ is obtained by back substitution with the computed $U$.}
+    \label{tab:lu-correctness}
+\end{table}
+
 \FloatBarrier
+
+We then moved on to strong and weak scaling pictured in \cref{fig:q1_strong} and \cref{fig:q1_weak}. 
+In the strong scaling plots we look at a few differnt linear system sizes $n$ and plot both the time 
 
 \begin{figure}[htbp]
     \centering
