@@ -108,8 +108,11 @@ def weak_plot(df, out, tag=""):
 
 
 def gflops_plot(df, out, tag=""):
+    groups = [(k, g) for k, g in df.groupby("foot_key") if g["np"].nunique() >= 3]
+    if not groups:                                  # nothing to draw
+        return
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 4.2))
-    for i, (k, g) in enumerate([(k, g) for k, g in df.groupby("foot_key") if g["np"].nunique() >= 3]):
+    for i, (k, g) in enumerate(groups):
         series(a1, g["np"], g["gflops"], i, f"n²/PQ = {k:.3g}")
         series(a2, g["np"], g["gflops_rank"], i, f"n²/PQ = {k:.3g}")
     for a in (a1, a2):

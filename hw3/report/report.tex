@@ -161,7 +161,7 @@ The blocked code uses the same layout with the distribution block equal to the p
 \appendix
 \section{Q2 results for additional block sizes}
 \FloatBarrier
-Strong scaling, GFLOPS and efficiency plots for the remaining block sizes of the sweep (weak-scaling runs were done only for $b=32,64,128$). Axes and legends are as in the main text.
+Strong scaling and efficiency plots for the remaining block sizes of the sweep. These runs covered 1, 16 and 64 ranks only, and weak scaling and the GFLOPS-against-ranks plots exist only for $b=32,64,128$. Axes and legends are as in the main text.
 
 \subsection*{Block size $b=4$}
 
@@ -172,12 +172,6 @@ Strong scaling, GFLOPS and efficiency plots for the remaining block sizes of the
     \label{fig:q2_strong_b4}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_gflops_b4.png}
-    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=4$, one curve per local footprint $n^2/(PQ)$.}
-    \label{fig:q2_gflops_b4}
-\end{figure}
 
 \begin{figure}[htbp]
     \centering
@@ -195,12 +189,6 @@ Strong scaling, GFLOPS and efficiency plots for the remaining block sizes of the
     \label{fig:q2_strong_b8}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_gflops_b8.png}
-    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=8$, one curve per local footprint $n^2/(PQ)$.}
-    \label{fig:q2_gflops_b8}
-\end{figure}
 
 \begin{figure}[htbp]
     \centering
@@ -218,12 +206,6 @@ Strong scaling, GFLOPS and efficiency plots for the remaining block sizes of the
     \label{fig:q2_strong_b16}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_gflops_b16.png}
-    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=16$, one curve per local footprint $n^2/(PQ)$.}
-    \label{fig:q2_gflops_b16}
-\end{figure}
 
 \begin{figure}[htbp]
     \centering
@@ -241,12 +223,6 @@ Strong scaling, GFLOPS and efficiency plots for the remaining block sizes of the
     \label{fig:q2_strong_b20}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_gflops_b20.png}
-    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=20$, one curve per local footprint $n^2/(PQ)$.}
-    \label{fig:q2_gflops_b20}
-\end{figure}
 
 \begin{figure}[htbp]
     \centering
@@ -264,12 +240,6 @@ Strong scaling, GFLOPS and efficiency plots for the remaining block sizes of the
     \label{fig:q2_strong_b48}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_gflops_b48.png}
-    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=48$, one curve per local footprint $n^2/(PQ)$.}
-    \label{fig:q2_gflops_b48}
-\end{figure}
 
 \begin{figure}[htbp]
     \centering
@@ -287,12 +257,6 @@ Strong scaling, GFLOPS and efficiency plots for the remaining block sizes of the
     \label{fig:q2_strong_b96}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figs/q2_gflops_b96.png}
-    \caption{Q2 total GFLOPS (left) and GFLOPS per rank (right) against ranks for $b=96$, one curve per local footprint $n^2/(PQ)$.}
-    \label{fig:q2_gflops_b96}
-\end{figure}
 
 \begin{figure}[htbp]
     \centering
