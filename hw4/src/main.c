@@ -1,11 +1,22 @@
 #include <stdio.h>
-#include "common.h"
+#include <stdlib.h>
+
+#include "matrix.h"
 
 int main(int argc, char *argv[]) {
-    (void)argc;
-    (void)argv;
+  (void)argc;
+  (void)argv;
 
-    printf("hw-template: %s\n", GREETING);
+  size_t ns[4] = {8, 16, 32, 64};
 
-    return 0;
+  for (int i = 0; i < 4; i++) {
+    tridiag_matrix matrix;
+    matrix.n = ns[i];
+
+    random_spd_tridiag(&matrix);
+
+    // solve
+  }
+
+  return 0;
 }
