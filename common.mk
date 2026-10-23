@@ -14,7 +14,7 @@ LDFLAGS  ?= -fopenmp -lm
 
 # ---- LaTeX toolchain ----
 LATEXMK   ?= latexmk
-LATEXOPTS ?= -pdf -interaction=nonstopmode -halt-on-error -output-directory=build
+LATEXOPTS ?= -pdf -interaction=nonstopmode -halt-on-error
 
 # ---- Generic pattern rule for object files ----
 # Assumes headers live in ./include relative to the assignment directory.
