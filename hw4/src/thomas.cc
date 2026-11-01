@@ -4,12 +4,25 @@
 
 #include <cmath>
 
+// d_k only depends on a ratio of entries of S, so S can be rescaled freely. This
+// keeps the product of the R_k matrices from overflowing for large N.
+static void RescaleS(double S[2][2]) {
+  double m = std::fmax(std::fmax(std::fabs(S[0][0]), std::fabs(S[0][1])),
+                       std::fmax(std::fabs(S[1][0]), std::fabs(S[1][1])));
+  if (m > 1e100) {
+    S[0][0] /= m;
+    S[0][1] /= m;
+    S[1][0] /= m;
+    S[1][1] /= m;
+  }
+}
+
 void ThomasAlgorithmParallel(int my_id, int P, int N, double* b, double* a,
                              double* c, double* x, double* q) {
-  int i, j, k, i_global;
   int rows_local, local_offset;
   double S[2][2], T[2][2], s1_tmp, s2_tmp;
   double *l, *d, *y;
+  MPI_Status status;
 
   l = new double[N];
   d = new double[N];
@@ -29,10 +42,12 @@ void ThomasAlgorithmParallel(int my_id, int P, int N, double* b, double* a,
   S[0][1] = 0.0;
 
   // find *my* rows
-  rows_local = static_cast<double>(std::floor(N / P));
+  rows_local = N / P;
   local_offset = my_id * rows_local;
+  if (my_id == P - 1) rows_local += N % P;  // last rank takes the leftovers
 
   if (my_id == 0) {
+    s1_tmp = a[local_offset] * S[0][0];
     S[1][0] = S[0][0];
     S[1][1] = S[0][1];
     S[0][1] = a[local_offset] * S[0][1];
@@ -47,17 +62,19 @@ void ThomasAlgorithmParallel(int my_id, int P, int N, double* b, double* a,
       S[1][1] = S[0][1];
       S[0][0] = s1_tmp;
       S[0][1] = s2_tmp;
+      RescaleS(S);
     }
   } else {
     for (auto i = 0; i < rows_local; i++) {
       s1_tmp = a[i + local_offset] * S[0][0] -
                b[i + local_offset - 1] * c[i + local_offset - 1] * S[1][0];
       s2_tmp = a[i + local_offset] * S[0][1] -
-               b[i + local_offset - 1] * c[i + local_offset - 1] S[1][1];
+               b[i + local_offset - 1] * c[i + local_offset - 1] * S[1][1];
       S[1][0] = S[0][0];
       S[1][1] = S[0][1];
       S[0][0] = s1_tmp;
       S[0][1] = s2_tmp;
+      RescaleS(S);
     }
   }
 
@@ -75,6 +92,7 @@ void ThomasAlgorithmParallel(int my_id, int P, int N, double* b, double* a,
       s1_tmp = S[1][0] * T[0][0] + S[1][1] * T[1][0];
       S[1][1] = S[1][0] * T[0][1] + S[1][1] * T[1][1];
       S[1][0] = s1_tmp;
+      RescaleS(S);
     }
   }
 
@@ -82,8 +100,9 @@ void ThomasAlgorithmParallel(int my_id, int P, int N, double* b, double* a,
   d[local_offset + rows_local - 1] = (S[0][0] + S[0][1]) / (S[1][0] + S[1][1]);
   if (my_id == 0) {
     // first processor can't receive anything
-    MPI_Send(&d[local_offset + rows_local - 1], 1, MPI_DOUBLE, 1, 0,
-             MPI_COMM_WORLD);
+    if (P > 1)
+      MPI_Send(&d[local_offset + rows_local - 1], 1, MPI_DOUBLE, 1, 0,
+               MPI_COMM_WORLD);
   } else {
     // middle and end processors receive information
     MPI_Recv(&d[local_offset - 1], 1, MPI_DOUBLE, my_id - 1, 0, MPI_COMM_WORLD,
@@ -104,8 +123,9 @@ void ThomasAlgorithmParallel(int my_id, int P, int N, double* b, double* a,
       d[local_offset + i] =
           a[local_offset + i] - l[local_offset + i] * c[local_offset + i - 1];
     }
-    l[local_offset + rows_local - 1] =
-        b[local_offset + rows_local - 2] / d[local_offset + rows_local - 2];
+    if (rows_local > 1)
+      l[local_offset + rows_local - 1] =
+          b[local_offset + rows_local - 2] / d[local_offset + rows_local - 2];
   } else {
     for (auto i = 0; i < rows_local - 1; i++) {
       l[local_offset + i] = b[local_offset + i - 1] / d[local_offset + i - 1];
@@ -124,12 +144,13 @@ void ThomasAlgorithmParallel(int my_id, int P, int N, double* b, double* a,
   MPI_Allreduce(tmp, d, N, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   for (auto i = 0; i < N; i++) tmp[i] = l[i];
-  MPI_Allreduce(tmp, l, N, MPI_DOUBLE, MPI_SUM_MPI_COMM_WORLD);
+  MPI_Allreduce(tmp, l, N, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   delete[] tmp;
 
   if (my_id == 0) {
     // forward substitution
-    y[0] = q[0] for (auto i = 1; i < N; i++) y[i] = q[i] - l[i] * y[i - 1];
+    y[0] = q[0];
+    for (auto i = 1; i < N; i++) y[i] = q[i] - l[i] * y[i - 1];
 
     // backward substitution
     x[N - 1] = y[N - 1] / d[N - 1];
