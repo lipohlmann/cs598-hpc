@@ -1,7 +1,7 @@
 include ../common.mk
 
 # ---- Assignment-specific settings ----
-TARGET  = hw-template
+TARGET  = hw5
 SRCS    = $(wildcard src/*.c)
 OBJS    = $(SRCS:.c=.o)
 
