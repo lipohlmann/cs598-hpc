@@ -1,9 +1,17 @@
 #pragma once
 
+#include <stddef.h>
+
 /**
- * @brief Create a Poisson Matrix as a flattened 1D array.
+ * Convention: M = N - 1 interior points per side. Grid point (i, j) maps to
+ * unknown index k = i * M + j, with i <-> x and j <-> y. Interior node i sits
+ * at x = h * (i + 1), where h = L / N.
+ */
+
+/**
+ * @brief Create a Poisson Matrix as a flattened 1D array (row-major).
  *
- * @param A 1D array with size (N+1) x (N+1)
+ * @param A 1D array with size (N-1)^2 x (N-1)^2
  * @param N N
  * @param L Length of square domain
  */
@@ -13,7 +21,7 @@ void CreatePoissonMatrix(double* A, const int N, const double L);
  * @brief Create the l.h.s. of a Poisson problem where the forcing function is
  * only the boundary values
  *
- * @param b 1D array with size (N+1)^2
+ * @param b 1D array with size (N-1)^2
  * @param N N
  * @param L Length of square domain
  * @param boundary_type Index for boundary types given in EvaluateBoundary
@@ -36,8 +44,8 @@ double EvaluateBoundary(const double x, const double y, const int type);
  * 0-indexing!
  *
  * @param n_cols
- * @param col
  * @param row
- * @return int
+ * @param col
+ * @return size_t
  */
-int FlatIndex(const int n_cols, const int row, const int col);
+size_t FlatIndex(const size_t n_cols, const size_t row, const size_t col);
