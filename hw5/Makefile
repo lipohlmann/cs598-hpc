@@ -1,9 +1,14 @@
+CXX      = mpicxx
+CXXFLAGS = -O2 -Wall -Wextra -std=c++17 -Iinclude
+LDFLAGS  = -lm
+
 include ../common.mk
 
 # ---- Assignment-specific settings ----
-TARGET  = hw-template
+TARGET  = hw5
 SRCS    = $(wildcard src/*.c)
 OBJS    = $(SRCS:.c=.o)
+NP     ?= 4
 
 REPORT  = report/report.tex
 
@@ -14,13 +19,16 @@ all: code pdf
 code: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+
+%.o: %.cc
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 pdf:
 	$(LATEXMK) $(LATEXOPTS) -cd $(REPORT)
 
 run: code
-	./$(TARGET)
+	mpirun -n $(NP) ./$(TARGET)
 
 clean:
 	rm -f $(TARGET) $(OBJS)
