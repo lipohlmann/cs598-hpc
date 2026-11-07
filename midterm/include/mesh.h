@@ -6,10 +6,10 @@ typedef struct {
   size_t n_rows;
   size_t n_cols;
   double* data;
-} mesh;
+} Matrix;
 
-mesh create_mesh(const size_t n_rows, const size_t n_cols);
+Matrix create_mesh(const size_t n_rows, const size_t n_cols);
 
-void free_mesh(mesh* mesh);
+void free_mesh(Matrix* mesh);
 
-size_t flat_index(const size_t row, const size_t col, const mesh* mesh);
+size_t flat_index(const size_t row, const size_t col, const Matrix* mesh);

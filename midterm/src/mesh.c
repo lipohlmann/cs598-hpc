@@ -1,19 +1,19 @@
 #include "mesh.h"
 
-mesh create_mesh(const size_t n_rows, const size_t n_cols) {
+Matrix create_matrix(const size_t n_rows, const size_t n_cols) {
   double* data = calloc(n_rows * n_cols, sizeof(double));
-  mesh mesh;
-  mesh.n_rows = n_rows;
-  mesh.n_cols = n_cols;
-  mesh.data = data;
-  return mesh;
+  Matrix matrix;
+  matrix.n_rows = n_rows;
+  matrix.n_cols = n_cols;
+  matrix.data = data;
+  return matrix;
 }
 
-void free_mesh(mesh* mesh) {
-  free(mesh->data);
-  mesh->data = NULL;
+void free_matrix(Matrix* matrix) {
+  free(matrix->data);
+  matrix->data = NULL;
 }
 
-size_t flat_index(const size_t row, const size_t col, const mesh* mesh) {
-  return row * mesh->n_cols + col;
+size_t flat_index(const size_t row, const size_t col, const Matrix* matrix) {
+  return row * matrix->n_cols + col;
 }
