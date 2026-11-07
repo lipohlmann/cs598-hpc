@@ -1,0 +1,72 @@
+\documentclass{beamer}
+
+% --- Use the following to create a printout for the presentation ---
+% \documentclass[handout]{beamer}
+
+% \usepackage{pgfpages}
+% \pgfpagesuselayout{2 on 1}[a4paper,border shrink=5mm]
+
+\setbeamertemplate{theorems}[numbered]
+\beamerdefaultoverlayspecification{<+->}
+
+\usetheme{gotham}
+
+	\gothamset{
+		% background=dark,
+		numbering= framenumber,
+		% tocframe template= gotham simple,
+		parttocframe default=off,
+		sectiontocframe default=off,
+		subsectiontocframe default=off,
+    progressbar style=rounded box
+	}
+
+\usepackage{standalone}
+\usepackage{changepage}
+
+\usepackage[backend=biber, style=numeric, sorting=none]{biblatex}
+\addbibresource{cs598.bib}
+
+\usepackage{appendixnumberbeamer}
+\gdef\appendixtotalframenumber{1}
+
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{physics}
+\usepackage[noabbrev,capitalize]{cleveref}
+\usepackage{nicefrac}
+\usepackage{todonotes}
+
+\usepackage[acronym,toc]{glossaries}
+\include{src/acronymns}
+\makeglossaries
+
+\title[]{Parallel Matrix-Free Spectral Elements for Solving 3D Poisson Equation}
+\subtitle[]{CS 598 Midterm}
+\date[]{November 2026}
+\author[]{\inst{1}Liam Pohlmann, \inst{2}Alex Shaffer}
+\institute{\inst{1} Department of Nuclear, Plasma, and Radiological Engineering \and \inst{2} Department of Computer Science }
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}[toc]{Table of Contents}%
+	\small
+	\tableofcontents%[hideallsubsections]
+\end{frame}
+
+\section{Project Description}
+\input{src/project_description.tex}
+
+
+\section{References}
+\begin{frame}[noframenumbering,plain,allowframebreaks]
+	\frametitle{References}
+	\printbibliography[heading=none]
+\end{frame}
+
+% Appendix holds backup slides
+\appendix
+
+\end{document}
