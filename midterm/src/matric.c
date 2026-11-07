@@ -1,4 +1,4 @@
-#include "mesh.h"
+#include "matrix.h"
 
 Matrix create_matrix(const size_t n_rows, const size_t n_cols) {
   double* data = calloc(n_rows * n_cols, sizeof(double));

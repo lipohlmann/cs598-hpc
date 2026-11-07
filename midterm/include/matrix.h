@@ -8,8 +8,8 @@ typedef struct {
   double* data;
 } Matrix;
 
-Matrix create_mesh(const size_t n_rows, const size_t n_cols);
+Matrix create_matrix(const size_t n_rows, const size_t n_cols);
 
-void free_mesh(Matrix* mesh);
+void free_matrix(Matrix* mesh);
 
 size_t flat_index(const size_t row, const size_t col, const Matrix* mesh);
