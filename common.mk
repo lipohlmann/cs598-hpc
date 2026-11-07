@@ -9,8 +9,8 @@ ifeq ($(origin CC),default)
 CC := mpicc
 endif
 
-CFLAGS   ?= -O2 -Wall -Wextra -std=c11 -fopenmp
-LDFLAGS  ?= -fopenmp -lm
+CFLAGS   ?= -O2 -Wall -Wextra -std=c11 
+LDFLAGS  ?=  -lm
 
 # ---- LaTeX toolchain ----
 LATEXMK   ?= latexmk
