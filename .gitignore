@@ -388,4 +388,5 @@ dkms.conf
 
 .DS_Store
 build/
+*.ist
 
