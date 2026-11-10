@@ -5,8 +5,7 @@
   \end{equation}
   Using vector identities and integration by parts leaves:
   \begin{equation}
-    \label{eq:weak-form}
-    -\int \nabla u\cdot\nabla v\odif{V}+\oint v\nabla u\cdot\hat{n}\odif{S}=\int fv\odif{V}.
+    \int \nabla u\cdot\nabla v\odif{V}-\oint v\nabla u\cdot\hat{n}\odif{S}=\int fv\odif{V}.
   \end{equation}
 \end{frame}
 
@@ -22,9 +21,38 @@
     \label{eq:test-galerkin}
     v(x,y,z)=\sum_{n=0}^{N_z}\sum_{m=0}^{N_y}\sum_{l=0}^{N_x}v_{lmn}\ell_l(x)\ell_m(y)\ell_n(z).
   \end{equation}
+  Using \cref{eq:lagrange-expansion} and \cref{eq:test-galerkin} in \cref{eq:weak-form} gives a set of $(N_x+1)(N_y+1)(N_z+1)$ equations.
 \end{frame}
 
-\begin{frame}{Galerkin Projection}
-  Using \cref{eq:lagrange-expansion} and \cref{eq:test-galerkin} in \cref{eq:weak-form} gives a set of $(N_x+1)(N_y+1)(N_z+1)$ equations.
-    [UNFINISHED]
+\begin{frame}{Galerkin Approximation}
+  Because of our choice for the test function in \cref{eq:test-galerkin}, $v$ also satisfies the homogeneous Dirichlet boundary conditions, leaving our weak form simply:
+  \begin{equation}
+    \label{eq:weak-form}
+    \underbrace{\int \nabla u\cdot\nabla v\odif{V}}_{\mathcal{A}\left(u,v\right)}=\underbrace{\int fv\odif{V}}_{\mathcal{F}(v)}.
+  \end{equation}
+
+\end{frame}
+
+\begin{frame}{Affine Transformation}
+  As a quick aside, we define the affine transformation, which is valid for $x_i\in [0,L_i]$:
+  \begin{equation}
+    \label{eq:affine-trans}
+    x_i (r_i)=\frac{L_i}{2}\left(1+r_i\right).
+  \end{equation}
+  This mapping transforms $x,y,z\in [0,L] \rightarrow \mu,\eta,\xi\in [-1,1]$, simplifying the integrals in the weak form.
+\end{frame}
+
+\begin{frame}{Kronecker Product Form}
+  Applying the weak form to a set of $E$ discretized hexahedral elements, each with a tensor product of internal nodes, gives $\forall e\in \{1,2,\dots ,E\}$:
+  \begin{multline}
+    \label{eq:kronecker-product-form}
+    \frac{L_yL_z}{4L_x}\mathbf{v}^T_e\left(\hat{K}\otimes \hat{M}\otimes \hat{M}\right)\mathbf{u}_e+\\
+    \frac{L_xL_z}{4L_y}\mathbf{v}^T\left(\hat{M}\otimes \hat{K}\otimes \hat{M}\right)\mathbf{u}_e+
+    \frac{L_xL_y}{4L_z}\mathbf{v}^T\left(\hat{M}\otimes \hat{M}\otimes \hat{K}\right)\mathbf{u}_e+\\
+    \frac{L_xL_yL_z}{8}\mathbf{v}^T\left(\hat{M}\otimes\hat{M}\otimes\hat{M}\right)\mathbf{u}_e=
+    \frac{L_xL_yL_z}{8}\mathbf{v}^T\left(\hat{M}\otimes\hat{M}\otimes\hat{M}\right)\mathbf{f}_e.
+  \end{multline}
+  $\hat{K}$ and $\hat{M}$ are the element \textit{stiffness} and \textit{mass} matrices, respectively.
+  Note that the forcing function, $f(x,y,z)$, has been transformed using \cref{eq:affine-trans} and expanded using Lagrange polynomials.
+  Internal nodes for which the Lagrange polynomials interpolate through are discussed next.
 \end{frame}
