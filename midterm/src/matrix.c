@@ -57,3 +57,19 @@ Matrix create_stiffness_matrix(const QuadSet* gll_set) {
   }
   return stiffness_matrix;
 }
+
+Vector mat_vec(const Matrix* A, const Vector* x) {
+  Vector b = create_vector(x->size);
+
+  if (A->is_diagonal == 1) {
+    for (size_t i = 0; i < A->n_rows; i++) {
+      b.data[i] = matrix_value_at(i, i, A) * vector_value_at(i, x);
+    }
+  } else {
+    for (size_t i = 0; i < A->n_rows; i++) {
+      for (size_t j = 0; j < A->n_cols; j++)
+        b.data[i] += matrix_value_at(i, j, A) * vector_value_at(j, x);
+    }
+  }
+  return b;
+}

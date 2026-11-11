@@ -57,3 +57,13 @@ double matrix_value_at(const size_t i, const size_t j, const Matrix* matrix);
 Matrix create_mass_matrix(const QuadSet* gll_set);
 
 Matrix create_stiffness_matrix(const QuadSet* gll_set);
+
+/**
+ * @brief Compute the matrix-vector product Ax=b. If A is diagonal, the product
+ * is optimized.
+ *
+ * @param A
+ * @param x
+ * @return Vector
+ */
+Vector mat_vec(const Matrix* A, const Vector* x);
