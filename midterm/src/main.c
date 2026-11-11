@@ -1,5 +1,6 @@
 #include <mpi.h>
 
+#include "gauss_lobatto_legendre.h"
 #include "mesh.h"
 
 int main(int argc, char const* argv[]) {
@@ -11,6 +12,8 @@ int main(int argc, char const* argv[]) {
   size_t nx = 4;
   size_t ny = 4;
   size_t nz = 4;
+
+  int n_nodes_per_element = 4;  // must be at least 2!
   // --------------------------------
 
   // initialize MPI
@@ -29,5 +32,13 @@ int main(int argc, char const* argv[]) {
   if (world_rank == 0) {
     create_mesh(&mesh, Lx, Ly, Lz, nx, ny, nz);
   };
+
+  // create GLL quadrature set
+  QuadSet gll_quad = GaussLobattoLegendre(n_nodes_per_element);
+
+  // create local mass matrices
+
+  // create local stiffness matrices
+
   return 0;
 }
