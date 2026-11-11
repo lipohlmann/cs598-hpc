@@ -55,3 +55,5 @@ double matrix_value_at(const size_t i, const size_t j, const Matrix* matrix);
  * @return Matrix
  */
 Matrix create_mass_matrix(const QuadSet* gll_set);
+
+Matrix create_stiffness_matrix(const QuadSet* gll_set);
