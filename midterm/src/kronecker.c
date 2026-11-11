@@ -12,6 +12,9 @@ Vector SerialTripleKroneckerProduct(const Vector* u, const Matrix* A,
   Vector y = create_vector(vector_len);
   SerialComputeY(&y, A, &v);
 
+  free_vector(&w);
+  free_vector(&v);
+
   return y;
 }
 
@@ -41,7 +44,7 @@ void SerialComputeV(Vector* v, const Matrix* B, const Vector* w) {
           sum += matrix_value_at(j, p, B) *
                  vector_value_at(FlatIndex(i, p, k, n), w);
 
-        v->data[FlatIndex(i, j, k, w->size)] = sum;
+        v->data[FlatIndex(i, j, k, v->size)] = sum;
       }
     }
   }
