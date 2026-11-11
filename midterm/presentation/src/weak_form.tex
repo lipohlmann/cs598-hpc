@@ -46,11 +46,11 @@
   Applying the weak form to a set of $E$ discretized hexahedral elements, each with a tensor product of internal nodes, gives $\forall e\in \{1,2,\dots ,E\}$:
   \begin{multline}
     \label{eq:kronecker-product-form}
-    \frac{L_yL_z}{4L_x}\mathbf{v}^T_e\left(\hat{M}_z\otimes \hat{M}_y\otimes \hat{K}_x\right)\mathbf{u}_e+\\
-    \frac{L_xL_z}{4L_y}\mathbf{v}^T_e\left(\hat{M}_z\otimes \hat{K}_y\otimes \hat{M}_x\right)\mathbf{u}_e+
-    \frac{L_xL_y}{4L_z}\mathbf{v}^T_e\left(\hat{K}_z\otimes \hat{M}_y\otimes \hat{M}_x\right)\mathbf{u}_e+\\
-    \frac{L_xL_yL_z}{8}\mathbf{v}^T_e\left(\hat{M}_z\otimes\hat{M}_y\otimes\hat{M}_x\right)\mathbf{u}_e=
-    \frac{L_xL_yL_z}{8}\mathbf{v}^T_e\left(\hat{M}_z\otimes\hat{M}_y\otimes\hat{M}_x\right)\mathbf{f}_e.
+    \mathbf{v}^T_e\left(\hat{M}_z\otimes \hat{M}_y\otimes \hat{K}_x\right)\mathbf{u}_e+\\
+    \mathbf{v}^T_e\left(\hat{M}_z\otimes \hat{K}_y\otimes \hat{M}_x\right)\mathbf{u}_e+
+    \mathbf{v}^T_e\left(\hat{K}_z\otimes \hat{M}_y\otimes \hat{M}_x\right)\mathbf{u}_e+\\
+    \mathbf{v}^T_e\left(\hat{M}_z\otimes\hat{M}_y\otimes\hat{M}_x\right)\mathbf{u}_e=
+    \mathbf{v}^T_e\left(\hat{M}_z\otimes\hat{M}_y\otimes\hat{M}_x\right)\mathbf{f}_e.
   \end{multline}
   $\hat{K}$ and $\hat{M}$ are the element \textit{stiffness} and \textit{mass} matrices, respectively.
   Note that the forcing function, $f(x,y,z)$, has been transformed using \cref{eq:affine-trans} and expanded using Lagrange polynomials.
@@ -61,17 +61,17 @@
   \begin{equation}
     \label{eq:mass-matrices}
     \begin{cases}
-      \left(\hat{M}_x\right)_{il}=\int_{-1}^{1}\ell_i(\mu)\ell_l(\mu)\odif{\mu}      \\
-      \left({\hat{M}_y}\right)_{jm}=\int_{-1}^{1}\ell_j(\eta)\ell_m(\eta)\odif{\eta} \\
-      \left({\hat{M}_z}\right)_{kn}=\int_{-1}^{1}\ell_j(\xi)\ell_n(\xi)\odif{\xi}
+      \left(\hat{M}_x\right)_{il}=\frac{L_x}{2}\int_{-1}^{1}\ell_i(\mu)\ell_l(\mu)\odif{\mu}      \\
+      \left({\hat{M}_y}\right)_{jm}=\frac{L_y}{2}\int_{-1}^{1}\ell_j(\eta)\ell_m(\eta)\odif{\eta} \\
+      \left({\hat{M}_z}\right)_{kn}=\frac{L_z}{2}\int_{-1}^{1}\ell_j(\xi)\ell_n(\xi)\odif{\xi}
     \end{cases}
   \end{equation}
   \begin{equation}
     \label{eq:stiffness-matrics}
     \begin{cases}
-      \left(\hat{K}_{x}\right)_{ij}=\int_{-1}^{1}\odv{\ell_i}{\mu}\odv{\ell_l}{\mu}\odif{\mu}    \\
-      \left(\hat{K}_{y}\right)_{jm}=\int_{-1}^{1}\odv{\ell_j}{\eta}\odv{\ell_m}{\eta}\odif{\eta} \\
-      \left(\hat{K}_{z}\right)_{kn}=\int_{-1}^{1}\odv{\ell_k}{\xi}\odv{\ell_n}{\xi}\odif{\xi}.
+      \left(\hat{K}_{x}\right)_{ij}=\frac{2}{L_x}\int_{-1}^{1}\odv{\ell_i}{\mu}\odv{\ell_l}{\mu}\odif{\mu}    \\
+      \left(\hat{K}_{y}\right)_{jm}=\frac{2}{L_y}\int_{-1}^{1}\odv{\ell_j}{\eta}\odv{\ell_m}{\eta}\odif{\eta} \\
+      \left(\hat{K}_{z}\right)_{kn}=\frac{2}{L_z}\int_{-1}^{1}\odv{\ell_k}{\xi}\odv{\ell_n}{\xi}\odif{\xi}.
     \end{cases}
   \end{equation}
   Note that the Jacobian involved in the change of variables has been factored out and included in \cref{eq:kronecker-product-form}.
