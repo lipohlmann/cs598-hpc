@@ -30,3 +30,13 @@ void free_vector(Vector* vector);
  * @return double
  */
 double vector_value_at(const size_t index, const Vector* vector);
+
+/**
+ * @brief Compute the dot product of two vectors. Returns NAN if sizes don't
+ * match.
+ *
+ * @param v1
+ * @param v2
+ * @return double
+ */
+double dot(const Vector* v1, const Vector* v2);
