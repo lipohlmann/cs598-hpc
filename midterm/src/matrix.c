@@ -17,3 +17,7 @@ void free_matrix(Matrix* matrix) {
 size_t flat_index(const size_t row, const size_t col, const Matrix* matrix) {
   return row * matrix->n_cols + col;
 }
+
+double value_at(const size_t i, const size_t j, const Matrix* matrix) {
+  return matrix->data[flat_index(i, j, matrix)];
+}
