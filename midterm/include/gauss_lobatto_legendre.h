@@ -35,3 +35,14 @@ void GaussLobattoLegendreNodes(QuadSet* gll_quad_set);
  * @param gll_quad_set QuadSet to modify
  */
 void GaussLobattoLegendreWeights(QuadSet* gll_quad_set);
+
+/**
+ * @brief Computes the derivative of the j-th Lagrange interpolant at node i.
+ *
+ * @param i
+ * @param j
+ * @param gll_quad_set
+ * @return double
+ */
+double ComputeLagrangeDerivative(const size_t i, const size_t j,
+                                 const QuadSet* gll_quad_set);
