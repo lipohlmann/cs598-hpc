@@ -1,0 +1,39 @@
+\begin{frame}{Kronecker Product}
+  For three square matrices of the same size, $A, B, C\in \mathbb{R}^{(N+1) \times (N+1)}$, the Kronecker product can be expanded using $(N+1)\times (N+1)$ identity matrices:
+  \begin{equation}
+    A\otimes B\otimes C=\left(A\otimes I\otimes I\right)\left(I\otimes B\otimes I\right)\left(I\otimes I\otimes C\right).
+  \end{equation}
+  We will be interested in finding the product, $\left(A\otimes I\otimes I\right)\left(I\otimes B\otimes I\right)\left(I\otimes I\otimes C\right)\mathbf{u}$, where $\mathbf{u}$ is a length $(N+1)^3$ vector.
+  Let:
+  \begin{subequations}
+    \begin{equation}
+      \mathbf{w}  =\left(I\otimes I\otimes C\right)\mathbf{u}
+    \end{equation}
+    \begin{equation}
+      \mathbf{v}  =\left(I\otimes B\otimes I\right)\mathbf{w}
+    \end{equation}
+    \begin{equation}
+      \mathbf{y}  =\left(A\otimes I\otimes I\right)\mathbf{v}
+    \end{equation}
+  \end{subequations}
+\end{frame}
+
+\begin{frame}{Kronecker Product}
+  Define the flat indexing:
+  \begin{equation}
+    \hat{\imath} (i,j,k)=i+j(N+1)+k(N+1)^2.
+  \end{equation}
+  Then we have the following definitions:
+  \begin{subequations}
+    \begin{equation}
+      w_{\hat{\imath}}= w_{ijk}=\sum_{p=0}^{N}C_{ip}u_{pjk}
+    \end{equation}
+    \begin{equation}
+      v_{\hat{\imath}}=v_{ijk}=\sum_{p=0}^{N}B_{jp}w_{ipk}
+    \end{equation}
+    \begin{equation}
+      y_{\hat{\imath}}=y_{ijk}=\sum_{p=0}^{N}A_{kp}v_{ijp}.
+    \end{equation}
+  \end{subequations}
+  Note that in doing this, we reduce the matrix-vector product from $\mathcal{O}\left((N+1)^6\right)$ to $\mathcal{O}\left((N+1)^4\right)$, recovering two orders of magnitude.
+\end{frame}
