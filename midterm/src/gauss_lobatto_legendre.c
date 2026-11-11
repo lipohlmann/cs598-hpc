@@ -38,10 +38,11 @@ void GaussLobattoLegendreWeights(QuadSet* gll_quad_set) {
 double ComputeLagrangeDerivative(const size_t i, const size_t j,
                                  const QuadSet* gll_quad_set) {
   const size_t n_points = gll_quad_set->weights.size;
+  const double corner = (double)n_points * (double)(n_points - 1) / 4.0;
   if (i == 0 && j == 0)
-    return -n_points * (n_points - 1) / 4.0;
+    return -corner;
   else if (i == (n_points - 1) && j == (n_points - 1))
-    return n_points * (n_points - 1) / 4.0;
+    return corner;
   else if (i != j) {
     double node_i = gll_quad_set->nodes.data[i];
     double node_j = gll_quad_set->nodes.data[j];
