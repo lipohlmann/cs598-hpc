@@ -7,6 +7,26 @@ typedef struct {
   double* data;
 } Vector;
 
+/**
+ * @brief Create a vector object. All values in vector are initialized to 0.
+ *
+ * @param size
+ * @return Vector
+ */
 Vector create_vector(const size_t size);
 
+/**
+ * @brief Free memory for members of vector
+ *
+ * @param vector
+ */
 void free_vector(Vector* vector);
+
+/**
+ * @brief Gets the value at a given index in the vector
+ *
+ * @param index
+ * @param vector
+ * @return double
+ */
+double vector_value_at(const size_t index, const Vector* vector);
