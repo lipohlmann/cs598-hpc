@@ -56,6 +56,12 @@ double matrix_value_at(const size_t i, const size_t j, const Matrix* matrix);
  */
 Matrix create_mass_matrix(const QuadSet* gll_set);
 
+/**
+ * @brief Create a stiffness matrix using the GLL quadrature set
+ *
+ * @param gll_set
+ * @return Matrix
+ */
 Matrix create_stiffness_matrix(const QuadSet* gll_set);
 
 /**
