@@ -43,5 +43,7 @@ int main(int argc, char const* argv[]) {
   // create local stiffness matrix
   Matrix K = create_stiffness_matrix(&gll_quad);
 
+  MPI_Finalize();
+
   return 0;
 }
