@@ -8,10 +8,38 @@ typedef struct {
   double* data;
 } Matrix;
 
+/**
+ * @brief Create a matrix object. All data are initialized to 0.
+ *
+ * @param n_rows
+ * @param n_cols
+ * @return Matrix
+ */
 Matrix create_matrix(const size_t n_rows, const size_t n_cols);
 
+/**
+ * @brief Free matrix member memory.
+ *
+ * @param matrix
+ */
 void free_matrix(Matrix* matrix);
 
+/**
+ * @brief Compute the equivalent flat index given a row and column number.
+ *
+ * @param row
+ * @param col
+ * @param matrix
+ * @return size_t
+ */
 size_t flat_index(const size_t row, const size_t col, const Matrix* matrix);
 
-double value_at(const size_t i, const size_t j, const Matrix* matrix);
+/**
+ * @brief Gets the matrix value at a given row, column pair
+ *
+ * @param i Row number
+ * @param j Column number
+ * @param matrix
+ * @return double
+ */
+double matrix_value_at(const size_t i, const size_t j, const Matrix* matrix);
