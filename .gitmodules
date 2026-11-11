@@ -1,0 +1,3 @@
+[submodule "midterm/external/gslib"]
+	path = midterm/external/gslib
+	url = https://github.com/Nek5000/gslib
