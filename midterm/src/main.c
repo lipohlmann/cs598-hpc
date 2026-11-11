@@ -1,6 +1,7 @@
 #include <mpi.h>
 
 #include "gauss_lobatto_legendre.h"
+#include "matrix.h"
 #include "mesh.h"
 
 int main(int argc, char const* argv[]) {
@@ -36,9 +37,11 @@ int main(int argc, char const* argv[]) {
   // create GLL quadrature set
   QuadSet gll_quad = GaussLobattoLegendre(n_nodes_per_element);
 
-  // create local mass matrices
+  // create local mass matrix
+  Matrix M = create_mass_matrix(&gll_quad);
 
-  // create local stiffness matrices
+  // create local stiffness matrix
+  Matrix K = create_stiffness_matrix(&gll_quad);
 
   return 0;
 }
