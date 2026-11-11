@@ -16,13 +16,14 @@ Vector SerialTripleKroneckerProduct(const Vector* u, const Matrix* A,
 }
 
 void SerialComputeW(Vector* w, const Matrix* C, const Vector* u) {
-  for (size_t k = 0; k < w->size; k++) {
-    for (size_t j = 0; j < w->size; j++) {
-      for (size_t i = 0; i < w->size; i++) {
+  const size_t n = C->n_rows;
+  for (size_t k = 0; k < n; k++) {
+    for (size_t j = 0; j < n; j++) {
+      for (size_t i = 0; i < n; i++) {
         double sum = 0.0;
-        for (size_t p = 0; p < w->size; p++)
+        for (size_t p = 0; p < n; p++)
           sum += matrix_value_at(i, p, C) *
-                 vector_value_at(FlatIndex(p, j, k, u->size), u);
+                 vector_value_at(FlatIndex(p, j, k, n), u);
 
         w->data[FlatIndex(i, j, k, w->size)] = sum;
       }
@@ -31,13 +32,14 @@ void SerialComputeW(Vector* w, const Matrix* C, const Vector* u) {
 }
 
 void SerialComputeV(Vector* v, const Matrix* B, const Vector* w) {
-  for (size_t k = 0; k < v->size; k++) {
-    for (size_t j = 0; j < v->size; j++) {
-      for (size_t i = 0; i < v->size; i++) {
+  const size_t n = B->n_rows;
+  for (size_t k = 0; k < n; k++) {
+    for (size_t j = 0; j < n; j++) {
+      for (size_t i = 0; i < n; i++) {
         double sum = 0.0;
         for (size_t p = 0; p < w->size; p++)
           sum += matrix_value_at(j, p, B) *
-                 vector_value_at(FlatIndex(i, p, k, v->size), w);
+                 vector_value_at(FlatIndex(i, p, k, n), w);
 
         v->data[FlatIndex(i, j, k, w->size)] = sum;
       }
@@ -46,15 +48,16 @@ void SerialComputeV(Vector* v, const Matrix* B, const Vector* w) {
 }
 
 void SerialComputeY(Vector* y, const Matrix* A, const Vector* v) {
-  for (size_t k = 0; k < y->size; k++) {
-    for (size_t j = 0; j < y->size; j++) {
-      for (size_t i = 0; i < y->size; i++) {
+  const size_t n = A->n_rows;
+  for (size_t k = 0; k < n; k++) {
+    for (size_t j = 0; j < n; j++) {
+      for (size_t i = 0; i < n; i++) {
         double sum = 0.0;
-        for (size_t p = 0; p < y->size; p++)
+        for (size_t p = 0; p < n; p++)
           sum += matrix_value_at(k, p, A) *
-                 vector_value_at(FlatIndex(i, j, p, y->size), v);
+                 vector_value_at(FlatIndex(i, j, p, n), v);
 
-        v->data[FlatIndex(i, j, k, y->size)] = sum;
+        y->data[FlatIndex(i, j, k, n)] = sum;
       }
     }
   }
