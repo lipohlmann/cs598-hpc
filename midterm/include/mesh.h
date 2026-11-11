@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+#include "element.h"
 #include "triple.h"
 
 typedef struct {
@@ -19,6 +20,8 @@ typedef struct {
 
   size_t* node_ids;  // array of flat node IDs
                      // (to be indexed with flat_node_id())
+
+  Element* elements;  // array of elements in mesh
 } Mesh;
 
 /**
@@ -87,3 +90,30 @@ size_t flat_node_id(const size_t i, const size_t j, const size_t k,
  */
 size_t flat_node_id_from_triple(const Triple* triple, const size_t nx,
                                 const size_t ny);
+
+/**
+ * @brief Set the elements in the mesh based on the canonical form:
+ *
+ *    8 --------------- 7
+ *   /|                /|
+ *  / |               / |
+ * 5 --------------- 6  |     +ζ
+ * |  |              |  |      |  _+η
+ * |  4 -------------|- 3      | /
+ * | /               | /       |/___ +ξ
+ * |/                |/
+ * 1 --------------- 2
+
+ *
+ * @param mesh
+ */
+Element* create_elements(const size_t nx, const size_t ny, const size_t nz);
+
+/**
+ * @brief Get the equivalent triple of indices given a flat index
+ *
+ * @param node_id
+ * @param mesh
+ * @return Triple
+ */
+Triple flat_node_id_to_triple(const size_t node_id, const Mesh* mesh);
