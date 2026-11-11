@@ -2,10 +2,13 @@
 
 #include <stdlib.h>
 
+#include "quad_set.h"
+
 typedef struct {
   size_t n_rows;
   size_t n_cols;
   double* data;
+  int is_diagonal;  // 0=false, 1=true
 } Matrix;
 
 /**
@@ -15,7 +18,8 @@ typedef struct {
  * @param n_cols
  * @return Matrix
  */
-Matrix create_matrix(const size_t n_rows, const size_t n_cols);
+Matrix create_matrix(const size_t n_rows, const size_t n_cols,
+                     const int is_diagonal);
 
 /**
  * @brief Free matrix member memory.
@@ -43,3 +47,11 @@ size_t flat_index(const size_t row, const size_t col, const Matrix* matrix);
  * @return double
  */
 double matrix_value_at(const size_t i, const size_t j, const Matrix* matrix);
+
+/**
+ * @brief Create a diagonal mass matrix using the GLL quadrature set
+ *
+ * @param gll_set
+ * @return Matrix
+ */
+Matrix create_mass_matrix(const QuadSet* gll_set);
