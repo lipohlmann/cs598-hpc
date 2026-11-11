@@ -40,3 +40,12 @@ double vector_value_at(const size_t index, const Vector* vector);
  * @return double
  */
 double dot(const Vector* v1, const Vector* v2);
+
+/**
+ * @brief Computes the component-wise addition of two vectors.
+ *
+ * @param vec1
+ * @param vec2
+ * @return Vector
+ */
+Vector vector_addition(const Vector* vec1, const Vector* vec2);

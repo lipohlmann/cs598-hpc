@@ -25,3 +25,10 @@ double dot(const Vector* v1, const Vector* v2) {
   for (size_t i = 0; i < v1->size; i++) sum += v1->data[i] * v2->data[i];
   return sum;
 }
+
+Vector vector_addition(const Vector* vec1, const Vector* vec2) {
+  Vector result = create_vector(vec1->size);
+  for (size_t i = 0; i < vec1->size; i++)
+    result.data[i] = vec1->data[i] + vec2->data[i];
+  return result;
+}
