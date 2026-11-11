@@ -68,20 +68,29 @@ size_t flat_node_id_from_triple(const Triple* triple, const size_t nx,
 }
 
 Element* create_elements(const size_t nx, const size_t ny, const size_t nz) {
-  Element* elements = malloc(nx * ny * nz * sizeof(*elements));
+  // nx, ny, nz are numbers of POINTS; the element grid is one smaller
+  const size_t ex = nx - 1;
+  const size_t ey = ny - 1;
+  const size_t ez = nz - 1;
 
-  for (size_t k = 0; k < nz - 1; k++) {
-    for (size_t j = 0; j < ny - 1; j++) {
-      for (size_t i = 0; i < nx - 1; i++) {
-        elements->node_ids[0] = flat_node_id(i, j, k, nx, ny);
-        elements->node_ids[1] = flat_node_id(i + 1, j, k, nx, ny);
-        elements->node_ids[2] = flat_node_id(i + 1, j + 1, k, nx, ny);
-        elements->node_ids[3] = flat_node_id(i, j + 1, k, nx, ny);
-        elements->node_ids[4] = flat_node_id(i, j, k + 1, nx, ny);
-        elements->node_ids[5] = flat_node_id(i + 1, j, k + 1, nx, ny);
-        elements->node_ids[6] = flat_node_id(i + 1, j + 1, k + 1, nx, ny);
-        elements->node_ids[7] = flat_node_id(i, j + 1, k + 1, nx, ny);
-        elements->id = flat_node_id(i, j, k, nx, ny);
+  Element* elements = malloc(ex * ey * ez * sizeof(*elements));
+
+  for (size_t k = 0; k < ez; k++) {
+    for (size_t j = 0; j < ey; j++) {
+      for (size_t i = 0; i < ex; i++) {
+        Element new_element;
+        new_element.node_ids[0] = flat_node_id(i, j, k, nx, ny);
+        new_element.node_ids[1] = flat_node_id(i + 1, j, k, nx, ny);
+        new_element.node_ids[2] = flat_node_id(i + 1, j + 1, k, nx, ny);
+        new_element.node_ids[3] = flat_node_id(i, j + 1, k, nx, ny);
+        new_element.node_ids[4] = flat_node_id(i, j, k + 1, nx, ny);
+        new_element.node_ids[5] = flat_node_id(i + 1, j, k + 1, nx, ny);
+        new_element.node_ids[6] = flat_node_id(i + 1, j + 1, k + 1, nx, ny);
+        new_element.node_ids[7] = flat_node_id(i, j + 1, k + 1, nx, ny);
+        // element ID is the flat index in the element grid, not the point grid
+        const size_t element_id = flat_node_id(i, j, k, ex, ey);
+        new_element.id = element_id;
+        elements[element_id] = new_element;
       }
     }
   }
