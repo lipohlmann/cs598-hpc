@@ -200,13 +200,13 @@ in any order or in parallel.
 | --- | --- | --- |
 | `run_p_convergence.sh` | p-convergence: fixed mesh, increase GLL points | `NELEM=4`, `NPTS="3 ... 16"`, `RANKS=4` |
 | `run_h_convergence.sh` | h-convergence: refine equally in x, y, z at fixed order; finest run writes VTK | `NELEMS="3 6 12 24 48"`, `NPTS="3 5"`, `RANKS=32` |
-| `run_strong_scaling.sh` | strong scaling: fixed problem, more ranks | `NELEM=32`, `NPTS=6`, `MAX_RANKS=256`, `MAX_ITERS=200` |
-| `run_weak_scaling.sh` | weak scaling: `BLOCK^3` elements per rank, constant h | `BLOCK=8`, `NPTS=6`, `MAX_RANKS=256`, `MAX_ITERS=200` |
+| `run_strong_scaling.sh` | strong scaling: fixed problem, more ranks | `NELEM=64`, `NPTS=6`, `MAX_RANKS=256`, `MAX_ITERS=200`, `TOL=1e-10` |
+| `run_weak_scaling.sh` | weak scaling: `BLOCK^3` elements per rank, constant h | `BLOCK=16`, `NPTS=6`, `MAX_RANKS=256`, `MAX_ITERS=200`, `TOL=1e-10` |
 
 General settings (environment variables, see `scripts/common.sh`):
 `ACCOUNT`, `PARTITION`, `TASKS_PER_NODE` (64), `TIME_LIMIT` (00:30:00),
 `EXCLUSIVE` (1, whole nodes for clean timings), `SBATCH_EXTRA`, `SETUP_CMD`,
-`LAUNCHER` (`srun --cpu-bind=cores`), `REPS` (3 repetitions of every timing
+`LAUNCHER` (`srun --mpi=pmix --cpu-bind=cores`), `REPS` (5 repetitions of every timing
 run), `RESULTS_DIR` (`./results`), `DRY_RUN`, and `SUBMIT=local` to run
 directly with `mpirun` instead of Slurm (for small tests on a laptop).
 

@@ -9,19 +9,21 @@
 # compare the time per iteration as well as the total time (analyze.py
 # reports both). MAX_ITERS fixes the iteration count to compare equal work.
 #
-#   BLOCK      elements per direction per rank (default: 8, i.e. 512/rank)
+#   BLOCK      elements per direction per rank (default: 16, i.e. 4096/rank)
 #   NPTS       GLL points per element          (default: 6)
 #   RANKS      list of rank counts, powers of 2 (default: up to MAX_RANKS)
 #   MAX_RANKS  largest rank count              (default: 256)
 #   MAX_ITERS  CG iteration cap                (default: 200)
+#   TOL        CG relative residual tolerance  (default: 1e-10)
 # plus the settings in common.sh (REPS repetitions per rank count).
 source "$(dirname "$0")/common.sh"
 
-BLOCK=${BLOCK:-8}
+BLOCK=${BLOCK:-16}
 NPTS=${NPTS:-6}
 MAX_RANKS=${MAX_RANKS:-256}
 RANKS=${RANKS:-$(powers_of_two_up_to "$MAX_RANKS")}
 MAX_ITERS=${MAX_ITERS:-200}
+TOL=${TOL:-1e-10}
 
 for p in $RANKS; do
   # k = log2(p); fails for non powers of two
@@ -38,6 +40,6 @@ for p in $RANKS; do
   for rep in $(seq 1 "$REPS"); do
     submit_run weak_scaling "$(printf 'ranks%05d_rep%d' "$p" "$rep")" "$p" \
       --nx "$nx" --ny "$ny" --nz "$nz" --lx "$lx" --ly "$ly" --lz "$lz" \
-      --npts "$NPTS" --max-iters "$MAX_ITERS"
+      --npts "$NPTS" --max-iters "$MAX_ITERS" --tol "$TOL"
   done
 done
