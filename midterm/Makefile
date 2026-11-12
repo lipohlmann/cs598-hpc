@@ -1,3 +1,10 @@
+# -O3 lets the compiler vectorize the element kernel (local_operator_apply).
+# Extra architecture flags go in ARCHFLAGS (don't override CFLAGS on the
+# command line: that would drop the gslib include path below), e.g. on a
+# compute node:  make code ARCHFLAGS=-march=native
+CFLAGS ?= -O3 -Wall -Wextra -std=c11
+ARCHFLAGS ?=
+
 include ../common.mk
 
 # ---- Assignment-specific settings ----
@@ -10,6 +17,7 @@ GSLIB_DIR = external/gslib
 GSLIB_LIB = $(GSLIB_DIR)/build/lib/libgs.a
 # -isystem silences -Wall/-Wextra noise from gslib's own headers
 CFLAGS   += -isystem $(GSLIB_DIR)/build/include
+CFLAGS   += $(ARCHFLAGS)
 
 PRESENTATION  = presentation/presentation.tex
 

@@ -25,6 +25,10 @@ Build the code (this builds gslib first, then the `midterm` executable):
 make code
 ```
 
+The default flags are `-O3 -Wall -Wextra -std=c11`. Pass extra architecture
+flags with `ARCHFLAGS` (not `CFLAGS`, which would drop the gslib include path),
+e.g. when building on a cluster compute node: `make code ARCHFLAGS=-march=native`.
+
 Other targets:
 
 ```sh
@@ -144,6 +148,11 @@ using unpreconditioned CG, and compares against a manufactured solution
 
 - Exact solution: \(u_{ex}=\sin(4\pi x/L_x)\sin(2\pi y/L_y)\sin(3\pi z/L_z)\)
 - Forcing: \(f=-\nabla^2 u_{ex}+u_{ex}=\left(\pi^2(16/L_x^2+4/L_y^2+9/L_z^2)+1\right)u_{ex}\)
+- Element operator: the GLL mass matrices are diagonal, so each of the four
+  Kronecker products in \(A_e = M_z\otimes M_y\otimes K_x + M_z\otimes K_y\otimes M_x +
+  K_z\otimes M_y\otimes M_x + M_z\otimes M_y\otimes M_x\) needs only one dense 1D
+  sweep; `local_operator_apply` (`src/operator.c`) does 3 n^4 multiply-adds
+  per element with no temporaries (vs 12 n^4 for four generic products).
 - Right-hand side: \(b = M f\), i.e. \(f\) at the GLL nodes times the lumped mass
   weights, summed over shared nodes (gather-scatter) and masked.
 
