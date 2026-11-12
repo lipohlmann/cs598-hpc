@@ -151,7 +151,7 @@ using unpreconditioned CG, and compares against a manufactured solution
 - Element operator: the GLL mass matrices are diagonal, so each of the four
   Kronecker products in \(A_e = M_z\otimes M_y\otimes K_x + M_z\otimes K_y\otimes M_x +
   K_z\otimes M_y\otimes M_x + M_z\otimes M_y\otimes M_x\) needs only one dense 1D
-  sweep; `local_operator_apply` (`src/operator.c`) does 3 n^4 multiply-adds
+  sweep; `SerialLocalOperator` (`src/kronecker.c`) does 3 n^4 multiply-adds
   per element with no temporaries (vs 12 n^4 for four generic products).
 - Right-hand side: \(b = M f\), i.e. \(f\) at the GLL nodes times the lumped mass
   weights, summed over shared nodes (gather-scatter) and masked.

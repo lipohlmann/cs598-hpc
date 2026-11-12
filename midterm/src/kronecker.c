@@ -70,3 +70,54 @@ size_t FlatIndex(const size_t i, const size_t j, const size_t k,
                  const size_t n) {
   return i + j * n + k * n * n;
 }
+
+void SerialLocalOperator(const double* restrict u, double* restrict y,
+                         const Matrix* Kx, const Matrix* Ky, const Matrix* Kz,
+                         const Matrix* Mx, const Matrix* My, const Matrix* Mz) {
+  const size_t n = Kx->n_rows;
+  const size_t n2 = n * n;
+  const double* restrict kx = Kx->data;  // dense, row-major n x n
+  const double* restrict ky = Ky->data;
+  const double* restrict kz = Kz->data;
+  const double* restrict mx = Mx->data;  // diagonals, length n
+  const double* restrict my = My->data;
+  const double* restrict mz = Mz->data;
+
+  // x-direction stiffness and the mass term, one x-line (fixed j, k) at a time:
+  // y[i,j,k] = my[j] mz[k] (sum_p Kx[i,p] u[p,j,k] + mx[i] u[i,j,k])
+  for (size_t k = 0; k < n; k++)
+    for (size_t j = 0; j < n; j++) {
+      const double* restrict u_line = u + j * n + k * n2;
+      double* restrict y_line = y + j * n + k * n2;
+      const double myz = my[j] * mz[k];
+      for (size_t i = 0; i < n; i++) {
+        double sum = mx[i] * u_line[i];
+        for (size_t p = 0; p < n; p++) sum += kx[i * n + p] * u_line[p];
+        y_line[i] = myz * sum;
+      }
+    }
+
+  // y-direction stiffness: y[i,j,k] += mx[i] mz[k] sum_p Ky[j,p] u[i,p,k]
+  // (innermost loop over i: unit stride)
+  for (size_t k = 0; k < n; k++)
+    for (size_t j = 0; j < n; j++) {
+      double* restrict y_line = y + j * n + k * n2;
+      for (size_t p = 0; p < n; p++) {
+        const double a = mz[k] * ky[j * n + p];
+        const double* restrict u_line = u + p * n + k * n2;
+        for (size_t i = 0; i < n; i++) y_line[i] += a * mx[i] * u_line[i];
+      }
+    }
+
+  // z-direction stiffness: y[i,j,k] += mx[i] my[j] sum_p Kz[k,p] u[i,j,p]
+  for (size_t k = 0; k < n; k++)
+    for (size_t p = 0; p < n; p++) {
+      const double a = kz[k * n + p];
+      for (size_t j = 0; j < n; j++) {
+        const double b = a * my[j];
+        const double* restrict u_line = u + j * n + p * n2;
+        double* restrict y_line = y + j * n + k * n2;
+        for (size_t i = 0; i < n; i++) y_line[i] += b * mx[i] * u_line[i];
+      }
+    }
+}

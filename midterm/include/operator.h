@@ -21,24 +21,6 @@ typedef struct {
 } Operator;
 
 /**
- * @brief Apply the local operator of one element,
- * \f$y = (M_z\otimes M_y\otimes K_x + M_z\otimes K_y\otimes M_x +
- * K_z\otimes M_y\otimes M_x + M_z\otimes M_y\otimes M_x)\,u\f$.
- *
- * Because the GLL mass matrices are diagonal, each Kronecker product only
- * needs one dense 1D sweep (the stiffness direction); the mass factors are
- * pointwise scalings. That is 3 n^4 multiply-adds per element instead of the
- * 12 n^4 of four generic SerialTripleKroneckerProduct() calls, with no
- * temporary vectors. Layout: x fastest, then y, then z (FlatIndex()).
- *
- * @param op Operator (n and the scaled 1D matrices)
- * @param u Element input, n^3 values
- * @param y Element output, n^3 values (overwritten; must not alias u)
- */
-void local_operator_apply(const Operator* op, const double* restrict u,
-                          double* restrict y);
-
-/**
  * @brief Fill the per-rank parts of the operator: element list, n_elements,
  * mask, gslib handle, inv_mult and mpi_comm. The scaled matrices and op->n
  * must already be set on this rank. Collective.

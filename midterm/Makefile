@@ -1,4 +1,5 @@
-# -O3 lets the compiler vectorize the element kernel (local_operator_apply).
+# -O3 lets the compiler vectorize the element kernel
+# (SerialLocalOperator in src/kronecker.c).
 # Extra architecture flags go in ARCHFLAGS (don't override CFLAGS on the
 # command line: that would drop the gslib include path below), e.g. on a
 # compute node:  make code ARCHFLAGS=-march=native
