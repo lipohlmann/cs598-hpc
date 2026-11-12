@@ -20,9 +20,9 @@
 #   SBATCH_EXTRA    extra sbatch arguments, e.g. "--mem=0 --constraint=xyz"
 #   SETUP_CMD       shell commands run in the job before the launch, e.g.
 #                   "module load openmpi/4.1"           (default: empty)
-#   LAUNCHER        MPI launcher inside a job           (default: srun --cpu-bind=cores)
+#   LAUNCHER        MPI launcher inside a job           (default: srun --mpi=pmix --cpu-bind=cores)
 #   MPIRUN          MPI launcher for SUBMIT=local       (default: mpirun --oversubscribe)
-#   REPS            repetitions of each timing run      (default: 3)
+#   REPS            repetitions of each timing run      (default: 5)
 
 set -euo pipefail
 
@@ -37,9 +37,9 @@ TIME_LIMIT=${TIME_LIMIT:-00:30:00}
 EXCLUSIVE=${EXCLUSIVE:-1}
 SBATCH_EXTRA=${SBATCH_EXTRA:-}
 SETUP_CMD=${SETUP_CMD:-}
-LAUNCHER=${LAUNCHER:-srun --cpu-bind=cores}
+LAUNCHER=${LAUNCHER:-srun --mpi=pmix --cpu-bind=cores}
 MPIRUN=${MPIRUN:-mpirun --oversubscribe}
-REPS=${REPS:-3}
+REPS=${REPS:-5}
 
 if [[ "$SUBMIT" != "sbatch" && "$SUBMIT" != "local" ]]; then
   echo "error: SUBMIT must be 'sbatch' or 'local' (got '$SUBMIT')" >&2
