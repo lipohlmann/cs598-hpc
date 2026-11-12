@@ -106,3 +106,35 @@ Properties and limits:
   only (no graph/edge-cut optimization). The partition is static.
 - On a 4x4x4 mesh with 8 ranks, RCB cuts 48 element faces versus 64 for
   contiguous blocks of element IDs, and 40 versus 80 on an 8x4x2 mesh.
+
+## Verification (manufactured solution)
+
+`main` solves \(-\nabla^2 u + u = f\) with homogeneous Dirichlet conditions
+using unpreconditioned CG, and compares against a manufactured solution
+(`src/mms.c`, `include/mms.h`):
+
+- Exact solution: \(u_{ex}=\sin(4\pi x/L_x)\sin(2\pi y/L_y)\sin(3\pi z/L_z)\)
+- Forcing: \(f=-\nabla^2 u_{ex}+u_{ex}=\left(\pi^2(16/L_x^2+4/L_y^2+9/L_z^2)+1\right)u_{ex}\)
+- Right-hand side: \(b = M f\), i.e. \(f\) at the GLL nodes times the lumped mass
+  weights, summed over shared nodes (gather-scatter) and masked.
+
+The program prints the CG iteration count and the global L2 and max-norm
+errors. They do not depend on the number of MPI ranks. The CG tolerance and
+iteration cap are set next to the other parameters in `main()`.
+
+To use your own solution, edit `mms_u_exact()` and `mms_forcing()` in
+`src/mms.c` (the forcing must equal \(-\nabla^2 u_{ex}+u_{ex}\)).
+Because the operator enforces homogeneous Dirichlet conditions, \(u_{ex}\)
+must be 0 on all six faces of the domain.
+
+Example results (unit cube, 4x4x4 elements, varying GLL points per element).
+The error drops by roughly a factor of 100 for every two extra points, i.e.
+spectral convergence, until it reaches the CG tolerance / round-off (~1e-13):
+
+| GLL points per element | CG iterations | L2 error |
+| ---------------------- | ------------- | -------- |
+| 4                      | 9             | 2.3e-3   |
+| 6                      | 41            | 1.1e-5   |
+| 8                      | 68            | 4.2e-8   |
+| 10                     | 95            | 1.4e-10  |
+| 12                     | 124           | 3.5e-13  |
