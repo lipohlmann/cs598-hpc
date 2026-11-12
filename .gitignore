@@ -391,3 +391,5 @@ build/
 *.ist
 .vscode
 
+/midterm/midterm
+
