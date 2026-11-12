@@ -28,7 +28,7 @@ void SerialComputeW(Vector* w, const Matrix* C, const Vector* u) {
           sum += matrix_value_at(i, p, C) *
                  vector_value_at(FlatIndex(p, j, k, n), u);
 
-        w->data[FlatIndex(i, j, k, w->size)] = sum;
+        w->data[FlatIndex(i, j, k, n)] = sum;
       }
     }
   }
@@ -40,11 +40,11 @@ void SerialComputeV(Vector* v, const Matrix* B, const Vector* w) {
     for (size_t j = 0; j < n; j++) {
       for (size_t i = 0; i < n; i++) {
         double sum = 0.0;
-        for (size_t p = 0; p < w->size; p++)
+        for (size_t p = 0; p < n; p++)
           sum += matrix_value_at(j, p, B) *
                  vector_value_at(FlatIndex(i, p, k, n), w);
 
-        v->data[FlatIndex(i, j, k, v->size)] = sum;
+        v->data[FlatIndex(i, j, k, n)] = sum;
       }
     }
   }
