@@ -105,3 +105,15 @@ Triple flat_node_id_to_triple(const size_t node_id, const Mesh* mesh) {
   triple.i = remainder % mesh->nx;
   return triple;
 }
+
+void gll_node_position(const Mesh* mesh, const QuadSet* quad,
+                       const size_t element_id, const size_t i, const size_t j,
+                       const size_t k, double xyz[3]) {
+  const size_t ex = mesh->nx - 1, ey = mesh->ny - 1;
+  const size_t ie = element_id % ex;
+  const size_t je = (element_id / ex) % ey;
+  const size_t ke = element_id / (ex * ey);
+  xyz[0] = mesh->xs[ie] + 0.5 * (quad->nodes.data[i] + 1.0) * mesh->dx;
+  xyz[1] = mesh->ys[je] + 0.5 * (quad->nodes.data[j] + 1.0) * mesh->dy;
+  xyz[2] = mesh->zs[ke] + 0.5 * (quad->nodes.data[k] + 1.0) * mesh->dz;
+}

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "element.h"
+#include "quad_set.h"
 #include "triple.h"
 
 typedef struct {
@@ -117,3 +118,20 @@ Element* create_elements(const size_t nx, const size_t ny, const size_t nz);
  * @return Triple
  */
 Triple flat_node_id_to_triple(const size_t node_id, const Mesh* mesh);
+
+/**
+ * @brief Physical position of a GLL node. The reference coordinate
+ * \f$\xi\in[-1,1]\f$ of GLL point i is mapped to the element as
+ * \f$x = x_e + \tfrac{1}{2}(\xi_i+1)\,dx\f$ (same for y and z).
+ *
+ * @param mesh Mesh
+ * @param quad GLL quadrature set (reference node positions)
+ * @param element_id Global element ID
+ * @param i GLL index in x
+ * @param j GLL index in y
+ * @param k GLL index in z
+ * @param xyz Output position
+ */
+void gll_node_position(const Mesh* mesh, const QuadSet* quad,
+                       const size_t element_id, const size_t i, const size_t j,
+                       const size_t k, double xyz[3]);

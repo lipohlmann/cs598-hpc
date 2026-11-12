@@ -1,6 +1,7 @@
 #include "gather_scatter.h"
 
 #include "kronecker.h"
+#include "timers.h"
 
 struct gs_data* create_gather_scatter(const Mesh* mesh, const size_t n,
                                       const size_t* element_ids,
@@ -15,7 +16,9 @@ struct gs_data* create_gather_scatter(const Mesh* mesh, const size_t n,
 }
 
 void direct_stiffness_sum(Vector* u, struct gs_data* gsh) {
+  timer_start(TIMER_GATHER_SCATTER);
   gs(u->data, gs_double, gs_add, 0, gsh, NULL);
+  timer_stop(TIMER_GATHER_SCATTER);
 }
 
 Vector create_inverse_multiplicity(const size_t size, struct gs_data* gsh) {

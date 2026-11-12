@@ -3,12 +3,15 @@
 #include "cg.h"
 #include "kronecker.h"
 #include "rcb.h"
+#include "timers.h"
 
 void apply_A(Vector* y, const Vector* x, void* ctx) {
   const Operator* op = ctx;
   const size_t n3 = op->n * op->n * op->n;
+  timer_start(TIMER_MATVEC);
 
   // 1. local operator, one element at a time
+  timer_start(TIMER_KRONECKER);
   for (size_t e = 0; e < op->n_elements; e++) {
     // non-owning view of this element's slice of x
     const Vector x_e = {.size = n3, .data = x->data + e * n3};
@@ -27,12 +30,14 @@ void apply_A(Vector* y, const Vector* x, void* ctx) {
     free_vector(&kz);
     free_vector(&m);
   }
+  timer_stop(TIMER_KRONECKER);
 
   // 2. sum contributions at shared nodes
   direct_stiffness_sum(y, op->gsh);
 
   // 3. zero the Dirichlet rows
   for (size_t i = 0; i < y->size; i++) y->data[i] *= op->mask.data[i];
+  timer_stop(TIMER_MATVEC);
 }
 
 double global_dot(const Vector* a, const Vector* b, void* ctx) {
@@ -43,7 +48,9 @@ double global_dot(const Vector* a, const Vector* b, void* ctx) {
     local_sum += a->data[i] * b->data[i] * op->inv_mult.data[i];
 
   double global_sum = 0.0;
+  timer_start(TIMER_ALLREDUCE);
   MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, op->mpi_comm);
+  timer_stop(TIMER_ALLREDUCE);
   return global_sum;
 }
 

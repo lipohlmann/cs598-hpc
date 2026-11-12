@@ -24,25 +24,17 @@ Vector evaluate_field(const Operator* op, const Mesh* mesh, const QuadSet* quad,
                       field_fn f, void* params) {
   const size_t n = op->n;
   const size_t n3 = n * n * n;
-  const size_t ex = mesh->nx - 1, ey = mesh->ny - 1;
 
   Vector values = create_vector(op->n_elements * n3);
-  for (size_t le = 0; le < op->n_elements; le++) {
-    const size_t e = op->element_ids[le];
-    const size_t ie = e % ex, je = (e / ex) % ey, ke = e / (ex * ey);
+  for (size_t le = 0; le < op->n_elements; le++)
     for (size_t k = 0; k < n; k++)
       for (size_t j = 0; j < n; j++)
         for (size_t i = 0; i < n; i++) {
-          // map reference coordinate xi in [-1,1] to the element
-          const double x =
-              mesh->xs[ie] + 0.5 * (quad->nodes.data[i] + 1.0) * mesh->dx;
-          const double y =
-              mesh->ys[je] + 0.5 * (quad->nodes.data[j] + 1.0) * mesh->dy;
-          const double z =
-              mesh->zs[ke] + 0.5 * (quad->nodes.data[k] + 1.0) * mesh->dz;
-          values.data[le * n3 + FlatIndex(i, j, k, n)] = f(x, y, z, params);
+          double xyz[3];
+          gll_node_position(mesh, quad, op->element_ids[le], i, j, k, xyz);
+          values.data[le * n3 + FlatIndex(i, j, k, n)] =
+              f(xyz[0], xyz[1], xyz[2], params);
         }
-  }
   return values;
 }
 

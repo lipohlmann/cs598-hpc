@@ -61,8 +61,28 @@ mpirun --oversubscribe -np 8 ./midterm
 
 ## Parameters
 
-Domain size, number of elements per direction, and GLL points per element are
-set at the top of `main()` in `src/main.c`; edit them and rebuild.
+All parameters are command-line options (`./midterm --help`):
+
+| Option | Meaning | Default |
+| --- | --- | --- |
+| `--nelem N` | elements per direction (sets `nx=ny=nz=N`) | 4 |
+| `--nx`, `--ny`, `--nz` | elements in one direction | 4 |
+| `--npts N` | GLL points per direction per element (>= 2) | 12 |
+| `--length L`, `--lx`, `--ly`, `--lz` | domain length(s) | 1 |
+| `--tol T` | CG relative residual tolerance | 1e-12 |
+| `--max-iters N` | CG iteration cap | 1000 |
+| `--csv FILE` | write one CSV row with results and timings | off |
+| `--label STR` | label stored in the CSV | `run` |
+| `--vtk PREFIX` | write `PREFIX_<rank>.vtu` + `PREFIX.pvtu` | off |
+
+Example: `mpirun -np 8 ./midterm --nelem 16 --npts 6 --csv out.csv`.
+
+Each run prints the CG iteration count, the L2 and max-norm errors, and the
+time (maximum over ranks) spent in setup, the solve, the matvec, the Kronecker
+products, the gslib gather-scatter and `MPI_Allreduce` (`src/timers.c`). The
+timers are inclusive: the matvec contains the Kronecker products and the
+gather-scatter, and the solve contains everything in CG. gslib also prints a
+few lines about the communication method it chose during setup.
 
 ## Mesh partitioning (RCB)
 
@@ -138,3 +158,71 @@ spectral convergence, until it reaches the CG tolerance / round-off (~1e-13):
 | 8                      | 68            | 4.2e-8   |
 | 10                     | 95            | 1.4e-10  |
 | 12                     | 124           | 3.5e-13  |
+
+Note that the errors are measured at the GLL nodes only. On very coarse meshes
+every node can sit on a zero of \(u_{ex}\) (e.g. 2 elements with 3 points
+put all x-nodes at multiples of 1/4, where \(\sin(4\pi x)=0\)); then
+\(b=0\), \(u=0\) and the reported error is zero to round-off. Avoid such
+meshes in convergence studies.
+
+## Running the studies (Slurm)
+
+The scripts in `scripts/` run the convergence, scaling and profiling studies.
+Each run is an independent Slurm job that writes one CSV file, so jobs can run
+in any order or in parallel.
+
+1. Build on the cluster (load the MPI module first, e.g. `module load
+   openmpi`): `make code`.
+2. Preview what would be submitted: `DRY_RUN=1 ./scripts/run_all.sh`.
+3. Submit, e.g.
+   `ACCOUNT=myacct PARTITION=cpu TASKS_PER_NODE=128 SETUP_CMD="module load openmpi" ./scripts/run_all.sh`
+   or run one study at a time:
+
+| Script | Study | Main knobs (defaults) |
+| --- | --- | --- |
+| `run_p_convergence.sh` | p-convergence: fixed mesh, increase GLL points | `NELEM=4`, `NPTS="3 ... 16"`, `RANKS=4` |
+| `run_h_convergence.sh` | h-convergence: refine equally in x, y, z at fixed order; finest run writes VTK | `NELEMS="3 6 12 24 48"`, `NPTS="3 5"`, `RANKS=32` |
+| `run_strong_scaling.sh` | strong scaling: fixed problem, more ranks | `NELEM=32`, `NPTS=6`, `MAX_RANKS=256`, `MAX_ITERS=200` |
+| `run_weak_scaling.sh` | weak scaling: `BLOCK^3` elements per rank, constant h | `BLOCK=8`, `NPTS=6`, `MAX_RANKS=256`, `MAX_ITERS=200` |
+
+General settings (environment variables, see `scripts/common.sh`):
+`ACCOUNT`, `PARTITION`, `TASKS_PER_NODE` (64), `TIME_LIMIT` (00:30:00),
+`EXCLUSIVE` (1, whole nodes for clean timings), `SBATCH_EXTRA`, `SETUP_CMD`,
+`LAUNCHER` (`srun --cpu-bind=cores`), `REPS` (3 repetitions of every timing
+run), `RESULTS_DIR` (`./results`), `DRY_RUN`, and `SUBMIT=local` to run
+directly with `mpirun` instead of Slurm (for small tests on a laptop).
+
+The scaling studies cap CG at `MAX_ITERS` iterations so every run does the same
+amount of work (they report "NOT CONVERGED"; that is expected). Weak scaling
+uses power-of-two rank counts: the mesh doubles in x, then y, then z, and the
+domain grows with it so that the element size and the work per rank stay
+constant.
+
+Output layout:
+
+```
+results/<study>/<label>.csv   one row per run (results + timings)
+results/logs/                 program output of every job
+results/vtk/finest.pvtu       finest h-convergence run (+ finest_<rank>.vtu)
+```
+
+4. When the jobs are done, make the figures and tables (needs pandas and
+   matplotlib): `python scripts/analyze.py results`. It writes
+   `results/figures/*.png` and `results/tables/*.{md,csv}`:
+   - p- and h-convergence plots and tables, with observed h-rates,
+   - strong scaling speedup and parallel efficiency `E = P0*T0 / (P*T(P))`,
+   - weak scaling efficiency `E = T0 / T(P)`, both for the total solve time
+     and per CG iteration (the unpreconditioned CG iteration count grows with
+     the problem size, so the per-iteration number isolates parallel
+     overhead),
+   - the breakdown of the solve time into Kronecker products, gather-scatter,
+     Allreduce, the rest of the matvec and the rest of CG, and the load
+     imbalance (max / average over ranks).
+5. Open `results/vtk/finest.pvtu` in ParaView. Point fields: `u`, `u_exact`,
+   `error`; cell fields: `rank` (shows the RCB partition) and `element_id`.
+   The files are ASCII and large for fine meshes (about 100 bytes per GLL
+   node).
+
+Known limits at scale: every rank receives the whole mesh and rank 0 computes
+the RCB partition serially, so setup time and memory grow with the global mesh
+size (setup is timed separately so this shows up in the results).
