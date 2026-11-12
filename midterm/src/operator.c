@@ -2,6 +2,7 @@
 
 #include "cg.h"
 #include "kronecker.h"
+#include "rcb.h"
 
 void apply_A(Vector* y, const Vector* x, void* ctx) {
   const Operator* op = ctx;
@@ -46,20 +47,21 @@ double global_dot(const Vector* a, const Vector* b, void* ctx) {
   return global_sum;
 }
 
-void setup_operator_local(Operator* op, const Mesh* mesh, MPI_Comm comm) {
-  int rank, size;
+void setup_operator_local(Operator* op, const Mesh* mesh, const int* owner,
+                          MPI_Comm comm) {
+  int rank;
   MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &size);
 
-  size_t first_element;
-  partition_elements(mesh, rank, size, &first_element, &op->n_elements);
+  const size_t total = (mesh->nx - 1) * (mesh->ny - 1) * (mesh->nz - 1);
+  op->element_ids = rcb_local_elements(owner, total, rank, &op->n_elements);
 
   op->mpi_comm = comm;
-  op->mask = create_dirichlet_mask(mesh, op->n, first_element, op->n_elements);
+  op->mask =
+      create_dirichlet_mask(mesh, op->n, op->element_ids, op->n_elements);
 
   struct comm gs_comm;
   comm_init(&gs_comm, comm);
-  op->gsh = create_gather_scatter(mesh, op->n, first_element, op->n_elements,
+  op->gsh = create_gather_scatter(mesh, op->n, op->element_ids, op->n_elements,
                                   &gs_comm);
   comm_free(&gs_comm);
 
@@ -74,6 +76,8 @@ void free_operator(Operator* op) {
   free_matrix(&op->Mx);
   free_matrix(&op->My);
   free_matrix(&op->Mz);
+  free(op->element_ids);
+  op->element_ids = NULL;
   free_vector(&op->mask);
   free_vector(&op->inv_mult);
   if (op->gsh) gs_free(op->gsh);

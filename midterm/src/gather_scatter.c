@@ -2,23 +2,13 @@
 
 #include "kronecker.h"
 
-void partition_elements(const Mesh* mesh, const int rank, const int size,
-                        size_t* first_element, size_t* n_local_elements) {
-  const size_t total = (mesh->nx - 1) * (mesh->ny - 1) * (mesh->nz - 1);
-  const size_t base = total / (size_t)size;
-  const size_t extra = total % (size_t)size;
-  const size_t r = (size_t)rank;
-  *n_local_elements = base + (r < extra ? 1 : 0);
-  *first_element = r * base + (r < extra ? r : extra);
-}
-
 struct gs_data* create_gather_scatter(const Mesh* mesh, const size_t n,
-                                      const size_t first_element,
+                                      const size_t* element_ids,
                                       const size_t n_local_elements,
                                       const struct comm* comm) {
   const size_t n_local = n_local_elements * n * n * n;
 
-  slong* ids = create_gll_global_ids(mesh, n, first_element, n_local_elements);
+  slong* ids = create_gll_global_ids(mesh, n, element_ids, n_local_elements);
   struct gs_data* gsh = gs_setup(ids, (uint)n_local, comm, 0, gs_auto, 0);
   free(ids);
   return gsh;
@@ -37,7 +27,7 @@ Vector create_inverse_multiplicity(const size_t size, struct gs_data* gsh) {
 }
 
 slong* create_gll_global_ids(const Mesh* mesh, const size_t n,
-                             const size_t first_element,
+                             const size_t* element_ids,
                              const size_t n_local_elements) {
   const size_t ex = mesh->nx - 1, ey = mesh->ny - 1;
   const size_t N = n - 1;                         // polynomial order
@@ -46,7 +36,7 @@ slong* create_gll_global_ids(const Mesh* mesh, const size_t n,
 
   slong* ids = malloc((n_local_elements * n3 + 1) * sizeof(*ids));
   for (size_t le = 0; le < n_local_elements; le++) {
-    const size_t e = first_element + le;
+    const size_t e = element_ids[le];
     const size_t ie = e % ex, je = (e / ex) % ey, ke = e / (ex * ey);
     for (size_t k = 0; k < n; k++)
       for (size_t j = 0; j < n; j++)
@@ -60,7 +50,7 @@ slong* create_gll_global_ids(const Mesh* mesh, const size_t n,
 }
 
 Vector create_dirichlet_mask(const Mesh* mesh, const size_t n,
-                             const size_t first_element,
+                             const size_t* element_ids,
                              const size_t n_local_elements) {
   const size_t ex = mesh->nx - 1, ey = mesh->ny - 1, ez = mesh->nz - 1;
   const size_t N = n - 1;
@@ -69,7 +59,7 @@ Vector create_dirichlet_mask(const Mesh* mesh, const size_t n,
 
   Vector mask = create_vector(n_local_elements * n3);
   for (size_t le = 0; le < n_local_elements; le++) {
-    const size_t e = first_element + le;
+    const size_t e = element_ids[le];
     const size_t ie = e % ex, je = (e / ex) % ey, ke = e / (ex * ey);
     for (size_t k = 0; k < n; k++)
       for (size_t j = 0; j < n; j++)

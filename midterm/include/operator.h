@@ -8,6 +8,7 @@
 typedef struct {
   size_t n;           // GLL points per direction per element
   size_t n_elements;  // number of elements on this rank
+  size_t* element_ids;  // global IDs of this rank's elements (ascending)
 
   Matrix Kx, Ky, Kz;  // scaled 1D stiffness matrices (dense)
   Matrix Mx, My, Mz;  // scaled 1D mass matrices (diagonal)
@@ -21,10 +22,12 @@ typedef struct {
 
 /**
  * @brief Fill the per-rank parts of the operator: n_elements, mask, gslib
- * handle, inv_mult and mpi_comm. The scaled matrices and op->n must already
+ * handle, inv_mult and mpi_comm. The elements of this rank are those with
+ * owner[e] == rank (see rcb_partition()). The scaled matrices and op->n must already
  * be set on this rank. Collective.
  */
-void setup_operator_local(Operator* op, const Mesh* mesh, MPI_Comm comm);
+void setup_operator_local(Operator* op, const Mesh* mesh, const int* owner,
+                          MPI_Comm comm);
 
 /**
  * @brief Free everything owned by the operator.

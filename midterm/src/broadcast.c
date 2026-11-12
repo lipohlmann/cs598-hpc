@@ -83,3 +83,11 @@ void bcast_matrix(Matrix* matrix, int root, MPI_Comm comm) {
   MPI_Bcast(matrix->data, checked_count(dims[0] * dims[1], comm), MPI_DOUBLE,
             root, comm);
 }
+
+void bcast_partition(int** owner, size_t n_elements, int root, MPI_Comm comm) {
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+
+  if (rank != root) *owner = malloc((n_elements + 1) * sizeof(int));
+  MPI_Bcast(*owner, checked_count(n_elements, comm), MPI_INT, root, comm);
+}

@@ -38,3 +38,14 @@ void bcast_quad_set(QuadSet* quad_set, int n_points, int root, MPI_Comm comm);
  * @param comm Communicator
  */
 void bcast_matrix(Matrix* matrix, int root, MPI_Comm comm);
+
+/**
+ * @brief Broadcast the element partition (owner of each element) from root.
+ * Collective. On non-root ranks *owner is allocated (release with free()).
+ *
+ * @param owner Pointer to the array: built on root, output on other ranks
+ * @param n_elements Number of elements (must be known on every rank)
+ * @param root Rank that owns the data
+ * @param comm Communicator
+ */
+void bcast_partition(int** owner, size_t n_elements, int root, MPI_Comm comm);

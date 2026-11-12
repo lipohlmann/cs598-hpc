@@ -6,6 +6,7 @@
 #include "matrix.h"
 #include "mesh.h"
 #include "operator.h"
+#include "rcb.h"
 
 int main(int argc, char const* argv[]) {
   // USER PARAMETERS
@@ -36,11 +37,13 @@ int main(int argc, char const* argv[]) {
   Matrix M = {0};
   Matrix K = {0};
   Operator operator= { 0 };
+  int* owner = NULL;  // rank that owns each element
 
   // build everything on rank 0
   if (world_rank == 0) {
     create_mesh(&mesh, Lx, Ly, Lz, nx, ny, nz);
     gll_quad = GaussLobattoLegendre(n_nodes_per_element);
+    owner = rcb_partition(&mesh, world_size);
     M = create_mass_matrix(&gll_quad);
     K = create_stiffness_matrix(&gll_quad);
     operator.Kx = scale_by_constant(&K, 2.0 / Lx);
@@ -54,6 +57,7 @@ int main(int argc, char const* argv[]) {
 
   // broadcast to all other ranks (collective)
   bcast_mesh(&mesh, 0, MPI_COMM_WORLD);
+  bcast_partition(&owner, (nx) * (ny) * (nz), 0, MPI_COMM_WORLD);
   bcast_quad_set(&gll_quad, n_nodes_per_element, 0, MPI_COMM_WORLD);
   bcast_matrix(&M, 0, MPI_COMM_WORLD);
   bcast_matrix(&K, 0, MPI_COMM_WORLD);
@@ -65,9 +69,10 @@ int main(int argc, char const* argv[]) {
   bcast_matrix(&operator.Mz, 0, MPI_COMM_WORLD);
 
   // per-rank parts: element partition, mask, gather-scatter, inv_mult
-  setup_operator_local(&operator, &mesh, MPI_COMM_WORLD);
+  setup_operator_local(&operator, &mesh, owner, MPI_COMM_WORLD);
 
   free_operator(&operator);
+  free(owner);
   free_mesh(&mesh);
   free_quad_set(&gll_quad);
   free_matrix(&M);

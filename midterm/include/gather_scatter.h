@@ -8,25 +8,18 @@
 #include "vector.h"
 
 /**
- * @brief Split the mesh elements into contiguous blocks of the flat element
- * ID, one block per rank. The first (total % size) ranks get one extra.
- */
-void partition_elements(const Mesh* mesh, const int rank, const int size,
-                        size_t* first_element, size_t* n_local_elements);
-
-/**
- * @brief Global GLL node IDs (1-based, for gslib) for the elements
- * [first_element, first_element + n_local_elements). Caller frees.
+ * @brief Global GLL node IDs (1-based, for gslib) for the given elements,
+ * stored element after element in the order of element_ids. Caller frees.
  */
 slong* create_gll_global_ids(const Mesh* mesh, const size_t n,
-                             const size_t first_element,
+                             const size_t* element_ids,
                              const size_t n_local_elements);
 
 /**
  * @brief Build the gslib handle for this rank's elements. Collective.
  */
 struct gs_data* create_gather_scatter(const Mesh* mesh, const size_t n,
-                                      const size_t first_element,
+                                      const size_t* element_ids,
                                       const size_t n_local_elements,
                                       const struct comm* comm);
 
@@ -35,7 +28,7 @@ struct gs_data* create_gather_scatter(const Mesh* mesh, const size_t n,
  * (all six faces), 1 elsewhere.
  */
 Vector create_dirichlet_mask(const Mesh* mesh, const size_t n,
-                             const size_t first_element,
+                             const size_t* element_ids,
                              const size_t n_local_elements);
 
 void direct_stiffness_sum(Vector* u, struct gs_data* gsh);
