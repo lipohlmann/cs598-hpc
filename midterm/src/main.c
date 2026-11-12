@@ -1,5 +1,6 @@
 #include <mpi.h>
 
+#include "broadcast.h"
 #include "gauss_lobatto_legendre.h"
 #include "matrix.h"
 #include "mesh.h"
@@ -28,20 +29,29 @@ int main(int argc, char const* argv[]) {
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  // initialize mesh
-  Mesh mesh;
+  Mesh mesh = {0};
+  QuadSet gll_quad = {0};
+  Matrix M = {0};
+  Matrix K = {0};
+
+  // build everything on rank 0
   if (world_rank == 0) {
     create_mesh(&mesh, Lx, Ly, Lz, nx, ny, nz);
-  };
+    gll_quad = GaussLobattoLegendre(n_nodes_per_element);
+    M = create_mass_matrix(&gll_quad);
+    K = create_stiffness_matrix(&gll_quad);
+  }
 
-  // create GLL quadrature set
-  QuadSet gll_quad = GaussLobattoLegendre(n_nodes_per_element);
+  // broadcast to all other ranks (collective)
+  bcast_mesh(&mesh, 0, MPI_COMM_WORLD);
+  bcast_quad_set(&gll_quad, n_nodes_per_element, 0, MPI_COMM_WORLD);
+  bcast_matrix(&M, 0, MPI_COMM_WORLD);
+  bcast_matrix(&K, 0, MPI_COMM_WORLD);
 
-  // create local mass matrix
-  Matrix M = create_mass_matrix(&gll_quad);
-
-  // create local stiffness matrix
-  Matrix K = create_stiffness_matrix(&gll_quad);
+  free_mesh(&mesh);
+  free_quad_set(&gll_quad);
+  free_matrix(&M);
+  free_matrix(&K);
 
   MPI_Finalize();
 
