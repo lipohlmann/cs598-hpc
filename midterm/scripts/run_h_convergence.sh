@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # h-type convergence: fixed domain and order, refine the mesh equally in all
-# directions (h = L / NELEM halves at every step). The expected L2 rate for
-# polynomial degree p = npts - 1 is p + 1.
+# directions (h = L / NELEM halves at every step). The error is measured at
+# the GLL nodes, where the solution superconverges: the expected rate for
+# polynomial degree p = npts - 1 is p + 2 (not the p + 1 of the continuous
+# L2 norm).
 #
 # Avoid meshes where every GLL node lies on a zero of the manufactured
 # solution: e.g. 2 elements with 3 points puts all x-nodes at multiples of

@@ -391,6 +391,8 @@ build/
 *.ist
 .vscode
 
+.venv/
+
 /midterm/midterm
 
 /midterm/results/

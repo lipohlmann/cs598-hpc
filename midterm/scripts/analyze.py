@@ -36,6 +36,17 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
+from matplotlib.ticker import FixedLocator, NullLocator  # noqa: E402
+
+
+def rank_axis(ax, ranks, axis="x"):
+    """Log2 axis with a plain-number tick (1, 2, 4, 8, ...) at every rank count."""
+    ticks = [int(r) for r in ranks]
+    target = ax.xaxis if axis == "x" else ax.yaxis
+    (ax.set_xscale if axis == "x" else ax.set_yscale)("log", base=2)
+    target.set_major_locator(FixedLocator(ticks))
+    target.set_minor_locator(NullLocator())
+    target.set_major_formatter(lambda v, _pos: f"{v:g}")
 
 
 def load(results: Path, study: str) -> pd.DataFrame:
@@ -99,14 +110,23 @@ def h_convergence(df, figures, tables):
         g["l2_rate"] = rate
         rows.append(g)
         line, = ax.loglog(g["h"], g["l2_error"], "o-", label=f"npts={npts} (p={npts - 1})")
-        # reference slope p+1 through the finest point
-        p1 = npts
+        # The error is measured at the GLL nodes, where the function values
+        # superconverge: O(h^(p+2)) rather than the O(h^(p+1)) of the
+        # continuous L2 norm. Reference slope p+2 through the finest point.
+        slope = npts + 1
         h_ref = np.array([g.h.iloc[0], g.h.iloc[-1]])
-        ax.loglog(h_ref, g.l2_error.iloc[-1] * (h_ref / h_ref[-1]) ** p1, ":",
-                  color=line.get_color(), label=f"slope {p1}")
+        ax.loglog(h_ref, g.l2_error.iloc[-1] * (h_ref / h_ref[-1]) ** slope, ":",
+                  color=line.get_color(), lw=5, alpha=0.55, zorder=1,
+                  dash_capstyle="round", label=f"$h^{{p+2}}$ = $h^{{{slope}}}$")
+    # one plain tick per mesh instead of the default log ticks, which overlap
+    hs = df.drop_duplicates("h")
+    ax.xaxis.set_major_locator(FixedLocator(hs["h"].tolist()))
+    ax.xaxis.set_minor_locator(NullLocator())
+    ax.set_xticklabels([f"1/{n}" if lx == 1 else f"{h:.3g}"
+                        for h, n, lx in zip(hs["h"], hs["nx"], hs["lx"])])
     ax.set_xlabel("element size h")
-    ax.set_ylabel("L2 error")
-    ax.set_title("h-convergence")
+    ax.set_ylabel("L2 error at the GLL nodes")
+    ax.set_title("h-convergence (dotted: GLL-node superconvergence)")
     ax.grid(True, which="both", alpha=0.3)
     ax.legend()
     fig.tight_layout()
@@ -157,9 +177,12 @@ def breakdown_plot(g, figures, name, title):
     axes[1].set_ylabel("fraction of solve time")
     axes[0].set_title(title)
     axes[1].set_title(title + " (fractions)")
-    axes[1].legend(loc="lower left", fontsize=8)
+    # legend outside the axes (the bars fill both panels), in stacking order
+    handles, labels = axes[1].get_legend_handles_labels()
+    fig.legend(handles[::-1], labels[::-1], loc="center left",
+               bbox_to_anchor=(1.0, 0.5), fontsize=9, frameon=False)
     fig.tight_layout()
-    fig.savefig(figures / f"{name}_breakdown.png", dpi=150)
+    fig.savefig(figures / f"{name}_breakdown.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -179,7 +202,9 @@ def strong_scaling(df, figures, tables):
     axes[1].set_ylim(0, 1.2)
     for ax in axes:
         ax.set_xlabel("MPI ranks")
+        rank_axis(ax, g.ranks)
         ax.grid(True, which="both", alpha=0.3)
+    rank_axis(axes[0], g.ranks / p0, axis="y")  # ideal speedup values
     axes[0].legend()
     axes[0].set_title(f"strong scaling ({int(g.dofs.iloc[0])} dofs)")
     fig.tight_layout()
@@ -209,6 +234,7 @@ def weak_scaling(df, figures, tables):
     axes[1].legend()
     for ax in axes:
         ax.set_xlabel("MPI ranks")
+        rank_axis(ax, g.ranks)
         ax.grid(True, which="both", alpha=0.3)
     per_rank = int(g.dofs.iloc[0])
     axes[0].set_title(f"weak scaling (~{per_rank} dofs per rank)")
