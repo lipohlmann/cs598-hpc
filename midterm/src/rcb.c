@@ -75,16 +75,22 @@ int* rcb_partition(const Mesh* mesh, const int n_parts) {
   return owner;
 }
 
-size_t* rcb_local_elements(const int* owner, const size_t n_elements,
-                           const int part, size_t* n_local) {
-  size_t count = 0;
-  for (size_t e = 0; e < n_elements; e++) count += (owner[e] == part);
+size_t* rcb_group_by_part(const int* owner, const size_t n_elements,
+                          const int n_parts, int* counts) {
+  for (int p = 0; p < n_parts; p++) counts[p] = 0;
+  for (size_t e = 0; e < n_elements; e++) counts[owner[e]]++;
 
-  size_t* ids = malloc((count + 1) * sizeof(size_t));
-  size_t next = 0;
-  for (size_t e = 0; e < n_elements; e++)
-    if (owner[e] == part) ids[next++] = e;
+  // next free slot of each part
+  size_t* next = malloc((size_t)n_parts * sizeof(size_t));
+  size_t offset = 0;
+  for (int p = 0; p < n_parts; p++) {
+    next[p] = offset;
+    offset += (size_t)counts[p];
+  }
 
-  *n_local = count;
-  return ids;
+  size_t* grouped = malloc((n_elements + 1) * sizeof(size_t));
+  for (size_t e = 0; e < n_elements; e++) grouped[next[owner[e]]++] = e;
+
+  free(next);
+  return grouped;
 }

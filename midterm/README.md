@@ -86,8 +86,8 @@ few lines about the communication method it chose during setup.
 
 ## Mesh partitioning (RCB)
 
-Every rank receives the full mesh, but each rank only owns (and does work on)
-a subset of the elements. The subsets are chosen with **recursive coordinate
+Rank 0 builds the mesh, and each rank only owns (and does work on) a subset
+of the elements. The subsets are chosen with **recursive coordinate
 bisection** (`src/rcb.c`, `include/rcb.h`). RCB is a geometric partitioner: it
 only uses the element centroids, not the element connectivity.
 
@@ -111,10 +111,19 @@ For `P` ranks, `rcb(elements, first_rank, P)` does:
 Example: 4x4x4 elements on 4 ranks. The first cut halves x (all axes tie), then
 each half is halved along y, giving four 2x2x4 columns of 16 elements.
 
-Rank 0 computes the partition (`rcb_partition`) and broadcasts the owner of
-each element (`bcast_partition`) so that all ranks use exactly the same
-partition. Each rank then builds its gather-scatter handle, Dirichlet mask and
-inverse multiplicity from its own elements (`setup_operator_local`).
+Rank 0 computes the partition (`rcb_partition`), groups the element IDs by
+owner and scatters them (`scatter_partition`), so each rank receives only the
+list of its own elements. The other ranks never get the global element or
+vertex arrays: `bcast_mesh` only sends the structured-grid description (vertex
+counts, spacings and the vertex coordinates along each axis, O(nx + ny + nz)
+numbers), from which element IDs are mapped to grid positions arithmetically.
+After partitioning, rank 0 frees its global arrays too. Each rank then builds
+its gather-scatter handle, Dirichlet mask and inverse multiplicity from its own
+elements (`setup_operator_local`).
+
+Per-rank mesh memory and communication are therefore O(nx + ny + nz) plus
+O(local elements). Rank 0 alone needs O(global mesh) memory, and only during
+setup.
 
 Properties and limits:
 
@@ -223,6 +232,7 @@ results/vtk/finest.pvtu       finest h-convergence run (+ finest_<rank>.vtu)
    The files are ASCII and large for fine meshes (about 100 bytes per GLL
    node).
 
-Known limits at scale: every rank receives the whole mesh and rank 0 computes
-the RCB partition serially, so setup time and memory grow with the global mesh
-size (setup is timed separately so this shows up in the results).
+Known limits at scale: rank 0 builds the whole mesh and computes the RCB
+partition serially, so rank 0's setup time and memory grow with the global
+mesh size (setup is timed separately so this shows up in the results). The
+other ranks only receive their own element list.

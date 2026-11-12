@@ -6,6 +6,12 @@
 #include "quad_set.h"
 #include "triple.h"
 
+/*
+ * A structured hexahedral mesh. nx, ny, nz, dx, dy, dz and xs, ys, zs (the
+ * structured-grid description) are valid on every rank. node_ids and elements
+ * are global O(mesh size) arrays that only exist on rank 0 while the mesh is
+ * partitioned (see bcast_mesh()); afterwards they are NULL on every rank.
+ */
 typedef struct {
   size_t nx;  // number of points in the x-direction
   size_t ny;  // number of points in the y-direction

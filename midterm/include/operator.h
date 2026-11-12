@@ -21,13 +21,19 @@ typedef struct {
 } Operator;
 
 /**
- * @brief Fill the per-rank parts of the operator: n_elements, mask, gslib
- * handle, inv_mult and mpi_comm. The elements of this rank are those with
- * owner[e] == rank (see rcb_partition()). The scaled matrices and op->n must already
- * be set on this rank. Collective.
+ * @brief Fill the per-rank parts of the operator: element list, n_elements,
+ * mask, gslib handle, inv_mult and mpi_comm. The scaled matrices and op->n
+ * must already be set on this rank. Collective.
+ *
+ * @param op Operator to fill
+ * @param mesh Mesh (only the structured-grid description is used)
+ * @param element_ids IDs of the elements owned by this rank (see
+ * scatter_partition()). The operator takes ownership of the array.
+ * @param n_local Number of entries in element_ids
+ * @param comm Communicator
  */
-void setup_operator_local(Operator* op, const Mesh* mesh, const int* owner,
-                          MPI_Comm comm);
+void setup_operator_local(Operator* op, const Mesh* mesh, size_t* element_ids,
+                          const size_t n_local, MPI_Comm comm);
 
 /**
  * @brief Free everything owned by the operator.

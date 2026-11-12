@@ -204,7 +204,7 @@ int main(int argc, char* argv[]) {
   Matrix M = {0};
   Matrix K = {0};
   Operator operator= { 0 };
-  int* owner = NULL;  // rank that owns each element
+  int* owner = NULL;  // rank that owns each element (rank 0 only)
 
   MPI_Barrier(MPI_COMM_WORLD);
   timer_start(TIMER_SETUP);
@@ -228,7 +228,22 @@ int main(int argc, char* argv[]) {
 
   // broadcast to all other ranks (collective)
   bcast_mesh(&mesh, 0, MPI_COMM_WORLD);
-  bcast_partition(&owner, nx * ny * nz, 0, MPI_COMM_WORLD);
+
+  // send every rank only the IDs of its own elements
+  size_t* local_element_ids = NULL;
+  size_t n_local_elements = 0;
+  scatter_partition(owner, nx * ny * nz, &local_element_ids, &n_local_elements,
+                    0, MPI_COMM_WORLD);
+
+  // the global vertex/element arrays and the owner map were only needed to
+  // partition; drop them so rank 0 keeps the same lightweight mesh as others
+  free(owner);
+  owner = NULL;
+  free(mesh.node_ids);
+  mesh.node_ids = NULL;
+  free(mesh.elements);
+  mesh.elements = NULL;
+
   bcast_quad_set(&gll_quad, n_nodes_per_element, 0, MPI_COMM_WORLD);
   bcast_matrix(&M, 0, MPI_COMM_WORLD);
   bcast_matrix(&K, 0, MPI_COMM_WORLD);
@@ -240,7 +255,8 @@ int main(int argc, char* argv[]) {
   bcast_matrix(&operator.Mz, 0, MPI_COMM_WORLD);
 
   // per-rank parts: element partition, mask, gather-scatter, inv_mult
-  setup_operator_local(&operator, &mesh, owner, MPI_COMM_WORLD);
+  setup_operator_local(&operator, &mesh, local_element_ids, n_local_elements,
+                       MPI_COMM_WORLD);
   timer_stop(TIMER_SETUP);
 
   // manufactured solution: right-hand side, CG solve, error against exact
@@ -295,7 +311,6 @@ int main(int argc, char* argv[]) {
   free_vector(&u);
 
   free_operator(&operator);
-  free(owner);
   free_mesh(&mesh);
   free_quad_set(&gll_quad);
   free_matrix(&M);

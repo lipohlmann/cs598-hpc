@@ -2,7 +2,6 @@
 
 #include "cg.h"
 #include "kronecker.h"
-#include "rcb.h"
 #include "timers.h"
 
 void apply_A(Vector* y, const Vector* x, void* ctx) {
@@ -54,13 +53,10 @@ double global_dot(const Vector* a, const Vector* b, void* ctx) {
   return global_sum;
 }
 
-void setup_operator_local(Operator* op, const Mesh* mesh, const int* owner,
-                          MPI_Comm comm) {
-  int rank;
-  MPI_Comm_rank(comm, &rank);
-
-  const size_t total = (mesh->nx - 1) * (mesh->ny - 1) * (mesh->nz - 1);
-  op->element_ids = rcb_local_elements(owner, total, rank, &op->n_elements);
+void setup_operator_local(Operator* op, const Mesh* mesh, size_t* element_ids,
+                          const size_t n_local, MPI_Comm comm) {
+  op->element_ids = element_ids;
+  op->n_elements = n_local;
 
   op->mpi_comm = comm;
   op->mask =

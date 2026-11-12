@@ -54,13 +54,14 @@
 int* rcb_partition(const Mesh* mesh, const int n_parts);
 
 /**
- * @brief List the elements owned by one part, in ascending element ID.
+ * @brief Group all element IDs by the part that owns them (counting sort).
  *
  * @param owner Result of rcb_partition()
  * @param n_elements Total number of elements in the mesh
- * @param part Part (MPI rank) to list
- * @param n_local Set to the number of elements owned by part
- * @return size_t* Element IDs. Release with free().
+ * @param n_parts Number of parts
+ * @param counts Output array of n_parts entries: elements owned by each part
+ * @return size_t* All element IDs, those of part 0 first, then part 1, ...;
+ * ascending within a part. Release with free().
  */
-size_t* rcb_local_elements(const int* owner, const size_t n_elements,
-                           const int part, size_t* n_local);
+size_t* rcb_group_by_part(const int* owner, const size_t n_elements,
+                          const int n_parts, int* counts);

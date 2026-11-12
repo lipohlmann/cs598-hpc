@@ -3,10 +3,10 @@
 #include <limits.h>
 #include <stdio.h>
 
+#include "rcb.h"
+
 _Static_assert(sizeof(size_t) == sizeof(unsigned long long),
                "size_t must be 64-bit to be sent as unsigned long long");
-_Static_assert(sizeof(Element) == 9 * sizeof(size_t),
-               "Element must be 9 contiguous size_t values");
 
 static int checked_count(const size_t n, MPI_Comm comm) {
   if (n > (size_t)INT_MAX) {
@@ -27,8 +27,6 @@ void bcast_mesh(Mesh* mesh, int root, MPI_Comm comm) {
   MPI_Bcast(spacing, 3, MPI_DOUBLE, root, comm);
 
   const size_t nx = dims[0], ny = dims[1], nz = dims[2];
-  const size_t n_nodes = nx * ny * nz;
-  const size_t n_elements = (nx - 1) * (ny - 1) * (nz - 1);
 
   if (rank != root) {
     mesh->nx = nx;
@@ -40,23 +38,15 @@ void bcast_mesh(Mesh* mesh, int root, MPI_Comm comm) {
     mesh->xs = malloc(nx * sizeof(double));
     mesh->ys = malloc(ny * sizeof(double));
     mesh->zs = malloc(nz * sizeof(double));
-    mesh->node_ids = malloc(n_nodes * sizeof(size_t));
-    mesh->elements = malloc(n_elements * sizeof(Element));
+    // the global vertex and element arrays are not needed off root
+    mesh->node_ids = NULL;
+    mesh->elements = NULL;
   }
 
+  // vertex coordinates along each axis: O(nx + ny + nz) values
   MPI_Bcast(mesh->xs, checked_count(nx, comm), MPI_DOUBLE, root, comm);
   MPI_Bcast(mesh->ys, checked_count(ny, comm), MPI_DOUBLE, root, comm);
   MPI_Bcast(mesh->zs, checked_count(nz, comm), MPI_DOUBLE, root, comm);
-  MPI_Bcast(mesh->node_ids, checked_count(n_nodes, comm),
-            MPI_UNSIGNED_LONG_LONG, root, comm);
-
-  // Element is 9 contiguous size_t values
-  MPI_Datatype element_type;
-  MPI_Type_contiguous(9, MPI_UNSIGNED_LONG_LONG, &element_type);
-  MPI_Type_commit(&element_type);
-  MPI_Bcast(mesh->elements, checked_count(n_elements, comm), element_type,
-            root, comm);
-  MPI_Type_free(&element_type);
 }
 
 void bcast_quad_set(QuadSet* quad_set, int n_points, int root, MPI_Comm comm) {
@@ -84,10 +74,34 @@ void bcast_matrix(Matrix* matrix, int root, MPI_Comm comm) {
             root, comm);
 }
 
-void bcast_partition(int** owner, size_t n_elements, int root, MPI_Comm comm) {
-  int rank;
+void scatter_partition(const int* owner, size_t n_elements,
+                       size_t** local_ids, size_t* n_local, int root,
+                       MPI_Comm comm) {
+  int rank, size;
   MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &size);
 
-  if (rank != root) *owner = malloc((n_elements + 1) * sizeof(int));
-  MPI_Bcast(*owner, checked_count(n_elements, comm), MPI_INT, root, comm);
+  int* counts = NULL;
+  int* displs = NULL;
+  size_t* grouped = NULL;
+  if (rank == root) {
+    checked_count(n_elements, comm);  // displacements must fit in an int
+    counts = malloc((size_t)size * sizeof(int));
+    displs = malloc((size_t)size * sizeof(int));
+    grouped = rcb_group_by_part(owner, n_elements, size, counts);
+    displs[0] = 0;
+    for (int r = 1; r < size; r++) displs[r] = displs[r - 1] + counts[r - 1];
+  }
+
+  int my_count = 0;
+  MPI_Scatter(counts, 1, MPI_INT, &my_count, 1, MPI_INT, root, comm);
+
+  *n_local = (size_t)my_count;
+  *local_ids = malloc(((size_t)my_count + 1) * sizeof(size_t));
+  MPI_Scatterv(grouped, counts, displs, MPI_UNSIGNED_LONG_LONG, *local_ids,
+               my_count, MPI_UNSIGNED_LONG_LONG, root, comm);
+
+  free(counts);
+  free(displs);
+  free(grouped);
 }
