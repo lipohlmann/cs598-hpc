@@ -2,6 +2,7 @@
 
 #include "gather_scatter.h"
 #include "matrix.h"
+#include "mesh.h"
 #include "vector.h"
 
 typedef struct {
@@ -17,3 +18,15 @@ typedef struct {
   struct gs_data* gsh;  // gslib gather-scatter handle
   MPI_Comm mpi_comm;    // communicator for global reductions
 } Operator;
+
+/**
+ * @brief Fill the per-rank parts of the operator: n_elements, mask, gslib
+ * handle, inv_mult and mpi_comm. The scaled matrices and op->n must already
+ * be set on this rank. Collective.
+ */
+void setup_operator_local(Operator* op, const Mesh* mesh, MPI_Comm comm);
+
+/**
+ * @brief Free everything owned by the operator.
+ */
+void free_operator(Operator* op);

@@ -73,3 +73,10 @@ Vector mat_vec(const Matrix* A, const Vector* x) {
   }
   return b;
 }
+
+Matrix scale_by_constant(const Matrix* A, const double scale) {
+  Matrix result = create_matrix(A->n_rows, A->n_cols, A->is_diagonal);
+  for (size_t i = 0; i < A->n_rows * A->n_cols; i++)
+    result.data[i] = A->data[i] * scale;
+  return result;
+}

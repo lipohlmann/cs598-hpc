@@ -45,3 +45,37 @@ double global_dot(const Vector* a, const Vector* b, void* ctx) {
   MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, op->mpi_comm);
   return global_sum;
 }
+
+void setup_operator_local(Operator* op, const Mesh* mesh, MPI_Comm comm) {
+  int rank, size;
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &size);
+
+  size_t first_element;
+  partition_elements(mesh, rank, size, &first_element, &op->n_elements);
+
+  op->mpi_comm = comm;
+  op->mask = create_dirichlet_mask(mesh, op->n, first_element, op->n_elements);
+
+  struct comm gs_comm;
+  comm_init(&gs_comm, comm);
+  op->gsh = create_gather_scatter(mesh, op->n, first_element, op->n_elements,
+                                  &gs_comm);
+  comm_free(&gs_comm);
+
+  op->inv_mult = create_inverse_multiplicity(
+      op->n_elements * op->n * op->n * op->n, op->gsh);
+}
+
+void free_operator(Operator* op) {
+  free_matrix(&op->Kx);
+  free_matrix(&op->Ky);
+  free_matrix(&op->Kz);
+  free_matrix(&op->Mx);
+  free_matrix(&op->My);
+  free_matrix(&op->Mz);
+  free_vector(&op->mask);
+  free_vector(&op->inv_mult);
+  if (op->gsh) gs_free(op->gsh);
+  op->gsh = NULL;
+}

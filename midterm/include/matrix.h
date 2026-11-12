@@ -73,3 +73,11 @@ Matrix create_stiffness_matrix(const QuadSet* gll_set);
  * @return Vector
  */
 Vector mat_vec(const Matrix* A, const Vector* x);
+
+/**
+ * @brief Scale a matrix by a constant
+ *
+ * @param A
+ * @param scale
+ */
+Matrix scale_by_constant(const Matrix* A, const double scale);
