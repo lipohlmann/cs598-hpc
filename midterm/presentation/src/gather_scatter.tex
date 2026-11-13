@@ -1,3 +1,11 @@
 \begin{frame}{Gather-Scatter Operator}
-
+  As discussed in \cite{devilleHighorderMethodsIncompressible2002}, the \textit{scatter} operator copies node values on element boundaries, while the \textit{gather} operator sums these values together.
+  This allows for a single sharing of values after each iteration and updating of all nodes.
+  \begin{equation}
+    \begin{aligned}
+       & \mathbf{u}_L & = & Q\mathbf{u}     & \text{scatter} \\
+       & \mathbf{v}   & = & Q^T\mathbf{u}_L & \text{gather}
+    \end{aligned}
+  \end{equation}
+  This was handled using \texttt{gslib} (\url{https://github.com/nek5000/gslib}).
 \end{frame}
