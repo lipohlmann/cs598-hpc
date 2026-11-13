@@ -1,0 +1,29 @@
+\begin{frame}{Conjugate Gradient}
+    Conjugate Gradient (CG) solves the linear system $A\mathbf{x}=\mathbf{b}$ for a symmetric positive definite matrix $A$ iteratively.
+
+    It is very well suited for SEM because it:
+    \begin{itemize}
+        \item Only requires the action of the matrix $A$ on a vector.
+        \item Only requires a couple global reductions per iteration.
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Conjugate Gradient}
+    \begin{algorithm}[H]
+      \caption{Unpreconditioned CG for $A u = b$}
+      \begin{algorithmic}[1]
+        \State $u \gets 0$, \quad $r \gets b$, \quad $p \gets r$
+        \State $\rho \gets r^{T} r$
+        \While{$\sqrt{\rho} \ge \varepsilon \, \lVert b \rVert$}
+          \State $w \gets A p$ \Comment{Kronecker products + gather-scatter}
+          \State $\alpha \gets \rho / (p^{T} w)$ \Comment{\texttt{MPI\_Allreduce}}
+          \State $u \gets u + \alpha p$
+          \State $r \gets r - \alpha w$
+          \State $\rho_{\text{new}} \gets r^{T} r$ \Comment{\texttt{MPI\_Allreduce}}
+          \State $p \gets r + (\rho_{\text{new}} / \rho) \, p$
+          \State $\rho \gets \rho_{\text{new}}$
+        \EndWhile
+      \end{algorithmic}
+    \end{algorithm}
+\end{frame}

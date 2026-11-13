@@ -23,6 +23,9 @@
 
 \usepackage{standalone}
 \usepackage{changepage}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
 
 \usepackage[backend=biber, style=numeric, sorting=none]{biblatex}
 \addbibresource{cs598.bib}
@@ -76,6 +79,7 @@
 \input{src/gather_scatter.tex}
 
 \subsection{Iterative Solver}
+\input{src/cg.tex}
 
 \section{Results}
 \input{src/results.tex}
