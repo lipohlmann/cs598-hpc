@@ -1,0 +1,77 @@
+\begin{frame}{Weak Form of PDE}
+  To develop the weak form, we first approximate the exact solution with a numerical solution, $\tilde{u}\approx u$, then multiply both sides of \cref{eq:poisson} by a test function, $v$, and integrate over the domain:
+  \begin{equation}
+    -\int v\nabla^2 u\odif{V}+ \int uv\odif{V}= \int vf\odif{V}
+  \end{equation}
+  Using vector identities and integration by parts leaves:
+  \begin{equation}
+    \int \nabla u\cdot\nabla v\odif{V}-\oint v\nabla u\cdot\hat{n}\odif{S}+\int uv\odif{V}=\int fv\odif{V}.
+  \end{equation}
+\end{frame}
+
+\begin{frame}{Galerkin Approximation}
+  We first choose the approximation $u$ to be a sum of Lagrange basis functions:
+  \begin{equation}
+    \label{eq:lagrange-expansion}
+    u(x,y,z)=\sum_{k=0}^{N_z}\sum_{j=0}^{N_y}\sum_{i=0}^{N_x}u_{ijk}\ell_i(x)\ell_j(y)\ell_k(z)
+  \end{equation}
+  for $N_x$, $N_y$, and $N_z$ elements in the $x$, $y$, $z$ directions, respectively.
+  For a Galerkin projection, we choose:
+  \begin{equation}
+    \label{eq:test-galerkin}
+    v(x,y,z)=\sum_{n=0}^{N_z}\sum_{m=0}^{N_y}\sum_{l=0}^{N_x}v_{lmn}\ell_l(x)\ell_m(y)\ell_n(z).
+  \end{equation}
+  Using \cref{eq:lagrange-expansion} and \cref{eq:test-galerkin} in \cref{eq:weak-form} gives a set of $(N_x+1)(N_y+1)(N_z+1)$ equations.
+\end{frame}
+
+\begin{frame}{Galerkin Approximation}
+  Because of our choice for the test function in \cref{eq:test-galerkin}, $v$ also satisfies the homogeneous Dirichlet boundary conditions, leaving our weak form simply:
+  \begin{equation}
+    \label{eq:weak-form}
+	  \underbrace{\int \nabla u\cdot\nabla v\odif{V}+ \int uv\odif{V}}_{\mathcal{A}\left(u,v\right)}=\underbrace{\int fv\odif{V}}_{\mathcal{F}(v)}.
+  \end{equation}
+
+\end{frame}
+
+\begin{frame}{Affine Transformation}
+  As a quick aside, we define the affine transformation, which is valid for $x_i\in [0,L_i]$:
+  \begin{equation}
+    \label{eq:affine-trans}
+    x_i (r_i)=\frac{L_i}{2}\left(1+r_i\right).
+  \end{equation}
+  This mapping transforms $x,y,z\in [0,L] \rightarrow \mu,\eta,\xi\in [-1,1]$, simplifying the integrals in the weak form.
+\end{frame}
+
+\begin{frame}{Kronecker Product Form}
+  Applying the weak form to a set of $E$ discretized hexahedral elements, each with a tensor product of internal nodes, gives $\forall e\in \{1,2,\dots ,E\}$:
+  \begin{multline}
+    \label{eq:kronecker-product-form}
+    \mathbf{v}^T_e\left(\hat{M}_z\otimes \hat{M}_y\otimes \hat{K}_x\right)\mathbf{u}_e+\\
+    \mathbf{v}^T_e\left(\hat{M}_z\otimes \hat{K}_y\otimes \hat{M}_x\right)\mathbf{u}_e+
+    \mathbf{v}^T_e\left(\hat{K}_z\otimes \hat{M}_y\otimes \hat{M}_x\right)\mathbf{u}_e+\\
+    \mathbf{v}^T_e\left(\hat{M}_z\otimes\hat{M}_y\otimes\hat{M}_x\right)\mathbf{u}_e=
+    \mathbf{v}^T_e\left(\hat{M}_z\otimes\hat{M}_y\otimes\hat{M}_x\right)\mathbf{f}_e.
+  \end{multline}
+  $\hat{K}$ and $\hat{M}$ are the element \textit{stiffness} and \textit{mass} matrices, respectively.
+  Note that the forcing function, $f(x,y,z)$, has been transformed using \cref{eq:affine-trans} and expanded using Lagrange polynomials.
+\end{frame}
+
+\begin{frame}{Kronecker Product Form}
+  The stiffness and mass matrices have the following definitions:
+  \begin{equation}
+    \label{eq:mass-matrices}
+    \begin{cases}
+      \left(\hat{M}_x\right)_{il}=\frac{L_x}{2}\int_{-1}^{1}\ell_i(\mu)\ell_l(\mu)\odif{\mu}      \\
+      \left({\hat{M}_y}\right)_{jm}=\frac{L_y}{2}\int_{-1}^{1}\ell_j(\eta)\ell_m(\eta)\odif{\eta} \\
+      \left({\hat{M}_z}\right)_{kn}=\frac{L_z}{2}\int_{-1}^{1}\ell_j(\xi)\ell_n(\xi)\odif{\xi}
+    \end{cases}
+  \end{equation}
+  \begin{equation}
+    \label{eq:stiffness-matrics}
+    \begin{cases}
+      \left(\hat{K}_{x}\right)_{ij}=\frac{2}{L_x}\int_{-1}^{1}\odv{\ell_i}{\mu}\odv{\ell_l}{\mu}\odif{\mu}    \\
+      \left(\hat{K}_{y}\right)_{jm}=\frac{2}{L_y}\int_{-1}^{1}\odv{\ell_j}{\eta}\odv{\ell_m}{\eta}\odif{\eta} \\
+      \left(\hat{K}_{z}\right)_{kn}=\frac{2}{L_z}\int_{-1}^{1}\odv{\ell_k}{\xi}\odv{\ell_n}{\xi}\odif{\xi}.
+    \end{cases}
+  \end{equation}
+\end{frame}

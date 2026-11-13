@@ -388,4 +388,11 @@ dkms.conf
 
 .DS_Store
 build/
+*.ist
+.vscode
 
+.venv/
+
+/midterm/midterm
+
+/midterm/results/

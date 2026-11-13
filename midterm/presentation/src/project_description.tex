@@ -1,0 +1,28 @@
+\begin{frame}{Toy Problem}
+  For this implementation, we look to solve the following toy problem:
+
+  Find $\tilde{u}\in \mathcal{R}^3$ s.t.
+  \begin{equation}
+    \label{eq:poisson}
+    -\nabla^2 \tilde{u}+\tilde{u}=f(x,y,z),\quad \tilde{u}\in \Omega,\quad u\in\partial \Omega=0.
+  \end{equation}
+  for $x,y,z\in [0,1]^3$.
+  We additionally choose the following manufactured solution:
+  \begin{equation}
+    \label{eq:mms}
+    \tilde{u}=\sin\left(4\pi x\right)\sin\left(2\pi y\right)\sin\left(3\pi z\right),\quad k\in \mathcal{R}^+
+  \end{equation}
+  This sets the forcing function to be:
+  \begin{equation}
+    \label{eq:mms-forcing}
+    \begin{split}
+      f(x,y,z) & =\left(29\pi^2+1\right)\sin\left(k\pi x\right)\sin\left(k\pi y\right)\sin\left(k\pi z\right) \\
+               & = \left(29\pi^2+1\right)\tilde{u}(x,y,z)
+    \end{split}
+  \end{equation}
+\end{frame}
+
+\begin{frame}{MMS Plot}
+  \centering
+  \includegraphics[width=1.05\textwidth]{figures/mms.png}
+\end{frame}

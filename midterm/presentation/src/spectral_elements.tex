@@ -1,0 +1,35 @@
+\begin{frame}{Spectral Element Method}
+  The defining feature of the spectral element method (SEM) is the selection of internal element nodes corresponding to the Gauss-Lobatto-Legendre (GLL) rule.
+  From \cite{devilleHighorderMethodsIncompressible2002}:
+  \begin{equation}
+    \label{eq:gll}
+    \begin{aligned}
+       & \int_{-1}^1 u(\xi)\odif{\xi} & \approx & \sum_{k=0}^{N}\rho_k u\left(\xi_k\right)                                  \\
+       & \xi_k                        & =       & \begin{cases}
+                                                    -1,                        & k=0              \\
+                                                    \text{zeros of }L'_N(\xi), & 1\leq k \leq N-1 \\
+                                                    1,                         & k=N              \\
+                                                  \end{cases}                           \\
+       & \rho_k                       & =       & \frac{2}{N\left(N+1\right)}\frac{1}{\left[L_N\left(\xi_k\right)\right]^2}
+    \end{aligned}
+  \end{equation}
+  The above rule is exact for polynomials degree up to $2N-1$.
+\end{frame}
+
+\begin{frame}{Spectral Element Method}
+  Using the points in \cref{eq:gll}, which we approximate the integrals for the stiffness and mass matrices.
+  Using \textit{generic} indices $i,j$, we have:
+  \begin{subequations}
+    \begin{equation}
+      \left(\hat{M}_n\right)_{ij}  \approx \frac{L_n}{2}\sum_{k=0}^{N}\rho_k\ell_i (\mu_k)\ell_j (\mu_k)=\begin{cases}
+        \rho_i, & i=j     \\
+        0,      & i\neq j
+      \end{cases}
+    \end{equation}
+    \begin{equation}
+      \left(\hat{K}_n\right)_{ij}  \approx \frac{2}{L_n}\sum_{k=0}^{N}\rho_k \odv{\ell_i}{\mu}(\mu_k)\odv{\ell_j}{\mu}(\mu_k)
+    \end{equation}
+  \end{subequations}
+  Notice that because the GLL quadrature points are also the nodes for the Lagrange interpolants, the mass matrix is \emph{diagonal}.
+  The stiffness matrix, however, is full.
+\end{frame}
