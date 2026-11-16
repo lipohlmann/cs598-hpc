@@ -13,7 +13,18 @@
 #   DRY_RUN         1 = print the commands, run/submit nothing (default: 0)
 #   ACCOUNT         Slurm account (--account), empty = not passed
 #   PARTITION       Slurm partition (--partition), empty = not passed
-#   TASKS_PER_NODE  MPI ranks per node                  (default: 64)
+#   SPREAD          1 = spread the ranks as thinly as possible to reduce
+#                   memory-bandwidth contention: use min(ranks, MAX_NODES)
+#                   nodes with the ranks divided evenly, give every rank an
+#                   equal block of cores (--cpus-per-task) alternating between
+#                   the sockets, and pin it to the first core of its block
+#                   (scripts/pin_first_core.sh).
+#                   0 = pack TASKS_PER_NODE ranks per node  (default: 1)
+#   MAX_NODES       nodes to spread over (SPREAD=1)     (default: 3)
+#   CORES_PER_NODE  cores of one node (SPREAD=1)        (default: 128)
+#   CONSTRAINT      Slurm node feature (--constraint) so every run uses the
+#                   same hardware, empty = not passed   (default: AE7713)
+#   TASKS_PER_NODE  MPI ranks per node (SPREAD=0)       (default: 64)
 #   TIME_LIMIT      Slurm time limit per run            (default: 00:30:00)
 #   EXCLUSIVE       1 = request whole nodes (--exclusive, recommended for
 #                   timing studies)                     (default: 1)
@@ -32,6 +43,10 @@ SUBMIT=${SUBMIT:-sbatch}
 DRY_RUN=${DRY_RUN:-0}
 ACCOUNT=${ACCOUNT:-26fa-cs598pa-eng}
 PARTITION=${PARTITION:-eng-instruction}
+SPREAD=${SPREAD:-1}
+MAX_NODES=${MAX_NODES:-3}
+CORES_PER_NODE=${CORES_PER_NODE:-128}
+CONSTRAINT=${CONSTRAINT-AE7713}
 TASKS_PER_NODE=${TASKS_PER_NODE:-64}
 TIME_LIMIT=${TIME_LIMIT:-00:30:00}
 EXCLUSIVE=${EXCLUSIVE:-1}
@@ -85,11 +100,27 @@ submit_run() {
   fi
 
   # Slurm: one job per run
-  local nodes=$(((ranks + TASKS_PER_NODE - 1) / TASKS_PER_NODE))
-  local per_node=$((ranks < TASKS_PER_NODE ? ranks : TASKS_PER_NODE))
-
-  local run_cmd
-  run_cmd="$LAUNCHER $(printf '%q ' "$EXE" "${args[@]}")"
+  local nodes per_node run_cmd layout_args
+  if [[ "$SPREAD" == "1" ]]; then
+    nodes=$((ranks < MAX_NODES ? ranks : MAX_NODES))
+    per_node=$(((ranks + nodes - 1) / nodes))  # most ranks on any node
+    if ((per_node > CORES_PER_NODE)); then
+      echo "error: $ranks ranks do not fit on $nodes node(s)" >&2
+      return 1
+    fi
+    # cores per rank: largest power of two that fits per_node ranks on a node
+    local cpt=1
+    while ((2 * cpt * per_node <= CORES_PER_NODE)); do cpt=$((2 * cpt)); done
+    # plane=per_node: consecutive ranks (neighbouring subdomains) share a node
+    run_cmd="$LAUNCHER --cpus-per-task=$cpt --distribution=plane=$per_node"
+    run_cmd+=" $(printf '%q ' "$(dirname "${BASH_SOURCE[0]}")/pin_first_core.sh" "$EXE" "${args[@]}")"
+    layout_args=(--cpus-per-task "$cpt")
+  else
+    nodes=$(((ranks + TASKS_PER_NODE - 1) / TASKS_PER_NODE))
+    per_node=$((ranks < TASKS_PER_NODE ? ranks : TASKS_PER_NODE))
+    run_cmd="$LAUNCHER $(printf '%q ' "$EXE" "${args[@]}")"
+    layout_args=(--ntasks-per-node "$per_node")
+  fi
   if [[ -n "$SETUP_CMD" ]]; then
     run_cmd="$SETUP_CMD && $run_cmd"
   fi
@@ -98,12 +129,13 @@ submit_run() {
     --job-name "$study-$label"
     --nodes "$nodes"
     --ntasks "$ranks"
-    --ntasks-per-node "$per_node"
+    "${layout_args[@]}"
     --time "$TIME_LIMIT"
     --output "$log_base-%j.out"
   )
   [[ -n "$ACCOUNT" ]] && sbatch_args+=(--account "$ACCOUNT")
   [[ -n "$PARTITION" ]] && sbatch_args+=(--partition "$PARTITION")
+  [[ -n "$CONSTRAINT" ]] && sbatch_args+=(--constraint "$CONSTRAINT")
   [[ "$EXCLUSIVE" == "1" ]] && sbatch_args+=(--exclusive)
   if [[ -n "$SBATCH_EXTRA" ]]; then
     # shellcheck disable=SC2206  # SBATCH_EXTRA is intentionally word-split
