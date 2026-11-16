@@ -9,8 +9,8 @@
 # compare the time per iteration as well as the total time (analyze.py
 # reports both). MAX_ITERS fixes the iteration count to compare equal work.
 #
-#   BLOCK      elements per direction per rank (default: 16, i.e. 4096/rank)
-#   NPTS       GLL points per element          (default: 6)
+#   BLOCK      elements per direction per rank (default: 8, i.e. 512/rank)
+#   NPTS       GLL points per element          (default: 12)
 #   RANKS      list of rank counts, powers of 2 (default: up to MAX_RANKS)
 #   MAX_RANKS  largest rank count              (default: 256)
 #   MAX_ITERS  CG iteration cap                (default: 200)
@@ -18,8 +18,8 @@
 # plus the settings in common.sh (REPS repetitions per rank count).
 source "$(dirname "$0")/common.sh"
 
-BLOCK=${BLOCK:-16}
-NPTS=${NPTS:-6}
+BLOCK=${BLOCK:-8}
+NPTS=${NPTS:-12}
 MAX_RANKS=${MAX_RANKS:-256}
 RANKS=${RANKS:-$(powers_of_two_up_to "$MAX_RANKS")}
 MAX_ITERS=${MAX_ITERS:-200}

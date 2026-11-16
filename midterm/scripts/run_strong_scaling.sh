@@ -2,8 +2,10 @@
 # Strong scaling: fixed global problem, increase the number of ranks.
 # Speedup S(P) = T(1) / T(P), efficiency E(P) = S(P) / P.
 #
-#   NELEM      elements per direction        (default: 64)
-#   NPTS       GLL points per element        (default: 6)
+#   NELEM      elements per direction        (default: 32)
+#   NPTS       GLL points per element; a high order does more arithmetic per
+#              byte of memory traffic, so the runs are less limited by
+#              memory bandwidth          (default: 12)
 #   RANKS      list of rank counts           (default: powers of 2 up to MAX_RANKS)
 #   MAX_RANKS  largest rank count            (default: 256)
 #   MAX_ITERS  CG iteration cap; a fixed cap keeps every run doing the same
@@ -13,8 +15,8 @@
 # plus the settings in common.sh (REPS repetitions per rank count).
 source "$(dirname "$0")/common.sh"
 
-NELEM=${NELEM:-64}
-NPTS=${NPTS:-6}
+NELEM=${NELEM:-32}
+NPTS=${NPTS:-12}
 MAX_RANKS=${MAX_RANKS:-256}
 RANKS=${RANKS:-$(powers_of_two_up_to "$MAX_RANKS")}
 MAX_ITERS=${MAX_ITERS:-200}
