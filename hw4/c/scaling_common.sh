@@ -1,6 +1,6 @@
-# Shared by strong.sh and weak.sh; not meant to be run on its own.
+# Shared by strong.sh, weak.sh and verify.sh; not meant to be run on its own.
 #
-# Builds build/scaling and submits ONE job that runs every (P, N) pair in turn.
+# Builds build/$PROG (from src/$PROG.c) and submits ONE job that runs every (P, N) pair in turn.
 # One allocation means every rank count runs on the same hardware, with the
 # node to ourselves. The partition mixes 64-core and 128-core nodes;
 # --ntasks-per-node=128 keeps us on the 128-core ones.
@@ -12,6 +12,7 @@ CORES_PER_NODE=128
 PS=${PS:-1 2 4 8 16 32 64 128 256}
 TIME=${TIME:-01:30:00}
 SOLVER=${SOLVER:-dd}    # dd or thomas
+PROG=${PROG:-scaling}   # driver in src/ to build and run
 
 # usage: submit_sweep job-name results.csv "P N" "P N" ...
 submit_sweep() {
@@ -24,7 +25,7 @@ submit_sweep() {
     # The other files in src/ are the library; skip any that bring their own main.
     local libs=() f
     for f in src/*.c; do
-        [ "$f" = src/scaling.c ] && continue
+        [ "$f" = "src/$PROG.c" ] && continue
         grep -qE '\bint[[:space:]]+main[[:space:]]*\(' "$f" && continue
         libs+=("$f")
     done
@@ -32,15 +33,15 @@ submit_sweep() {
     # Build to a temp name and rename, so a job that is already running or
     # about to launch never sees a half-written binary.
     mkdir -p build "$(dirname "$csv")"
-    mpicc -O2 -Wall -Wextra -std=c11 -Iinclude src/scaling.c "${libs[@]}" \
-        -o "build/scaling.$$" -lm
-    mv "build/scaling.$$" build/scaling
+    mpicc -O2 -Wall -Wextra -std=c11 -Iinclude "src/$PROG.c" "${libs[@]}" \
+        -o "build/$PROG.$$" -lm
+    mv "build/$PROG.$$" "build/$PROG"
 
     local max_p=0 cmds="" run p n
     for run in "$@"; do
         read -r p n <<<"$run"
         [ "$p" -gt "$max_p" ] && max_p=$p
-        cmds+="mpirun -np $p --map-by core --bind-to core build/scaling $n $csv $SOLVER </dev/null || echo \"FAILED: P=$p N=$n\""$'\n'
+        cmds+="mpirun -np $p --map-by core --bind-to core build/$PROG $n $csv $SOLVER </dev/null || echo \"FAILED: P=$p N=$n\""$'\n'
     done
     local nodes=$(((max_p + CORES_PER_NODE - 1) / CORES_PER_NODE))
 
