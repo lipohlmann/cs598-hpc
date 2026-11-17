@@ -9,9 +9,7 @@ Vector SerialJacobi(const Matrix* A, const Vector* b, const double tol,
   Vector x_kp1 = create_vector(n);
   Vector x_k = create_vector(n);
 
-  Vector residual = create_vector(n);
-
-  double residual_norm = 1.0;  // dummy value
+  double residual_norm = 0.0;
 
   int k = 0;
   while (k <= max_iters) {
@@ -28,16 +26,16 @@ Vector SerialJacobi(const Matrix* A, const Vector* b, const double tol,
         sum += A->data[flat_index(i, j, A)] * x_k.data[j];
 
       x_kp1.data[i] = 1.0 / diag * (bi - sum);
-      residual.data[i] = bi - sum - diag * x_k.data[i];
+      residual_norm += pow(bi - sum - diag * x_k.data[i], 2.0);
     }
-    residual_norm = sqrt(dot(&residual, &residual));
+    residual_norm = sqrt(residual_norm);
     printf("k = %d, residual_norm = %.4e\n", k, residual_norm);
     if (residual_norm < tol) {
       free_vector(&x_k);
-      free_vector(&residual);
       return x_kp1;
     }
     for (size_t i = 0; i < n; i++) x_k.data[i] = x_kp1.data[i];
+    residual_norm = 0.0;
   }
   printf("WARNING: SerialJacobi did not converge!\n");
   return x_kp1;
