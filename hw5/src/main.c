@@ -22,9 +22,11 @@ int main(int argc, char *argv[]) {
   Vector b = CreateBoundaryVector(N, L, boundary_flag);
 
   // solve here...
+  Vector x = SerialJacobi(&A, &b, 1e-8, 1000);
 
   free_matrix(&A);
   free_vector(&b);
+  free_vector(&x);
 
   return 0;
 }

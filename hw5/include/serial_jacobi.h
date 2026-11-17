@@ -3,4 +3,5 @@
 #include "matrix.h"
 #include "vector.h"
 
-Vector SerialJacobi(const Matrix* A, const Vector* b, const double tol);
+Vector SerialJacobi(const Matrix* A, const Vector* b, const double tol,
+                    const int max_iters);
