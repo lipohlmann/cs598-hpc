@@ -2,6 +2,9 @@
 
 #include <stddef.h>
 
+#include "matrix.h"
+#include "vector.h"
+
 /**
  * Convention: M = N - 1 interior points per side. Grid point (i, j) maps to
  * unknown index k = i * M + j, with i <-> x and j <-> y. Interior node i sits
@@ -9,25 +12,27 @@
  */
 
 /**
- * @brief Create a Poisson Matrix as a flattened 1D array (row-major).
+ * @brief Create the (dense) Poisson matrix. Caller owns the result and must
+ * release it with free_matrix().
  *
- * @param A 1D array with size (N-1)^2 x (N-1)^2
  * @param N N
  * @param L Length of square domain
+ * @return Matrix of size (N-1)^2 x (N-1)^2
  */
-void CreatePoissonMatrix(double* A, const int N, const double L);
+Matrix CreatePoissonMatrix(const size_t N, const double L);
 
 /**
- * @brief Create the l.h.s. of a Poisson problem where the forcing function is
- * only the boundary values
+ * @brief Create the r.h.s. of a Poisson problem where the forcing function is
+ * only the boundary values. Caller owns the result and must release it with
+ * free_vector().
  *
- * @param b 1D array with size (N-1)^2
  * @param N N
  * @param L Length of square domain
  * @param boundary_type Index for boundary types given in EvaluateBoundary
+ * @return Vector of size (N-1)^2
  */
-void CreateBoundaryVector(double* b, const int N, const double L,
-                          const int boundary_type);
+Vector CreateBoundaryVector(const size_t N, const double L,
+                            const int boundary_type);
 
 /**
  * @brief Evaluates the boundary condition.
@@ -40,8 +45,9 @@ void CreateBoundaryVector(double* b, const int N, const double L,
 double EvaluateBoundary(const double x, const double y, const int type);
 
 /**
- * @brief Computes the equivalent flat index given a row,col index pair. Assumes
- * 0-indexing!
+ * @brief Maps a grid point (row, col) = (i, j) to its unknown index
+ * k = row * n_cols + col. Used for the grid -> unknown mapping only; index
+ * into a Matrix with flat_index(). Assumes 0-indexing!
  *
  * @param n_cols
  * @param row

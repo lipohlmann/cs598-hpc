@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-#include "quad_set.h"
+#include "vector.h"
 
 typedef struct {
   size_t n_rows;
@@ -47,22 +47,6 @@ size_t flat_index(const size_t row, const size_t col, const Matrix* matrix);
  * @return double
  */
 double matrix_value_at(const size_t i, const size_t j, const Matrix* matrix);
-
-/**
- * @brief Create a diagonal mass matrix using the GLL quadrature set
- *
- * @param gll_set
- * @return Matrix
- */
-Matrix create_mass_matrix(const QuadSet* gll_set);
-
-/**
- * @brief Create a stiffness matrix using the GLL quadrature set
- *
- * @param gll_set
- * @return Matrix
- */
-Matrix create_stiffness_matrix(const QuadSet* gll_set);
 
 /**
  * @brief Compute the matrix-vector product Ax=b. If A is diagonal, the product
