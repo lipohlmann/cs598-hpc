@@ -86,7 +86,8 @@ void MPIJacobi(const size_t N, const double L, const int boundary_type,
       MPI_Allreduce(&local_residual_sqrd, &global_residual, 1, MPI_DOUBLE,
                     MPI_SUM, MPI_COMM_WORLD);
       residual_norm = sqrt(global_residual);
-      printf("k = %d, residual_norm = %.4e\n", k, residual_norm);
+      if (this_rank == 0)
+        printf("k = %d, residual_norm = %.4e\n", k, residual_norm);
 
       if (residual_norm < tol) {
         free_vector(&boundary_vector);
