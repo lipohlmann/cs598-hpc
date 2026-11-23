@@ -15,4 +15,4 @@
  * @param comm
  */
 void MPIJacobi(const size_t N, const double L, const int boundary_type,
-               const double tol, const int max_iters, MPI_Comm comm);
+               const double tol, const int max_iters);
