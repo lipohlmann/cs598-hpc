@@ -21,7 +21,10 @@ double mms_forcing(double x, double y, double z, void* params) {
   const double k2 =
       M_PI * M_PI *
       (16.0 / (p->Lx * p->Lx) + 4.0 / (p->Ly * p->Ly) + 9.0 / (p->Lz * p->Lz));
-  return (k2 + 1.0) * mms_u_exact(x, y, z, params);
+  const double k3 = M_PI * (4.0 / p->Lx / tan(4.0 * M_PI * x / p->Lx) +
+                            2.0 / p->Ly / tan(2.0 * M_PI * x / p->Ly) +
+                            3.0 / p->Lz / tan(3.0 * M_PI * z / p->Lz));
+  return (k2 + k3 + 1.0) * mms_u_exact(x, y, z, params);
 }
 
 Vector evaluate_field(const Operator* op, const Mesh* mesh, const QuadSet* quad,
