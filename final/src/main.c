@@ -5,9 +5,9 @@
 #include <string.h>
 
 #include "broadcast.h"
-#include "cg.h"
 #include "gather_scatter.h"
 #include "gauss_lobatto_legendre.h"
+#include "gmres.h"
 #include "matrix.h"
 #include "mesh.h"
 #include "mms.h"
@@ -99,24 +99,50 @@ static int parse_args(int argc, char* argv[], Params* p) {
         bad = parse_size(optarg, &p->nx);
         p->ny = p->nz = p->nx;
         break;
-      case OPT_NX: bad = parse_size(optarg, &p->nx); break;
-      case OPT_NY: bad = parse_size(optarg, &p->ny); break;
-      case OPT_NZ: bad = parse_size(optarg, &p->nz); break;
-      case 'n': bad = parse_int(optarg, 2, &p->n_nodes_per_element); break;
-      case OPT_LX: bad = parse_positive_double(optarg, &p->Lx); break;
-      case OPT_LY: bad = parse_positive_double(optarg, &p->Ly); break;
-      case OPT_LZ: bad = parse_positive_double(optarg, &p->Lz); break;
+      case OPT_NX:
+        bad = parse_size(optarg, &p->nx);
+        break;
+      case OPT_NY:
+        bad = parse_size(optarg, &p->ny);
+        break;
+      case OPT_NZ:
+        bad = parse_size(optarg, &p->nz);
+        break;
+      case 'n':
+        bad = parse_int(optarg, 2, &p->n_nodes_per_element);
+        break;
+      case OPT_LX:
+        bad = parse_positive_double(optarg, &p->Lx);
+        break;
+      case OPT_LY:
+        bad = parse_positive_double(optarg, &p->Ly);
+        break;
+      case OPT_LZ:
+        bad = parse_positive_double(optarg, &p->Lz);
+        break;
       case 'L':
         bad = parse_positive_double(optarg, &p->Lx);
         p->Ly = p->Lz = p->Lx;
         break;
-      case 't': bad = parse_positive_double(optarg, &p->cg_rel_tol); break;
-      case OPT_MAX_ITERS: bad = parse_int(optarg, 1, &p->cg_max_iters); break;
-      case 'c': p->csv_path = optarg; break;
-      case 'l': p->label = optarg; break;
-      case 'v': p->vtk_prefix = optarg; break;
-      case 'h': return 2;
-      default: return 1;  // unknown option or missing argument
+      case 't':
+        bad = parse_positive_double(optarg, &p->cg_rel_tol);
+        break;
+      case OPT_MAX_ITERS:
+        bad = parse_int(optarg, 1, &p->cg_max_iters);
+        break;
+      case 'c':
+        p->csv_path = optarg;
+        break;
+      case 'l':
+        p->label = optarg;
+        break;
+      case 'v':
+        p->vtk_prefix = optarg;
+        break;
+      case 'h':
+        return 2;
+      default:
+        return 1;  // unknown option or missing argument
     }
     if (bad) return 1;
   }
@@ -203,6 +229,7 @@ int main(int argc, char* argv[]) {
   QuadSet gll_quad = {0};
   Matrix M = {0};
   Matrix K = {0};
+  Matrix C = {0};
   Operator operator= { 0 };
   int* owner = NULL;  // rank that owns each element (rank 0 only)
 
@@ -216,6 +243,7 @@ int main(int argc, char* argv[]) {
     owner = rcb_partition(&mesh, world_size);
     M = create_mass_matrix(&gll_quad);
     K = create_stiffness_matrix(&gll_quad);
+    operator.C = create_convection_matrix(&gll_quad);
     // map the reference element [-1,1] to an element of size dx, dy, dz
     operator.Kx = scale_by_constant(&K, 2.0 / mesh.dx);
     operator.Ky = scale_by_constant(&K, 2.0 / mesh.dy);
@@ -223,8 +251,11 @@ int main(int argc, char* argv[]) {
     operator.Mx = scale_by_constant(&M, mesh.dx / 2.0);
     operator.My = scale_by_constant(&M, mesh.dy / 2.0);
     operator.Mz = scale_by_constant(&M, mesh.dz / 2.0);
+
+    // No mapping needed for the convection matrix because the Jacobian drops
+    // out in the change of variables
   }
-  operator.n = (size_t)n_nodes_per_element;
+  operator.n =(size_t) n_nodes_per_element;
 
   // broadcast to all other ranks (collective)
   bcast_mesh(&mesh, 0, MPI_COMM_WORLD);
@@ -247,43 +278,45 @@ int main(int argc, char* argv[]) {
   bcast_quad_set(&gll_quad, n_nodes_per_element, 0, MPI_COMM_WORLD);
   bcast_matrix(&M, 0, MPI_COMM_WORLD);
   bcast_matrix(&K, 0, MPI_COMM_WORLD);
+  bcast_matrix(&C, 0, MPI_COMM_WORLD);
   bcast_matrix(&operator.Kx, 0, MPI_COMM_WORLD);
   bcast_matrix(&operator.Ky, 0, MPI_COMM_WORLD);
   bcast_matrix(&operator.Kz, 0, MPI_COMM_WORLD);
   bcast_matrix(&operator.Mx, 0, MPI_COMM_WORLD);
   bcast_matrix(&operator.My, 0, MPI_COMM_WORLD);
   bcast_matrix(&operator.Mz, 0, MPI_COMM_WORLD);
+  bcast_matrix(&operator.C, 0, MPI_COMM_WORLD);
 
   // per-rank parts: element partition, mask, gather-scatter, inv_mult
-  setup_operator_local(&operator, &mesh, local_element_ids, n_local_elements,
+  setup_operator_local(&operator, & mesh, local_element_ids, n_local_elements,
                        MPI_COMM_WORLD);
   timer_stop(TIMER_SETUP);
 
   // manufactured solution: right-hand side, CG solve, error against exact
   MmsParams mms_params = {Lx, Ly, Lz};
-  Vector b = create_rhs(&operator, &mesh, &gll_quad, mms_forcing, &mms_params);
+  Vector b = create_rhs(&operator, & mesh, &gll_quad, mms_forcing, &mms_params);
   Vector u_exact =
-      evaluate_field(&operator, &mesh, &gll_quad, mms_u_exact, &mms_params);
+      evaluate_field(&operator, & mesh, &gll_quad, mms_u_exact, &mms_params);
   Vector u = create_vector(b.size);  // zero initial guess
 
   // only time the solve: clear what setup and the RHS accumulated
   for (int t = TIMER_SOLVE; t < TIMER_COUNT; t++) timer_reset((TimerId)t);
   MPI_Barrier(MPI_COMM_WORLD);
   timer_start(TIMER_SOLVE);
-  int iters = conjugate_gradient(&u, &b, params.cg_rel_tol,
-                                 params.cg_max_iters, &operator);
+  int iters = gmres(&u, &b, params.cg_rel_tol, params.cg_max_iters, &operator);
   timer_stop(TIMER_SOLVE);
 
   double l2_error, linf_error;
-  mms_error_norms(&operator, &u, &u_exact, &l2_error, &linf_error);
+  mms_error_norms(&operator, & u, &u_exact, &l2_error, &linf_error);
 
   TimerSummary timers[TIMER_COUNT];
   timers_summary(MPI_COMM_WORLD, timers);
 
   if (world_rank == 0) {
-    printf("ranks %d | CG iterations %d%s | L2 error %.6e | Linf error %.6e\n",
-           world_size, iters, iters < 0 ? " (NOT CONVERGED)" : "", l2_error,
-           linf_error);
+    printf(
+        "ranks %d | GMRES iterations %d%s | L2 error %.6e | L_inf error %.6e\n",
+        world_size, iters, iters < 0 ? " (NOT CONVERGED)" : "", l2_error,
+        linf_error);
     printf(
         "time [s, max over ranks]: setup %.4e | solve %.4e | matvec %.4e |"
         " kronecker %.4e | gather-scatter %.4e | allreduce %.4e\n",
@@ -296,7 +329,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (params.vtk_prefix) {
-    if (write_vtu_parallel(params.vtk_prefix, &operator, &mesh, &gll_quad, &u,
+    if (write_vtu_parallel(params.vtk_prefix, &operator, & mesh, &gll_quad, &u,
                            &u_exact, MPI_COMM_WORLD) != 0) {
       if (world_rank == 0)
         fprintf(stderr, "error: failed to write VTK output %s\n",
