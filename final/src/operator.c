@@ -1,0 +1,73 @@
+#include "operator.h"
+
+#include "cg.h"
+#include "kronecker.h"
+#include "timers.h"
+
+void apply_A(Vector* y, const Vector* x, void* ctx) {
+  const Operator* op = ctx;
+  const size_t n3 = op->n * op->n * op->n;
+  timer_start(TIMER_MATVEC);
+
+  // 1. local operator, one element at a time
+  timer_start(TIMER_KRONECKER);
+  for (size_t e = 0; e < op->n_elements; e++)
+    SerialLocalOperator(x->data + e * n3, y->data + e * n3, &op->Kx, &op->Ky,
+                        &op->Kz, &op->Mx, &op->My, &op->Mz);
+  timer_stop(TIMER_KRONECKER);
+
+  // 2. sum contributions at shared nodes
+  direct_stiffness_sum(y, op->gsh);
+
+  // 3. zero the Dirichlet rows
+  for (size_t i = 0; i < y->size; i++) y->data[i] *= op->mask.data[i];
+  timer_stop(TIMER_MATVEC);
+}
+
+double global_dot(const Vector* a, const Vector* b, void* ctx) {
+  const Operator* op = ctx;
+
+  double local_sum = 0.0;
+  for (size_t i = 0; i < a->size; i++)
+    local_sum += a->data[i] * b->data[i] * op->inv_mult.data[i];
+
+  double global_sum = 0.0;
+  timer_start(TIMER_ALLREDUCE);
+  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, op->mpi_comm);
+  timer_stop(TIMER_ALLREDUCE);
+  return global_sum;
+}
+
+void setup_operator_local(Operator* op, const Mesh* mesh, size_t* element_ids,
+                          const size_t n_local, MPI_Comm comm) {
+  op->element_ids = element_ids;
+  op->n_elements = n_local;
+
+  op->mpi_comm = comm;
+  op->mask =
+      create_dirichlet_mask(mesh, op->n, op->element_ids, op->n_elements);
+
+  struct comm gs_comm;
+  comm_init(&gs_comm, comm);
+  op->gsh = create_gather_scatter(mesh, op->n, op->element_ids, op->n_elements,
+                                  &gs_comm);
+  comm_free(&gs_comm);
+
+  op->inv_mult = create_inverse_multiplicity(
+      op->n_elements * op->n * op->n * op->n, op->gsh);
+}
+
+void free_operator(Operator* op) {
+  free_matrix(&op->Kx);
+  free_matrix(&op->Ky);
+  free_matrix(&op->Kz);
+  free_matrix(&op->Mx);
+  free_matrix(&op->My);
+  free_matrix(&op->Mz);
+  free(op->element_ids);
+  op->element_ids = NULL;
+  free_vector(&op->mask);
+  free_vector(&op->inv_mult);
+  if (op->gsh) gs_free(op->gsh);
+  op->gsh = NULL;
+}
