@@ -40,3 +40,26 @@ void setup_operator_local(Operator* op, const Mesh* mesh, size_t* element_ids,
  * @brief Free everything owned by the operator.
  */
 void free_operator(Operator* op);
+
+/**
+ * @brief Compute the operator application y = A x. Must overwrite y.
+ *
+ * For the SEM: local Kronecker apply per element, then gather-scatter
+ * (gs_add), then the Dirichlet mask.
+ *
+ * @param y Result vector (overwritten)
+ * @param x Input vector
+ * @param ctx Opaque pointer to operator data
+ */
+void apply_A(Vector* y, const Vector* x, void* ctx);
+
+/**
+ * @brief Compute the global inner product of two vectors, counting each
+ * shared node exactly once across elements and MPI ranks.
+ *
+ * @param a
+ * @param b
+ * @param ctx Opaque pointer to operator data
+ * @return double
+ */
+double global_dot(const Vector* a, const Vector* b, void* ctx);
