@@ -6,12 +6,13 @@
 #include "vector.h"
 
 typedef struct {
-  size_t n;           // GLL points per direction per element
-  size_t n_elements;  // number of elements on this rank
+  size_t n;             // GLL points per direction per element
+  size_t n_elements;    // number of elements on this rank
   size_t* element_ids;  // global IDs of this rank's elements (ascending)
 
   Matrix Kx, Ky, Kz;  // scaled 1D stiffness matrices (dense)
   Matrix Mx, My, Mz;  // scaled 1D mass matrices (diagonal)
+  Matrix C;           // 1D convection matrix (dense)
 
   Vector mask;      // 0 on Dirichlet nodes, 1 elsewhere
   Vector inv_mult;  // 1 / (number of local copies of each node)
