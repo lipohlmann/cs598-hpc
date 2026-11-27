@@ -65,6 +65,14 @@ Matrix create_mass_matrix(const QuadSet* gll_set);
 Matrix create_stiffness_matrix(const QuadSet* gll_set);
 
 /**
+ * @brief Create a convection matrix using the GLL quadrature set
+ *
+ * @param gll_set
+ * @return Matrix
+ */
+Matrix create_convection_matrix(const QuadSet* gll_set);
+
+/**
  * @brief Compute the matrix-vector product Ax=b. If A is diagonal, the product
  * is optimized.
  *

@@ -58,6 +58,18 @@ Matrix create_stiffness_matrix(const QuadSet* gll_set) {
   return stiffness_matrix;
 }
 
+Matrix create_convection_matrix(const QuadSet* gll_set) {
+  const size_t n_nodes = gll_set->nodes.size;
+  Matrix convection_matrix = create_matrix(n_nodes, n_nodes, 0);
+  for (size_t i = 0; i < n_nodes; i++) {
+    for (size_t j = 0; j < n_nodes; j++) {
+      convection_matrix.data[flat_index(i, j, &convection_matrix)] =
+          gll_set->weights.data[i] * ComputeLagrangeDerivative(i, j, gll_set);
+    }
+  }
+  return convection_matrix;
+}
+
 Vector mat_vec(const Matrix* A, const Vector* x) {
   Vector b = create_vector(x->size);
 
