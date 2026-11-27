@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stddef.h>
 
+#include "operator.h"
+
 // y += alpha * x
 static void axpy(Vector* y, const double alpha, const Vector* x) {
   for (size_t i = 0; i < y->size; i++) y->data[i] += alpha * x->data[i];
@@ -15,7 +17,7 @@ static void xpby(Vector* p, const Vector* r, const double beta) {
 }
 
 /*
-Matlab version of serial CG. 
+Matlab version of serial CG.
 
 function x = conjugate_gradient(A, b, x0, tol)
 % Return the solution to `A * x = b` using the conjugate gradient method.
@@ -42,7 +44,6 @@ function x = conjugate_gradient(A, b, x0, tol)
     end
 end
 */
-
 
 int conjugate_gradient(Vector* x, const Vector* b, const double rel_tol,
                        const int max_iters, void* ctx) {
@@ -72,8 +73,8 @@ int conjugate_gradient(Vector* x, const Vector* b, const double rel_tol,
     apply_A(&Ap, &p, ctx);
 
     const double alpha = rr / global_dot(&p, &Ap, ctx);
-    axpy(x, alpha, &p);    // x += alpha * p
-    axpy(&r, -alpha, &Ap); // r -= alpha * A p
+    axpy(x, alpha, &p);     // x += alpha * p
+    axpy(&r, -alpha, &Ap);  // r -= alpha * A p
 
     const double rr_new = global_dot(&r, &r, ctx);
     xpby(&p, &r, rr_new / rr);  // p = r + beta * p
@@ -86,4 +87,3 @@ int conjugate_gradient(Vector* x, const Vector* b, const double rel_tol,
   free_vector(&Ap);
   return iters;
 }
-
